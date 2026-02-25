@@ -303,19 +303,24 @@
       message:    document.getElementById('msg').value
     };
 
-    // no-corsモードで送信（GASのCORS制限を回避）
-    // レスポンスは読めないが、GAS側でスプレッドシート記録・メール送信は正常に実行される
-    fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(p),
-      mode: 'no-cors'
-    })
-    .then(function() {
-      // no-corsではレスポンスが読めないため、送信できた時点で成功とみなす
-      document.getElementById('formBody').style.display = 'none';
-      document.getElementById('receiptId').innerText = '受付IDは確認メールをご確認ください。';
-      document.getElementById('successMsg').style.display = 'block';
+    // GETパラメータ方式で送信（CORSプリフライト不要・最も確実な方法）
+    var url = GAS_URL
+      + '?action=submitInquiry'
+      + '&data=' + encodeURIComponent(JSON.stringify(p));
+
+    fetch(url)
+    .then(function(res) { return res.json(); })
+    .then(function(res) {
+      if (res.success) {
+        document.getElementById('formBody').style.display = 'none';
+        document.getElementById('receiptId').innerText = '受付ID: ' + res.id;
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        document.getElementById('stat').innerHTML =
+          '<span style="color:#E8294A">送信エラー: ' + (res.message || '不明なエラー') + '</span>';
+        btn.disabled = false;
+        btn.innerText = 'Send Message / 送信する';
+      }
     })
     .catch(function(err) {
       document.getElementById('stat').innerHTML =
