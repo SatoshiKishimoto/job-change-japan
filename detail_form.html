@@ -1,1 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>求職申込書 | Job Change Japan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --red:#E8294A; --dark:#0D0D12; --card:#16161E; --border:#2a2a35; --text:#FAFAFA; --muted:#888; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--dark); color:var(--text); font-family:'DM Sans',sans-serif; padding:20px 10px 40px; }
 
+    .page-wrap { max-width:640px; margin:0 auto; }
+    .back-link { display:block; font-size:12px; color:var(--muted); text-decoration:none; margin-bottom:16px; }
+    .back-link:hover { color:var(--text); }
+
+    .page-title { font-family:'Playfair Display',serif; font-size:22px; text-align:center; margin-bottom:4px; }
+    .page-title span { color:var(--red); }
+    .page-sub { font-size:11px; color:var(--muted); text-align:center; letter-spacing:1px; margin-bottom:8px; }
+    .page-note { font-size:12px; color:#aaa; text-align:center; margin-bottom:28px; line-height:1.7; background:#1a1a24; border:1px solid var(--border); border-radius:8px; padding:12px; }
+
+    /* セクション */
+    .section { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:20px; }
+    .section-title { font-size:13px; font-weight:600; color:var(--red); letter-spacing:2px; text-transform:uppercase; margin-bottom:20px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+    .section-title span { color:var(--muted); font-weight:400; }
+
+    .field { margin-bottom:16px; }
+    .field:last-child { margin-bottom:0; }
+    .label { font-size:12px; color:#aaa; margin-bottom:5px; font-weight:500; }
+    .label .en { color:var(--muted); font-weight:400; margin-left:6px; }
+    .label .req { color:var(--red); margin-left:3px; }
+    input[type=text], input[type=email], input[type=date], input[type=tel],
+    select, textarea {
+      width:100%; padding:11px 13px;
+      background:#222; color:var(--text);
+      border:1px solid #444; border-radius:6px;
+      font-family:'DM Sans',sans-serif; font-size:14px;
+    }
+    input:focus, select:focus, textarea:focus { outline:none; border-color:var(--red); }
+    textarea { resize:vertical; min-height:80px; }
+
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+    /* チェックボックスグループ */
+    .check-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+    .check-item { display:flex; align-items:center; gap:6px; background:#222; border:1px solid #444; border-radius:6px; padding:8px 12px; cursor:pointer; font-size:13px; transition:all 0.15s; }
+    .check-item:hover { border-color:#666; }
+    .check-item input { width:15px; height:15px; margin:0; flex-shrink:0; accent-color:var(--red); }
+    .check-item.selected { border-color:var(--red); background:#2a0d12; }
+
+    /* ラジオグループ */
+    .radio-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+    .radio-item { display:flex; align-items:center; gap:6px; background:#222; border:1px solid #444; border-radius:6px; padding:8px 16px; cursor:pointer; font-size:13px; transition:all 0.15s; }
+    .radio-item:hover { border-color:#666; }
+    .radio-item input { width:15px; height:15px; margin:0; flex-shrink:0; accent-color:var(--red); }
+
+    /* 同意ボックス */
+    .agree-section { background:#0f0f18; border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:20px; font-size:12px; color:#aaa; line-height:1.9; }
+    .agree-section h3 { font-size:13px; color:var(--text); margin-bottom:12px; }
+    .agree-check { display:flex; align-items:flex-start; gap:10px; margin-top:16px; cursor:pointer; font-size:13px; color:var(--text); }
+    .agree-check input { width:18px; height:18px; margin-top:2px; flex-shrink:0; accent-color:var(--red); }
+
+    /* 送信ボタン */
+    .submit-btn { width:100%; padding:17px; background:var(--red); color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; font-family:'DM Sans',sans-serif; cursor:pointer; transition:background 0.2s; margin-top:8px; }
+    .submit-btn:hover:not(:disabled) { background:#ff3355; }
+    .submit-btn:disabled { background:#7a1525; cursor:not-allowed; }
+    #stat { text-align:center; margin-top:14px; font-size:14px; font-weight:bold; }
+
+    /* 完了メッセージ */
+    #successMsg { display:none; text-align:center; padding:40px 20px; }
+    #successMsg .check { font-size:52px; margin-bottom:16px; }
+    #successMsg h3 { font-family:'Playfair Display',serif; color:#4CAF50; font-size:22px; margin-bottom:12px; }
+    #successMsg p { font-size:13px; color:var(--muted); line-height:1.9; }
+    #successMsg .receipt { background:#222; border:1px solid #333; border-radius:6px; padding:12px 16px; margin:16px auto; max-width:320px; font-family:monospace; font-size:13px; color:var(--text); }
+    .btn-back { display:inline-block; margin-top:20px; padding:12px 28px; background:var(--red); color:#fff; border-radius:6px; text-decoration:none; font-size:14px; }
+
+    @media (max-width:500px) {
+      .row2, .row3 { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <a href="index.html" class="back-link">← Job Change Japan トップへ戻る</a>
+
+  <h1 class="page-title">Job Change <span>Japan</span></h1>
+  <p class="page-sub">求職申込書 / Job Application Form (For Foreign Nationals)</p>
+  <p class="page-note">
+    このフォームは、職業安定法に基づく求職申込書です。入力いただいた情報は求職管理簿に記録され、求人者へのご紹介にのみ使用します。<br>
+    This form is the official job application form required under Japanese Employment Security Law.
+  </p>
+
+  <div id="formBody">
+
+    <!-- 1. 基本情報 -->
+    <div class="section">
+      <div class="section-title">1. 求職者基本情報 <span>/ Applicant Information</span></div>
+
+      <div class="field">
+        <div class="label">氏名（ローマ字） <span class="en">Name (Roman alphabet)</span><span class="req">*</span></div>
+        <input type="text" id="nameRoman" placeholder="例: NGUYEN THI LAN">
+      </div>
+      <div class="field">
+        <div class="label">氏名（漢字・カナ）<span class="en">Name (Kanji/Kana)</span></div>
+        <input type="text" id="nameKanji" placeholder="例: グエン ティ ラン">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="label">生年月日 <span class="en">Date of Birth</span><span class="req">*</span></div>
+          <input type="date" id="dob">
+        </div>
+        <div class="field">
+          <div class="label">性別（任意）<span class="en">Gender (Optional)</span></div>
+          <select id="gender">
+            <option value="">選択してください</option>
+            <option value="男性 / Male">男性 / Male</option>
+            <option value="女性 / Female">女性 / Female</option>
+            <option value="回答しない / Prefer not to say">回答しない / Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="label">国籍 <span class="en">Nationality</span><span class="req">*</span></div>
+          <input type="text" id="nationality" placeholder="例: Vietnam / ベトナム">
+        </div>
+        <div class="field">
+          <div class="label">母国語 <span class="en">Native Language</span></div>
+          <input type="text" id="nativeLang" placeholder="例: Vietnamese">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 連絡先 -->
+    <div class="section">
+      <div class="section-title">2. 連絡先・現住所 <span>/ Contact Information</span></div>
+
+      <div class="field">
+        <div class="label">現住所 <span class="en">Current Address</span><span class="req">*</span></div>
+        <input type="text" id="address" placeholder="例: 大阪府大阪市中央区〇〇町1-2-3">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="label">電話番号 <span class="en">Phone Number</span><span class="req">*</span></div>
+          <input type="tel" id="phone" placeholder="例: 090-1234-5678">
+        </div>
+        <div class="field">
+          <div class="label">メールアドレス <span class="en">Email Address</span><span class="req">*</span></div>
+          <input type="email" id="email" placeholder="例: yourname@email.com">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 在留資格 -->
+    <div class="section">
+      <div class="section-title">3. 在留資格・就労状況 <span>/ Residence &amp; Work Eligibility</span></div>
+
+      <div class="row2">
+        <div class="field">
+          <div class="label">現在の在留資格 <span class="en">Status of Residence</span><span class="req">*</span></div>
+          <select id="visaStatus">
+            <option value="">選択してください</option>
+            <option value="技術・人文知識・国際業務">技術・人文知識・国際業務</option>
+            <option value="特定技能1号">特定技能1号</option>
+            <option value="特定技能2号">特定技能2号</option>
+            <option value="技能実習（移行中）">技能実習（移行中）</option>
+            <option value="永住者">永住者</option>
+            <option value="日本人の配偶者等">日本人の配偶者等</option>
+            <option value="永住者の配偶者等">永住者の配偶者等</option>
+            <option value="定住者">定住者</option>
+            <option value="家族滞在">家族滞在</option>
+            <option value="留学（資格外活動許可あり）">留学（資格外活動許可あり）</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label">在留期限 <span class="en">Expiration Date</span><span class="req">*</span></div>
+          <input type="date" id="visaExpiry">
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">就労制限の有無 <span class="en">Work Restriction</span></div>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="workRestriction" value="制限なし / No restriction"> 制限なし / No restriction</label>
+          <label class="radio-item"><input type="radio" name="workRestriction" value="制限あり（週28時間以内等）"> 制限あり（週28時間以内等）</label>
+          <label class="radio-item"><input type="radio" name="workRestriction" value="特定業種のみ"> 特定業種のみ</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">就労可能な在留資格（変更希望等）<span class="en">Eligible / Intended Status</span></div>
+        <input type="text" id="visaEligible" placeholder="例: 特定技能への変更を希望 / No change needed">
+      </div>
+      <div class="field">
+        <div class="label">在留資格変更・認定希望 <span class="en">Change / COE Request</span></div>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="visaChange" value="不要 / Not needed"> 不要 / Not needed</label>
+          <label class="radio-item"><input type="radio" name="visaChange" value="変更希望 / Change requested"> 変更希望 / Change requested</label>
+          <label class="radio-item"><input type="radio" name="visaChange" value="認定希望 / COE requested"> 認定希望 / COE requested</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 学歴・職歴 -->
+    <div class="section">
+      <div class="section-title">4. 学歴・職歴 <span>/ Education &amp; Work History</span></div>
+
+      <div class="field">
+        <div class="label">最終学歴 <span class="en">Highest Education</span></div>
+        <select id="education">
+          <option value="">選択してください</option>
+          <option value="中学校卒業 / Junior High School">中学校卒業 / Junior High School</option>
+          <option value="高校卒業 / High School">高校卒業 / High School</option>
+          <option value="専門学校卒業 / Vocational School">専門学校卒業 / Vocational School</option>
+          <option value="短期大学卒業 / Junior College">短期大学卒業 / Junior College</option>
+          <option value="大学卒業 / University">大学卒業 / University</option>
+          <option value="大学院卒業 / Graduate School">大学院卒業 / Graduate School</option>
+          <option value="その他 / Other">その他 / Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="label">職歴（直近の職場から）<span class="en">Work History (most recent first)</span></div>
+        <textarea id="workHistory" rows="4" placeholder="例：&#10;2022年〜2024年：株式会社〇〇　飲食店スタッフ（大阪）&#10;2020年〜2022年：△△工場　製造ライン作業（愛知）"></textarea>
+      </div>
+    </div>
+
+    <!-- 5. 資格・技能 -->
+    <div class="section">
+      <div class="section-title">5. 資格・技能 <span>/ Qualifications &amp; Skills</span></div>
+
+      <div class="field">
+        <div class="label">日本語能力 <span class="en">Japanese Language Level</span><span class="req">*</span></div>
+        <select id="japaneseLevel">
+          <option value="">選択してください</option>
+          <option value="N1（ビジネスレベル）">N1（ビジネスレベル）</option>
+          <option value="N2（日常会話以上）">N2（日常会話以上）</option>
+          <option value="N3（日常会話可能）">N3（日常会話可能）</option>
+          <option value="N4（基本的な会話）">N4（基本的な会話）</option>
+          <option value="N5（初級）">N5（初級）</option>
+          <option value="未取得（日常会話程度）">未取得（日常会話程度）</option>
+          <option value="未取得（ほぼ話せない）">未取得（ほぼ話せない）</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="label">保有資格・技能 <span class="en">Qualifications / Skills</span></div>
+        <textarea id="qualifications" rows="3" placeholder="例：普通自動車運転免許、フォークリフト免許、調理師免許、TOEIC 750点、など"></textarea>
+      </div>
+      <div class="field">
+        <div class="label">実務経験年数（日本国内）<span class="en">Years of Experience in Japan</span></div>
+        <select id="experienceYears">
+          <option value="">選択してください</option>
+          <option value="1年未満 / Less than 1 year">1年未満 / Less than 1 year</option>
+          <option value="1〜3年 / 1-3 years">1〜3年 / 1-3 years</option>
+          <option value="3〜5年 / 3-5 years">3〜5年 / 3-5 years</option>
+          <option value="5〜10年 / 5-10 years">5〜10年 / 5-10 years</option>
+          <option value="10年以上 / 10+ years">10年以上 / 10+ years</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 6. 希望条件 -->
+    <div class="section">
+      <div class="section-title">6. 希望条件 <span>/ Job Preferences</span></div>
+
+      <div class="field">
+        <div class="label">希望職種 <span class="en">Desired Job Type</span><span class="req">*</span></div>
+        <div class="check-group" id="jobTypeGroup">
+          <label class="check-item"><input type="checkbox" value="外食業"> 外食業</label>
+          <label class="check-item"><input type="checkbox" value="食品製造"> 食品製造</label>
+          <label class="check-item"><input type="checkbox" value="ホテル・宿泊"> ホテル・宿泊</label>
+          <label class="check-item"><input type="checkbox" value="製造業"> 製造業</label>
+          <label class="check-item"><input type="checkbox" value="物流・倉庫"> 物流・倉庫</label>
+          <label class="check-item"><input type="checkbox" value="IT・テクノロジー"> IT・テクノロジー</label>
+          <label class="check-item"><input type="checkbox" value="介護・医療"> 介護・医療</label>
+          <label class="check-item"><input type="checkbox" value="販売・小売"> 販売・小売</label>
+          <label class="check-item"><input type="checkbox" value="建設・土木"> 建設・土木</label>
+          <label class="check-item"><input type="checkbox" value="事務・管理"> 事務・管理</label>
+          <label class="check-item"><input type="checkbox" value="その他"> その他</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">希望雇用形態 <span class="en">Employment Type</span></div>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="employType" value="正社員 / Full-time"> 正社員 / Full-time</label>
+          <label class="radio-item"><input type="radio" name="employType" value="契約社員 / Contract"> 契約社員 / Contract</label>
+          <label class="radio-item"><input type="radio" name="employType" value="パート・アルバイト / Part-time"> パート・アルバイト / Part-time</label>
+          <label class="radio-item"><input type="radio" name="employType" value="どちらでも / Any"> どちらでも / Any</label>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="label">希望月収（税込）<span class="en">Desired Monthly Salary</span></div>
+          <input type="text" id="desiredSalary" placeholder="例: 250,000円">
+        </div>
+        <div class="field">
+          <div class="label">希望勤務地 <span class="en">Preferred Location</span></div>
+          <select id="desiredLocation">
+            <option value="全国 / Nationwide">全国 / Nationwide</option>
+            <option value="北海道">北海道</option><option value="青森県">青森県</option>
+            <option value="岩手県">岩手県</option><option value="宮城県">宮城県</option>
+            <option value="秋田県">秋田県</option><option value="山形県">山形県</option>
+            <option value="福島県">福島県</option><option value="茨城県">茨城県</option>
+            <option value="栃木県">栃木県</option><option value="群馬県">群馬県</option>
+            <option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option>
+            <option value="東京都">東京都</option><option value="神奈川県">神奈川県</option>
+            <option value="新潟県">新潟県</option><option value="富山県">富山県</option>
+            <option value="石川県">石川県</option><option value="福井県">福井県</option>
+            <option value="山梨県">山梨県</option><option value="長野県">長野県</option>
+            <option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option>
+            <option value="愛知県">愛知県</option><option value="三重県">三重県</option>
+            <option value="滋賀県">滋賀県</option><option value="京都府">京都府</option>
+            <option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option>
+            <option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option>
+            <option value="鳥取県">鳥取県</option><option value="島根県">島根県</option>
+            <option value="岡山県">岡山県</option><option value="広島県">広島県</option>
+            <option value="山口県">山口県</option><option value="徳島県">徳島県</option>
+            <option value="香川県">香川県</option><option value="愛媛県">愛媛県</option>
+            <option value="高知県">高知県</option><option value="福岡県">福岡県</option>
+            <option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option>
+            <option value="熊本県">熊本県</option><option value="大分県">大分県</option>
+            <option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option>
+            <option value="沖縄県">沖縄県</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="label">ボーナス希望 <span class="en">Bonus</span></div>
+          <select id="bonusPref">
+            <option value="有 / Yes">有 / Yes</option>
+            <option value="無 / No">無 / No</option>
+            <option value="どちらでも / Either">どちらでも / Either</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label">住宅手当希望 <span class="en">Housing Allowance</span></div>
+          <select id="housingPref">
+            <option value="有 / Yes">有 / Yes</option>
+            <option value="無 / No">無 / No</option>
+            <option value="どちらでも / Either">どちらでも / Either</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">入社可能時期 <span class="en">Available Start Date</span></div>
+        <select id="availableDate">
+          <option value="即日 / Immediately">即日 / Immediately</option>
+          <option value="1ヶ月以内 / Within 1 month">1ヶ月以内 / Within 1 month</option>
+          <option value="2〜3ヶ月後 / 2-3 months">2〜3ヶ月後 / 2-3 months</option>
+          <option value="3〜6ヶ月後 / 3-6 months">3〜6ヶ月後 / 3-6 months</option>
+          <option value="未定 / TBD">未定 / TBD</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="label">その他希望・特記事項 <span class="en">Other Notes</span></div>
+        <textarea id="otherNotes" rows="3" placeholder="その他ご希望があればご記入ください。/ Any other preferences or notes."></textarea>
+      </div>
+    </div>
+
+    <!-- 7. 同意事項 -->
+    <div class="agree-section">
+      <h3>7. 同意事項 / Declaration</h3>
+      <p>
+        弊社は、求職者から知り得た個人的な情報は、弊社の個人情報適正管理規程に基づき適正に取り扱います。本求職申込書に記載された個人情報は、職業紹介で応募を希望する求人先に応募情報を提供するために使用し、職業紹介（適格紹介）以外の目的には使用しません。<br><br>
+        Our company handles personal information obtained from job applicants appropriately in accordance with our Personal Information Management Regulations. The personal information provided in this job application form will be used solely for the purpose of providing your application information to employers for job placement services. It will not be used for any purpose other than job placement (qualified referrals).
+      </p>
+      <label class="agree-check" onclick="document.getElementById('agreeCheck').click(); return false;">
+        <input type="checkbox" id="agreeCheck">
+        <span>個人情報の求人者への提供について同意いたします。<br>
+        <span style="font-size:11px;color:var(--muted);">I consent to the provision of my personal information to employers.</span></span>
+      </label>
+      <label class="agree-check" style="margin-top:8px;" onclick="document.getElementById('agreePrivacy').click(); return false;">
+        <input type="checkbox" id="agreePrivacy">
+        <span><a href="https://fairlyconnecting.blog.jp/archives/11232068.html" target="_blank" style="color:var(--red);">プライバシーポリシー / Privacy Policy</a> に同意します。</span>
+      </label>
+    </div>
+
+    <button type="button" class="submit-btn" id="subBtn" onclick="send()">
+      求職申込書を送信する / Submit Application
+    </button>
+    <div id="stat"></div>
+  </div>
+
+  <!-- 送信完了 -->
+  <div id="successMsg">
+    <div class="check">✅</div>
+    <h3>送信完了 / Submitted!</h3>
+    <p>求職申込書を受け付けました。<br>担当者より折り返しご連絡いたします。<br><br>We have received your job application.<br>Our staff will contact you shortly.</p>
+    <div class="receipt" id="receiptId"></div>
+    <p style="font-size:11px;color:#666;margin-top:8px;">確認メールが届かない場合は迷惑メールフォルダをご確認ください。</p>
+    <a href="index.html" class="btn-back">← トップページへ戻る</a>
+  </div>
+
+  <div style="text-align:center;margin-top:24px;">
+    <img src="https://lh3.googleusercontent.com/d/1nai6gVSvkd93IUx_9MQtEw6wYNIAMx8q" style="max-width:150px;height:auto;" alt="Fairly Connecting" onerror="this.style.display='none';">
+    <div style="font-size:11px;color:#555;margin-top:8px;">© 2026 株式会社Fairly connecting. All Rights Reserved.</div>
+  </div>
+</div>
+
+<script>
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbyrLBO1LqeOXjempqZXJUtMH09uk9eV2UbAN2K3Aq-fTHbL_7SopLNqhlIyonimmMU/exec';
+
+  // チェックボックスの選択スタイル
+  document.querySelectorAll('.check-item input').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      this.closest('.check-item').classList.toggle('selected', this.checked);
+    });
+  });
+
+  // チェックボックスの値取得
+  function getChecked(groupId) {
+    var vals = [];
+    document.querySelectorAll('#' + groupId + ' input:checked').forEach(function(cb) {
+      vals.push(cb.value);
+    });
+    return vals.join('、');
+  }
+
+  // ラジオの値取得
+  function getRadio(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  }
+
+  function send() {
+    var nameRoman = document.getElementById('nameRoman').value.trim();
+    var email     = document.getElementById('email').value.trim();
+    var dob       = document.getElementById('dob').value;
+    var nationality = document.getElementById('nationality').value.trim();
+    var phone     = document.getElementById('phone').value.trim();
+    var address   = document.getElementById('address').value.trim();
+    var visaStatus = document.getElementById('visaStatus').value;
+    var visaExpiry = document.getElementById('visaExpiry').value;
+    var japaneseLevel = document.getElementById('japaneseLevel').value;
+    var jobTypes  = getChecked('jobTypeGroup');
+
+    if (!document.getElementById('agreeCheck').checked || !document.getElementById('agreePrivacy').checked) {
+      alert('同意事項にチェックを入れてください。\nPlease check the agreement boxes.');
+      return;
+    }
+    if (!nameRoman) { alert('氏名（ローマ字）を入力してください。'); return; }
+    if (!dob)       { alert('生年月日を入力してください。'); return; }
+    if (!nationality) { alert('国籍を入力してください。'); return; }
+    if (!address)   { alert('現住所を入力してください。'); return; }
+    if (!phone)     { alert('電話番号を入力してください。'); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert('有効なメールアドレスを入力してください。');
+      return;
+    }
+    if (!visaStatus) { alert('在留資格を選択してください。'); return; }
+    if (!visaExpiry) { alert('在留期限を入力してください。'); return; }
+    if (!japaneseLevel) { alert('日本語能力を選択してください。'); return; }
+    if (!jobTypes)  { alert('希望職種を1つ以上選択してください。'); return; }
+
+    var btn = document.getElementById('subBtn');
+    btn.disabled = true;
+    btn.innerText = 'Sending... / 送信中...';
+    document.getElementById('stat').innerHTML = '';
+
+    var p = {
+      action:          'submitDetailForm',
+      // 基本情報
+      nameRoman:       nameRoman,
+      nameKanji:       document.getElementById('nameKanji').value.trim(),
+      dob:             dob,
+      gender:          document.getElementById('gender').value,
+      nationality:     nationality,
+      nativeLang:      document.getElementById('nativeLang').value.trim(),
+      // 連絡先
+      address:         address,
+      phone:           phone,
+      email:           email,
+      // 在留資格
+      visaStatus:      visaStatus,
+      visaExpiry:      visaExpiry,
+      workRestriction: getRadio('workRestriction'),
+      visaEligible:    document.getElementById('visaEligible').value.trim(),
+      visaChange:      getRadio('visaChange'),
+      // 学歴・職歴
+      education:       document.getElementById('education').value,
+      workHistory:     document.getElementById('workHistory').value.trim(),
+      // 資格・技能
+      japaneseLevel:   japaneseLevel,
+      qualifications:  document.getElementById('qualifications').value.trim(),
+      experienceYears: document.getElementById('experienceYears').value,
+      // 希望条件
+      jobTypes:        jobTypes,
+      employType:      getRadio('employType'),
+      desiredSalary:   document.getElementById('desiredSalary').value.trim(),
+      desiredLocation: document.getElementById('desiredLocation').value,
+      bonusPref:       document.getElementById('bonusPref').value,
+      housingPref:     document.getElementById('housingPref').value,
+      availableDate:   document.getElementById('availableDate').value,
+      otherNotes:      document.getElementById('otherNotes').value.trim()
+    };
+
+    var url = GAS_URL + '?action=submitDetailForm&data=' + encodeURIComponent(JSON.stringify(p));
+    fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.success) {
+        document.getElementById('formBody').style.display = 'none';
+        document.getElementById('receiptId').innerText = '受付ID: ' + res.id;
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        document.getElementById('stat').innerHTML = '<span style="color:var(--red)">送信エラー: ' + (res.message||'不明') + '</span>';
+        btn.disabled = false;
+        btn.innerText = '求職申込書を送信する / Submit Application';
+      }
+    })
+    .catch(function(err) {
+      document.getElementById('stat').innerHTML = '<span style="color:var(--red)">通信エラー: ' + err.message + '</span>';
+      btn.disabled = false;
+      btn.innerText = '求職申込書を送信する / Submit Application';
+    });
+  }
+</script>
+</body>
+</html>
