@@ -1,1 +1,336 @@
 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登録フォーム | Job Change Japan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      background-color: #0D0D12; color: #FAFAFA;
+      font-family: 'DM Sans', sans-serif;
+      margin: 0; padding: 10px;
+    }
+    .card {
+      background: #16161E; border: 1px solid #333;
+      padding: 25px; border-radius: 12px;
+      max-width: 480px; margin: 20px auto;
+    }
+    h2 {
+      font-family: 'Playfair Display', serif;
+      color: #FAFAFA; text-align: center; margin: 0;
+      font-size: 22px; letter-spacing: 1px;
+    }
+    h2 span { color: #E8294A; }
+    .sub-title {
+      display: block; font-size: 12px; color: #888;
+      text-align: center; margin-bottom: 25px; margin-top: 5px;
+      letter-spacing: 1px;
+    }
+    .back-link {
+      display: block; text-align: center;
+      font-size: 12px; color: #888; text-decoration: none;
+      margin-bottom: 20px; transition: color 0.2s;
+    }
+    .back-link:hover { color: #FAFAFA; }
+    .label {
+      font-size: 13px; color: #AAA;
+      margin: 15px 0 5px 0; font-weight: 500;
+    }
+    input, select, textarea {
+      width: 100%; padding: 12px;
+      background: #222; color: #fff;
+      border: 1px solid #444; border-radius: 6px;
+      box-sizing: border-box;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: #E8294A;
+    }
+
+    /* 企業/個人トグル */
+    .type-toggle { display: flex; gap: 10px; margin: 5px 0 20px; }
+    .type-toggle .toggle-btn {
+      flex: 1; text-align: center; padding: 13px;
+      border: 2px solid #444; border-radius: 6px;
+      cursor: pointer; font-size: 14px; font-weight: 500;
+      background: #222; color: #888;
+      transition: all 0.2s; user-select: none;
+    }
+    .type-toggle .toggle-btn.active {
+      border-color: #E8294A; background: #2a0d12; color: #FAFAFA;
+    }
+
+    .agree-box {
+      display: flex; align-items: flex-start;
+      gap: 10px; margin: 25px 0; font-size: 13px; cursor: pointer;
+    }
+    .agree-box input[type="checkbox"] {
+      width: 18px; height: 18px; margin: 0;
+      flex-shrink: 0; margin-top: 2px;
+    }
+
+    button#subBtn {
+      width: 100%; padding: 16px;
+      background: #E8294A; color: #fff; border: none;
+      font-weight: 500; border-radius: 6px;
+      cursor: pointer; font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s;
+    }
+    button#subBtn:hover:not(:disabled) { background: #ff3355; }
+    button#subBtn:disabled { background: #7a1525; cursor: not-allowed; }
+
+    #stat { text-align: center; margin-top: 15px; font-weight: bold; font-size: 14px; }
+
+    /* 送信完了メッセージ */
+    #successMsg {
+      display: none; text-align: center; padding: 30px 20px;
+    }
+    #successMsg .check { font-size: 48px; margin-bottom: 16px; }
+    #successMsg h3 {
+      font-family: 'Playfair Display', serif;
+      color: #4CAF50; font-size: 20px; margin-bottom: 12px;
+    }
+    #successMsg p { font-size: 13px; color: #888; line-height: 1.8; }
+    #successMsg .receipt-id {
+      background: #222; border: 1px solid #333; border-radius: 6px;
+      padding: 12px; margin: 16px 0; font-size: 13px;
+      font-family: monospace; color: #FAFAFA;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <a href="index.html" class="back-link">← Job Change Japan トップへ戻る</a>
+    <h2>Job Change <span>Japan</span></h2>
+    <span class="sub-title">Career Consultation / 転職相談フォーム</span>
+
+    <!-- フォーム本体 -->
+    <div id="formBody">
+      <div class="label">お客様の種別 / Client Type</div>
+      <div class="type-toggle">
+        <div class="toggle-btn active" id="btn-individual" onclick="setType('individual')">
+          👤 個人 / Individual
+        </div>
+        <div class="toggle-btn" id="btn-corporate" onclick="setType('corporate')">
+          🏢 企業 / Corporate
+        </div>
+      </div>
+      <input type="hidden" id="clientType" value="individual">
+
+      <div class="label">Name (お名前) <span style="color:#E8294A;">*</span></div>
+      <input type="text" id="name" placeholder="例: Nguyen Thi Lan">
+
+      <div class="label">Email (メールアドレス) <span style="color:#E8294A;">*</span></div>
+      <input type="email" id="email" placeholder="例: yourname@email.com">
+
+      <div class="label">Job Category (希望職種)</div>
+      <select id="role">
+        <option value="外食業">外食業</option>
+        <option value="食品製造">食品製造</option>
+        <option value="ホテル・宿泊">ホテル・宿泊</option>
+        <option value="製造業">製造業</option>
+        <option value="IT・テクノロジー">IT・テクノロジー</option>
+        <option value="物流・倉庫">物流・倉庫</option>
+        <option value="介護・医療">介護・医療</option>
+        <option value="販売・小売">販売・小売</option>
+        <option value="建設・土木">建設・土木</option>
+        <option value="事務・管理">事務・管理</option>
+        <option value="その他">その他</option>
+      </select>
+
+      <div class="label">Desired Monthly Salary (希望月収)</div>
+      <input type="text" id="salary" placeholder="例: 250,000">
+
+      <div class="label">Bonus (ボーナス)</div>
+      <select id="bonus">
+        <option value="有 / Yes">有 / Yes</option>
+        <option value="無 / No">無 / No</option>
+        <option value="どちらでも / Either">どちらでも / Either</option>
+      </select>
+
+      <div class="label">Work Location (希望勤務地)</div>
+      <select id="location">
+        <option value="全国 / Nationwide">全国 / Nationwide</option>
+        <option value="北海道">北海道 / Hokkaido</option>
+        <option value="青森県">青森県 / Aomori</option>
+        <option value="岩手県">岩手県 / Iwate</option>
+        <option value="宮城県">宮城県 / Miyagi</option>
+        <option value="秋田県">秋田県 / Akita</option>
+        <option value="山形県">山形県 / Yamagata</option>
+        <option value="福島県">福島県 / Fukushima</option>
+        <option value="茨城県">茨城県 / Ibaraki</option>
+        <option value="栃木県">栃木県 / Tochigi</option>
+        <option value="群馬県">群馬県 / Gunma</option>
+        <option value="埼玉県">埼玉県 / Saitama</option>
+        <option value="千葉県">千葉県 / Chiba</option>
+        <option value="東京都">東京都 / Tokyo</option>
+        <option value="神奈川県">神奈川県 / Kanagawa</option>
+        <option value="新潟県">新潟県 / Niigata</option>
+        <option value="富山県">富山県 / Toyama</option>
+        <option value="石川県">石川県 / Ishikawa</option>
+        <option value="福井県">福井県 / Fukui</option>
+        <option value="山梨県">山梨県 / Yamanashi</option>
+        <option value="長野県">長野県 / Nagano</option>
+        <option value="岐阜県">岐阜県 / Gifu</option>
+        <option value="静岡県">静岡県 / Shizuoka</option>
+        <option value="愛知県">愛知県 / Aichi</option>
+        <option value="三重県">三重県 / Mie</option>
+        <option value="滋賀県">滋賀県 / Shiga</option>
+        <option value="京都府">京都府 / Kyoto</option>
+        <option value="大阪府">大阪府 / Osaka</option>
+        <option value="兵庫県">兵庫県 / Hyogo</option>
+        <option value="奈良県">奈良県 / Nara</option>
+        <option value="和歌山県">和歌山県 / Wakayama</option>
+        <option value="鳥取県">鳥取県 / Tottori</option>
+        <option value="島根県">島根県 / Shimane</option>
+        <option value="岡山県">岡山県 / Okayama</option>
+        <option value="広島県">広島県 / Hiroshima</option>
+        <option value="山口県">山口県 / Yamaguchi</option>
+        <option value="徳島県">徳島県 / Tokushima</option>
+        <option value="香川県">香川県 / Kagawa</option>
+        <option value="愛媛県">愛媛県 / Ehime</option>
+        <option value="高知県">高知県 / Kochi</option>
+        <option value="福岡県">福岡県 / Fukuoka</option>
+        <option value="佐賀県">佐賀県 / Saga</option>
+        <option value="長崎県">長崎県 / Nagasaki</option>
+        <option value="熊本県">熊本県 / Kumamoto</option>
+        <option value="大分県">大分県 / Oita</option>
+        <option value="宮崎県">宮崎県 / Miyazaki</option>
+        <option value="鹿児島県">鹿児島県 / Kagoshima</option>
+        <option value="沖縄県">沖縄県 / Okinawa</option>
+      </select>
+
+      <div class="label">Housing Allowance (住宅手当)</div>
+      <select id="housing">
+        <option value="有 / Yes">有 / Yes</option>
+        <option value="無 / No">無 / No</option>
+        <option value="どちらでも / Either">どちらでも / Either</option>
+      </select>
+
+      <div class="label">Message (相談内容)</div>
+      <textarea id="msg" rows="3" placeholder="ご希望・ご状況をお気軽にご記入ください。"></textarea>
+
+      <div class="agree-box" onclick="if(event.target.id!=='agree') document.getElementById('agree').click()">
+        <input type="checkbox" id="agree">
+        <span>
+          I agree to the <a href="https://fairlyconnecting.blog.jp/archives/11232068.html" target="_blank" style="color:#E8294A;">Privacy Policy</a>.<br>
+          <span style="font-size:11px; color:#888;">プライバシーポリシーに同意します。</span>
+        </span>
+      </div>
+
+      <button type="button" id="subBtn" onclick="send()">Send Message / 送信する</button>
+      <div id="stat"></div>
+    </div>
+
+    <!-- 送信完了メッセージ（送信後に表示） -->
+    <div id="successMsg">
+      <div class="check">✅</div>
+      <h3>送信完了 / Submitted!</h3>
+      <p>お問い合わせを受け付けました。<br>担当者よりメールにてご連絡いたします。</p>
+      <div class="receipt-id" id="receiptId"></div>
+      <p style="font-size:11px; color:#666; margin-top:8px;">確認メールが届かない場合は迷惑メールフォルダをご確認ください。</p>
+      <a href="index.html" style="display:inline-block; margin-top:20px; padding:12px 28px; background:#E8294A; color:#fff; border-radius:6px; text-decoration:none; font-size:14px;">← トップページへ戻る</a>
+    </div>
+
+    <div style="text-align:center; margin-top:18px;">
+      <img src="https://lh3.googleusercontent.com/d/1nai6gVSvkd93IUx_9MQtEw6wYNIAMx8q"
+           style="max-width:180px; height:auto;"
+           alt="JOB CHANGE JAPAN"
+           onerror="this.style.display='none';">
+      <div style="font-size:11px; color:#FAFAFA; margin-top:8px;">
+        © 2026 株式会社Fairly connecting. All Rights Reserved.
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ============================================================
+  // ★★★ ここにGAS WebAppのURLを設定してください ★★★
+  // GASをデプロイ後、発行されたURLを貼り付けます
+  // 例: 'https://script.google.com/macros/s/XXXXXX/exec'
+  // ============================================================
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbw24FS_dNAiLk-zjSBgVhfW8O28MTfQ_Sc-ABgMPGcea8gd4HlCgut4LoW7vR1y7w/exec';
+
+  /* URLパラメータで企業登録を自動選択 */
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('type') === 'corporate') {
+      setType('corporate');
+    }
+  })();
+
+  /* 企業/個人 切替 */
+  function setType(type) {
+    document.getElementById('clientType').value = type;
+    document.getElementById('btn-individual').classList.toggle('active', type === 'individual');
+    document.getElementById('btn-corporate').classList.toggle('active', type === 'corporate');
+  }
+
+  /* フォーム送信 */
+  function send() {
+    var name  = document.getElementById('name').value.trim();
+    var email = document.getElementById('email').value.trim();
+
+    if (!document.getElementById('agree').checked) {
+      alert('プライバシーポリシーに同意してください。\nPlease agree to the Privacy Policy.');
+      return;
+    }
+    if (!name) { alert('お名前を入力してください。\nPlease enter your name.'); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert('有効なメールアドレスを入力してください。\nPlease enter a valid email.');
+      return;
+    }
+
+    var btn = document.getElementById('subBtn');
+    btn.disabled = true;
+    btn.innerText = 'Sending... / 送信中...';
+    document.getElementById('stat').innerHTML = '';
+
+    var p = {
+      action:     'submitInquiry',
+      clientType: document.getElementById('clientType').value,
+      name:       name,
+      email:      email,
+      role:       document.getElementById('role').value,
+      salary:     document.getElementById('salary').value,
+      bonus:      document.getElementById('bonus').value,
+      location:   document.getElementById('location').value,
+      housing:    document.getElementById('housing').value,
+      message:    document.getElementById('msg').value
+    };
+
+    // GAS WebAppにPOSTで送信（CORS対応のため no-cors は使わず、GAS側でCORS設定）
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' }, // GASのdoPostではtext/plainで受け取る
+      body: JSON.stringify(p)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(res) {
+      if (res.success) {
+        // 成功：フォームを非表示にして完了メッセージを表示
+        document.getElementById('formBody').style.display = 'none';
+        document.getElementById('receiptId').innerText = '受付ID: ' + res.id;
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        document.getElementById('stat').innerHTML =
+          '<span style="color:#E8294A">送信エラー: ' + (res.message || '不明なエラー') + '</span>';
+        btn.disabled = false;
+        btn.innerText = 'Send Message / 送信する';
+      }
+    })
+    .catch(function(err) {
+      document.getElementById('stat').innerHTML =
+        '<span style="color:#E8294A">通信エラーが発生しました。時間をおいて再度お試しください。<br>' + err.message + '</span>';
+      btn.disabled = false;
+      btn.innerText = 'Send Message / 送信する';
+    });
+  }
+</script>
+</body>
+</html>
