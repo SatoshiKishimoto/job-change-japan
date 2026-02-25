@@ -1,1 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="在日外国人と採用企業をつなぐ転職エージェント。登録3分・相談無料。Job Change Japan by Fairly Connecting.">
+  <meta name="robots" content="index, follow">
+  <title>Job Change Japan | 転職・採用エージェント</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red: #E8294A;
+      --dark: #0D0D12;
+      --card: #16161E;
+      --border: #2a2a35;
+      --text: #FAFAFA;
+      --muted: #888;
+      --gold: #c9a84c;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--dark); color: var(--text);
+      font-family: 'DM Sans', sans-serif; overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
 
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 5%;
+      background: rgba(13,13,18,0.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; font-weight: 700;
+      color: var(--text); text-decoration: none; letter-spacing: 1px;
+    }
+    .nav-logo span { color: var(--red); }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 13px; letter-spacing: 0.5px; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--red); color: #fff !important;
+      padding: 10px 22px; border-radius: 4px;
+      font-weight: 500; transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: #ff3355 !important; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 120px 5% 80px; position: relative; overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 60% at 80% 50%, rgba(232,41,74,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(201,168,76,0.06) 0%, transparent 60%);
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 700px; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 28px;
+    }
+    .hero-eyebrow::before {
+      content: ''; display: block; width: 32px; height: 1px; background: var(--gold);
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 6vw, 74px);
+      font-weight: 900; line-height: 1.05; margin-bottom: 12px;
+    }
+    .hero h1 em { font-style: italic; color: var(--red); }
+    .hero-ja {
+      font-size: clamp(14px, 2vw, 17px); color: var(--muted);
+      margin-bottom: 28px; font-weight: 300; letter-spacing: 2px;
+    }
+    .hero-desc {
+      font-size: 15px; color: #bbb; line-height: 1.9;
+      max-width: 560px; margin-bottom: 44px;
+    }
+    .hero-desc .ja { display: block; font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--red); color: #fff;
+      padding: 16px 36px; border-radius: 4px;
+      font-size: 15px; font-weight: 500;
+      text-decoration: none; display: inline-block;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { background: #ff3355; transform: translateY(-2px); }
+    .btn-secondary {
+      border: 1px solid var(--border); color: var(--text);
+      padding: 16px 36px; border-radius: 4px;
+      font-size: 15px; font-weight: 500;
+      text-decoration: none; display: inline-block;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--muted); transform: translateY(-2px); }
+    .hero-stats {
+      position: absolute; right: 5%; bottom: 80px;
+      display: flex; flex-direction: column; gap: 24px; z-index: 1;
+    }
+    .stat-item { text-align: right; }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px; font-weight: 700; line-height: 1;
+    }
+    .stat-num span { color: var(--red); }
+    .stat-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: var(--border); margin: 0 5%; }
+
+    /* SECTION */
+    section { padding: 100px 5%; position: relative; }
+    .section-label {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--red); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-label::after {
+      content: ''; flex: 1; max-width: 40px; height: 1px; background: var(--red);
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 700; line-height: 1.2; margin-bottom: 8px;
+    }
+    .section-sub { font-size: 13px; color: var(--muted); letter-spacing: 1px; margin-bottom: 60px; }
+
+    /* TARGET */
+    .target-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .target-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 40px;
+      position: relative; overflow: hidden; transition: border-color 0.3s;
+    }
+    .target-card:hover { border-color: var(--red); }
+    .target-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .target-card.individual::before { background: var(--red); }
+    .target-card.corporate::before { background: var(--gold); }
+    .target-icon { font-size: 36px; margin-bottom: 20px; }
+    .target-card h3 {
+      font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 4px;
+    }
+    .target-card .sub-lang { font-size: 12px; color: var(--muted); margin-bottom: 24px; letter-spacing: 1px; }
+    .target-card ul { list-style: none; }
+    .target-card ul li {
+      font-size: 14px; color: #bbb;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: flex-start; line-height: 1.6;
+    }
+    .target-card ul li:last-child { border-bottom: none; }
+    .target-card ul li::before { content: '→'; color: var(--red); flex-shrink: 0; }
+    .corporate-note {
+      font-size: 11px; color: var(--muted);
+      margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+    }
+
+    /* WHY */
+    .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .why-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .why-card:hover { transform: translateY(-6px); border-color: rgba(232,41,74,0.4); }
+    .why-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 52px; font-weight: 900;
+      color: rgba(232,41,74,0.15); line-height: 1; margin-bottom: 16px;
+    }
+    .why-card h4 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .why-card .h4-ja { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .why-card p { font-size: 13px; color: var(--muted); line-height: 1.75; }
+    .why-card .p-ja { font-size: 12px; color: #666; line-height: 1.7; margin-top: 6px; }
+
+    /* FLOW */
+    .flow-steps { display: flex; gap: 0; position: relative; }
+    .flow-steps::before {
+      content: ''; position: absolute;
+      top: 28px; left: 28px; right: 28px; height: 1px;
+      background: var(--border); z-index: 0;
+    }
+    .flow-step { flex: 1; text-align: center; position: relative; z-index: 1; padding: 0 16px; }
+    .flow-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--card); border: 2px solid var(--red);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 700;
+      margin: 0 auto 20px; color: var(--red);
+    }
+    .flow-step h4 { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+    .flow-step .h4-ja { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .flow-step p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* VOICES */
+    .voices-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .voice-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px;
+    }
+    .voice-stars { color: var(--gold); font-size: 14px; margin-bottom: 14px; }
+    .voice-text { font-size: 13px; color: #ccc; line-height: 1.8; margin-bottom: 8px; font-style: italic; }
+    .voice-text-ja { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+    .voice-person { display: flex; align-items: center; gap: 12px; }
+    .voice-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .voice-name { font-size: 13px; font-weight: 500; }
+    .voice-role { font-size: 11px; color: var(--muted); }
+
+    /* CTA */
+    .cta-section {
+      background: linear-gradient(135deg, #1a0a0d 0%, var(--dark) 50%, #0a0d1a 100%);
+      text-align: center; padding: 120px 5%;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 50% 80% at 50% 50%, rgba(232,41,74,0.08) 0%, transparent 70%);
+    }
+    .cta-section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(30px, 5vw, 58px);
+      font-weight: 900; margin-bottom: 8px; position: relative;
+    }
+    .cta-section .cta-ja { font-size: 16px; color: var(--muted); margin-bottom: 12px; position: relative; }
+    .cta-section p { color: #777; font-size: 14px; margin-bottom: 44px; position: relative; }
+    .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+    /* FOOTER */
+    footer { padding: 48px 5%; border-top: 1px solid var(--border); }
+    .footer-inner {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 32px; margin-bottom: 32px;
+    }
+    .footer-logo {
+      font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700;
+    }
+    .footer-logo span { color: var(--red); }
+    .footer-address { font-size: 12px; color: var(--muted); line-height: 2; margin-top: 10px; }
+    .footer-links { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+    .footer-links a {
+      font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy {
+      font-size: 11px; color: #444; text-align: center;
+      padding-top: 24px; border-top: 1px solid var(--border);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-content > * { opacity: 0; animation: fadeUp 0.8s ease forwards; }
+    .hero-eyebrow { animation-delay: 0.1s; }
+    .hero h1      { animation-delay: 0.2s; }
+    .hero-ja      { animation-delay: 0.3s; }
+    .hero-desc    { animation-delay: 0.4s; }
+    .hero-actions { animation-delay: 0.5s; }
+    .hero-stats   { opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .hero-stats { display: none; }
+      .target-grid { grid-template-columns: 1fr; }
+      .why-grid { grid-template-columns: 1fr 1fr; }
+      .voices-grid { grid-template-columns: 1fr; }
+      .flow-steps { flex-direction: column; gap: 24px; }
+      .flow-steps::before { display: none; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 600px) {
+      .why-grid { grid-template-columns: 1fr; }
+      section { padding: 70px 5%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Job Change <span>Japan</span></a>
+  <div class="nav-links">
+    <a href="#for-you">For You / 対象の方</a>
+    <a href="#why">Why Us / 選ばれる理由</a>
+    <a href="#flow">How It Works / 流れ</a>
+    <a href="form.html" class="nav-cta">無料登録 / Register</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Fairly Connecting — Osaka, Japan</div>
+    <h1>Your Career.<br><em>Upgraded.</em></h1>
+    <p class="hero-ja">在日外国人・採用企業のための転職エージェント</p>
+    <p class="hero-desc">
+      Already living in Japan? Know how things work here?<br>
+      We connect ready-to-work foreign talent with companies that value them.
+      <span class="ja">日本在住の外国人と、即戦力を求める企業をつなぐ転職エージェントです。手間なく、スピーディーに。</span>
+    </p>
+    <div class="hero-actions">
+      <a href="form.html" class="btn-primary">👤 個人登録 / Register Free</a>
+      <a href="form.html?type=corporate" class="btn-secondary">🏢 企業登録</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">47<span>都道府県</span></div>
+      <div class="stat-label">Nationwide / 全国対応</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3<span>分</span></div>
+      <div class="stat-label">To Register / 登録時間</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0<span>円</span></div>
+      <div class="stat-label">Free for Candidates / 求職者無料</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOR YOU -->
+<section id="for-you">
+  <div class="section-label">Who We Serve / 対象の方</div>
+  <h2 class="section-title">個人の方も、企業の方も</h2>
+  <p class="section-sub">For Individuals &amp; Companies — 登録3分、相談無料</p>
+  <div class="target-grid">
+    <div class="target-card individual">
+      <div class="target-icon">👤</div>
+      <h3>For Individuals</h3>
+      <p class="sub-lang">個人の方へ / 在日外国人求職者</p>
+      <ul>
+        <li>日本在住でビザをお持ちの方<br><span style="font-size:11px;color:var(--muted);">Already living in Japan with valid visa</span></li>
+        <li>現在の給与・勤務環境に不満がある<br><span style="font-size:11px;color:var(--muted);">Unhappy with current pay or environment</span></li>
+        <li>日本の職場文化をある程度理解している<br><span style="font-size:11px;color:var(--muted);">Understand Japanese workplace culture</span></li>
+        <li>手続きに時間をかけずスムーズに転職したい<br><span style="font-size:11px;color:var(--muted);">Want to move fast — minimum paperwork</span></li>
+        <li>給与・ボーナス・手当の改善を希望<br><span style="font-size:11px;color:var(--muted);">Seeking better salary, bonus, or benefits</span></li>
+      </ul>
+    </div>
+    <div class="target-card corporate">
+      <div class="target-icon">🏢</div>
+      <h3>採用企業の方へ</h3>
+      <p class="sub-lang">人事・採用ご担当者様</p>
+      <ul>
+        <li>即戦力となる外国人人材を探している</li>
+        <li>ビザ取得済み・日本語対応可能な人材が欲しい</li>
+        <li>ビザ申請の手間やミスマッチリスクを避けたい</li>
+        <li>採用コストと時間をできる限り抑えたい</li>
+        <li>業種・職種を絞ってマッチングしてほしい</li>
+      </ul>
+      <p class="corporate-note">※ 企業様向けのご相談・お問い合わせはすべて日本語で対応いたします。<br>※ 紹介手数料：採用決定者の総支給額1ヶ月分（税別）</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHY -->
+<section id="why">
+  <div class="section-label">Why Us / 選ばれる理由</div>
+  <h2 class="section-title">3つの強み</h2>
+  <p class="section-sub">Why Job Change Japan — 他のエージェントとの違い</p>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="why-num">01</div>
+      <h4>Japan-Ready Talent Only</h4>
+      <p class="h4-ja">日本適応済みの人材のみ</p>
+      <p>Every candidate already lives in Japan and holds a valid work visa.</p>
+      <p class="p-ja">全ての求職者が日本在住・就労ビザ取得済み。日本での就業経験があり、職場環境への理解が期待できます。</p>
+    </div>
+    <div class="why-card">
+      <div class="why-num">02</div>
+      <h4>Speed Over Bureaucracy</h4>
+      <p class="h4-ja">スピード重視・手間なし</p>
+      <p>Register in 3 minutes. We cut the lengthy paperwork that slows agencies down.</p>
+      <p class="p-ja">登録はわずか3分。煩雑な書類作業を省き、担当者ができる限り早くご連絡します。</p>
+    </div>
+    <div class="why-card">
+      <div class="why-num">03</div>
+      <h4>Nationwide, Any Industry</h4>
+      <p class="h4-ja">全国47都道府県・全業種対応</p>
+      <p>From Tokyo to Okinawa — food service, hospitality, manufacturing, IT and more.</p>
+      <p class="p-ja">北海道から沖縄まで、外食・ホテル・製造・ITなど幅広い業種に対応しています。<br><span style="font-size:11px;color:#666;">※ 求人状況やタイミングによっては、マッチングに時間がかかる場合や、ご希望に沿えない場合がございます。</span></p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FLOW -->
+<section id="flow">
+  <div class="section-label">How It Works / ご利用の流れ</div>
+  <h2 class="section-title">登録から就業開始まで</h2>
+  <p class="section-sub">Simple 4-step process — タイミング次第で最短2週間</p>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <h4>Register Free</h4>
+      <p class="h4-ja">無料登録</p>
+      <p>Fill in the form in 3 minutes.<br>フォームに入力するだけ。個人・企業どちらも歓迎。</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <h4>Consultation</h4>
+      <p class="h4-ja">ご相談・ヒアリング</p>
+      <p>We will contact you as soon as possible.<br>担当者ができる限り早くご連絡し、ご希望を詳しく伺います。</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <h4>Matching</h4>
+      <p class="h4-ja">マッチング</p>
+      <p>We present curated options.<br>ご希望に合った求人・人材をご提案します。</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <h4>Start Working</h4>
+      <p class="h4-ja">就業開始</p>
+      <p>Finalize terms and begin.<br>条件を確定し、スムーズに就業スタート。</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- VOICES -->
+<section id="voices">
+  <div class="section-label">Success Stories / 登録者の声</div>
+  <h2 class="section-title">実際の声</h2>
+  <p class="section-sub">What Our Clients Say</p>
+  <div class="voices-grid">
+    <div class="voice-card">
+      <div class="voice-stars">★★★★★</div>
+      <p class="voice-text">"I had been stuck in the same restaurant job for 3 years. Within 2 weeks of registering, I had two offers with better pay and actual weekends off."</p>
+      <p class="voice-text-ja">「同じ飲食店で3年間働いていましたが、登録から2週間で給与アップ・土日休みの求人を2件もらいました。」</p>
+      <div class="voice-person">
+        <div class="voice-avatar">🇵🇭</div>
+        <div>
+          <div class="voice-name">Maria S.</div>
+          <div class="voice-role">飲食 → ホテルフロント / 大阪</div>
+        </div>
+      </div>
+    </div>
+    <div class="voice-card">
+      <div class="voice-stars">★★★★★</div>
+      <p class="voice-text-ja">「即戦力となる外国人を探していましたが、すでに日本で働いていて職場環境への理解もある方を紹介いただけました。採用後もスムーズに活躍しています。」</p>
+      <div class="voice-person">
+        <div class="voice-avatar">🏢</div>
+        <div>
+          <div class="voice-name">田中様（人事部長）</div>
+          <div class="voice-role">製造業 / 愛知県</div>
+        </div>
+      </div>
+    </div>
+    <div class="voice-card">
+      <div class="voice-stars">★★★★★</div>
+      <p class="voice-text">"The registration took literally 3 minutes. I was nervous about changing jobs but they made the whole process feel easy and smooth."</p>
+      <p class="voice-text-ja">「登録は本当に3分でした。転職が不安でしたが、担当の方が丁寧にサポートしてくれて安心できました。」</p>
+      <div class="voice-person">
+        <div class="voice-avatar">🇻🇳</div>
+        <div>
+          <div class="voice-name">Nguyen T.</div>
+          <div class="voice-role">工場 → ITサポート / 東京</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="register">
+  <h2>Ready to Make Your <em style="color:var(--red);font-style:italic;">Move?</em></h2>
+  <p class="cta-ja">さあ、次のステップへ。登録は無料・3分で完了します。</p>
+  <p>Registration is free. Consultation is free. Your next opportunity is waiting.</p>
+  <div class="cta-buttons">
+    <a href="form.html" class="btn-primary">👤 個人登録（無料） / Register Free</a>
+    <a href="form.html?type=corporate" class="btn-secondary">🏢 企業のお問い合わせ</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <img src="https://lh3.googleusercontent.com/d/1nai6gVSvkd93IUx_9MQtEw6wYNIAMx8q"
+           style="max-width:160px; height:auto; display:block; margin-bottom:16px;"
+           alt="Fairly Connecting"
+           onerror="this.style.display='none';">
+      <div class="footer-logo">Job Change <span>Japan</span></div>
+      <p class="footer-address">
+        株式会社Fairly connecting<br>
+        〒540-0034 大阪市中央区島町2丁目2-3<br>
+        サンハイム天満橋204<br>
+        <br>
+        Sunheim Tenmabashi #204<br>
+        2-2-3 Shimamachi, Chuo-ku,<br>
+        Osaka-shi, Osaka, 540-0034 Japan<br>
+        <br>
+        Email: fairiyconnecting@gmail.com<br>
+        <br>
+        有料職業紹介事業許可番号：27 - ユ - 304918<br>
+        許可日：令和7年7月1日
+      </p>
+    </div>
+    <div class="footer-links">
+      <a href="#for-you">対象の方 / For You</a>
+      <a href="#why">選ばれる理由 / Why Us</a>
+      <a href="#flow">ご利用の流れ / How It Works</a>
+      <a href="https://fairlyconnecting.blog.jp/archives/11232068.html" target="_blank">プライバシーポリシー</a>
+      <a href="form.html">無料登録 / Register</a>
+    </div>
+  </div>
+  <p class="footer-copy">© 2026 株式会社Fairly connecting. All Rights Reserved.</p>
+</footer>
+
+</body>
+</html>
