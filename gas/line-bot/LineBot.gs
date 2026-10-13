@@ -1,17 +1,31 @@
 /**
- * Job Change Japan — 公式LINE 登録ボット（GAS）
+ * Job Change Japan — 公式LINE ボット（GAS） v2
  *
- * 友だち追加 → 言語を選ぶ → 6つの質問にボタンで答える → 名前を入力 → 登録完了
- * 登録内容はスプレッドシートに保存し、運営にメールで通知します。
+ * 機能
+ *  1. 登録      : 友だち追加 → 言語選択 → 5問＋名前 → シート保存・メール通知
+ *  2. リッチメニュー : 登録 / 求人を見る / 相談する / 言語（setupRichMenu で作成）
+ *  3. ステップ配信 : 登録の翌日・3日後・7日後に自動配信（毎朝10時）
+ *  4. 求人のお知らせ: 「求人」シートの新しい求人を、条件が合う人へ自動配信（毎朝10時）
+ *  5. AI自動応答  : 質問にAI（Claude）が回答。担当者が必要な内容はメールで通知
  *
- * 【初期設定】スクリプトプロパティに以下を登録
- *   LINE_TOKEN   : LINE Developers の「チャネルアクセストークン（長期）」
- *   NOTIFY_EMAIL : 新規登録の通知先（空ならGASの所有者）
- *   SHEET_ID     : （任意）保存先スプレッドシートのID。空なら自動作成
+ * スクリプトプロパティ
+ *   LINE_TOKEN        : チャネルアクセストークン（長期）       ※必須
+ *   NOTIFY_EMAIL      : 通知先メール（空ならGASの所有者）
+ *   SHEET_ID          : 保存先スプレッドシートID（空なら自動作成）
+ *   ANTHROPIC_API_KEY : AI自動応答に使うキー（空ならAI応答なし）
+ *   AI_MODEL          : 使うモデル（空なら claude-haiku-5-5）
+ *
+ * 初回だけ実行する関数
+ *   setup()          : 権限の許可・シート作成・LINE接続確認・毎朝10時の自動実行を登録
+ *   setupRichMenu()  : リッチメニューを作成して全員に表示
  */
 
+var RICHMENU_IMAGE_URL = 'https://raw.githubusercontent.com/SatoshiKishimoto/job-change-japan/main/line/richmenu.png';
+var DAILY_HOUR = 10;          // 毎日の自動実行（ステップ配信・求人配信）の時刻
+var STEP_DAYS = [1, 3, 7];    // ステップ配信：登録から何日後に送るか
+
 // ============================================================
-// 文言
+// 言語・文言
 // ============================================================
 var LANGS = [['ja', '日本語'], ['en', 'English'], ['vi', 'Tiếng Việt'], ['ne', 'नेपाली']];
 
@@ -24,11 +38,21 @@ var T = {
     q1: '1/6 どんな仕事をしたいですか？', q2: '2/6 いまの在留資格は？', q3: '3/6 日本語のレベルは？',
     q4: '4/6 どこで働きたいですか？', q5: '5/6 いつから働けますか？',
     q6: '6/6 最後に、お名前をローマ字で送ってください。\n（例: NGUYEN THI LAN）',
-    done: '{name} さん、登録できました！\n受付ID: {id}\n\n担当者から、このLINEで2営業日以内にご連絡します。\nあなたに合う求人が見つかったら、ここでお知らせします。',
-    already: 'すでに登録済みです。登録内容を変えたいときは「登録」と送ってください。',
+    done: '{name} さん、登録できました！\n受付ID: {id}\n\n担当者から、このLINEで2営業日以内にご連絡します。\nあなたに合う求人が見つかったら、ここでお知らせします。\n\n下のメニューの「求人を見る」から、いまの求人も見られます。',
+    updated: '{name} さん、登録内容を更新しました。',
     other: 'その他', none: '資格なし',
-    fallback: 'メッセージありがとうございます。担当者が確認してご返信します。\n\n登録がまだの方は「登録」、言語を変えるときは「言語」と送ってください。',
-    nameRetry: 'お名前をローマ字（英字）で送ってください。'
+    nameRetry: 'お名前をローマ字（英字）で送ってください。',
+    needRegister: 'まだ登録されていません。下のボタンから登録してください（30秒で終わります）。',
+    noJobs: 'いま、あなたの希望に合う求人はありません。\n新しい求人が出たら、このLINEでお知らせします。',
+    jobsHead: 'あなたの希望に合う求人です（{n}件）',
+    newJob: '【新着求人】',
+    jobFields: { role: '職種', loc: '勤務地', pay: '給与' },
+    applyHint: '応募・質問は「応募 {id}」と送ってください。',
+    applied: '応募を受け付けました（求人ID: {id}）。\n担当者から、このLINEでご連絡します。',
+    askPrompt: '質問をこのトークに送ってください。\nAIがすぐにお答えし、必要なときは担当者からご連絡します。',
+    fallback: 'メッセージありがとうございます。担当者が確認してご返信します。',
+    handoff: '\n\n（担当者にも伝えました。このLINEでご連絡します）',
+    aiNote: '※AIによる自動回答です'
   },
   en: {
     welcome: 'Thank you for adding us!\nThis is Job Change Japan (Fairly connecting Inc.).\n\nWe help foreign nationals find jobs in Japan — completely free.',
@@ -38,11 +62,21 @@ var T = {
     q1: '1/6 What kind of work do you want?', q2: '2/6 What is your current visa status?', q3: '3/6 What is your Japanese level?',
     q4: '4/6 Where do you want to work?', q5: '5/6 When can you start working?',
     q6: '6/6 Finally, please send your full name in English letters.\n(e.g. NGUYEN THI LAN)',
-    done: 'Thank you, {name}! You are registered.\nReceipt ID: {id}\n\nOur staff will contact you on this LINE within 2 business days.\nWe will let you know here when we find a job that suits you.',
-    already: 'You are already registered. To update your information, send "register".',
+    done: 'Thank you, {name}! You are registered.\nReceipt ID: {id}\n\nOur staff will contact you on this LINE within 2 business days.\nWe will let you know here when we find a job that suits you.\n\nTap "Jobs" in the menu below to see current openings.',
+    updated: '{name}, your information has been updated.',
     other: 'Other', none: 'No certificate',
-    fallback: 'Thank you for your message. Our staff will check and reply.\n\nTo register, send "register". To change language, send "language".',
-    nameRetry: 'Please send your name in English letters.'
+    nameRetry: 'Please send your name in English letters.',
+    needRegister: 'You are not registered yet. Tap the button below to register (30 seconds).',
+    noJobs: 'There are no openings that match your wishes right now.\nWe will let you know on this LINE when new jobs come in.',
+    jobsHead: 'Jobs that match your wishes ({n})',
+    newJob: '[New job]',
+    jobFields: { role: 'Job', loc: 'Location', pay: 'Salary' },
+    applyHint: 'To apply or ask, send "apply {id}".',
+    applied: 'We received your application (Job ID: {id}).\nOur staff will contact you on this LINE.',
+    askPrompt: 'Please send your question in this chat.\nOur AI will answer right away, and our staff will follow up if needed.',
+    fallback: 'Thank you for your message. Our staff will check and reply.',
+    handoff: '\n\n(We have also passed this to our staff. They will contact you on this LINE.)',
+    aiNote: '* Automatic answer by AI'
   },
   vi: {
     welcome: 'Cảm ơn bạn đã kết bạn!\nĐây là Job Change Japan (Công ty Fairly connecting).\n\nChúng tôi hỗ trợ người nước ngoài tìm việc tại Nhật Bản — hoàn toàn miễn phí.',
@@ -52,11 +86,21 @@ var T = {
     q1: '1/6 Bạn muốn làm công việc gì?', q2: '2/6 Tư cách lưu trú hiện tại?', q3: '3/6 Trình độ tiếng Nhật?',
     q4: '4/6 Bạn muốn làm việc ở đâu?', q5: '5/6 Khi nào bạn có thể bắt đầu?',
     q6: '6/6 Cuối cùng, hãy gửi họ tên bằng chữ La-tinh.\n(VD: NGUYEN THI LAN)',
-    done: 'Cảm ơn {name}! Bạn đã đăng ký thành công.\nMã tiếp nhận: {id}\n\nNhân viên sẽ liên lạc qua LINE này trong vòng 2 ngày làm việc.\nKhi có việc phù hợp, chúng tôi sẽ báo tại đây.',
-    already: 'Bạn đã đăng ký rồi. Muốn thay đổi thông tin, hãy gửi "đăng ký".',
+    done: 'Cảm ơn {name}! Bạn đã đăng ký thành công.\nMã tiếp nhận: {id}\n\nNhân viên sẽ liên lạc qua LINE này trong vòng 2 ngày làm việc.\nKhi có việc phù hợp, chúng tôi sẽ báo tại đây.\n\nBấm "Jobs" ở menu bên dưới để xem việc làm hiện có.',
+    updated: '{name}, thông tin của bạn đã được cập nhật.',
     other: 'Khác', none: 'Chưa có',
-    fallback: 'Cảm ơn tin nhắn của bạn. Nhân viên sẽ kiểm tra và trả lời.\n\nĐể đăng ký, gửi "đăng ký". Đổi ngôn ngữ, gửi "ngôn ngữ".',
-    nameRetry: 'Vui lòng gửi họ tên bằng chữ La-tinh.'
+    nameRetry: 'Vui lòng gửi họ tên bằng chữ La-tinh.',
+    needRegister: 'Bạn chưa đăng ký. Hãy bấm nút bên dưới để đăng ký (30 giây).',
+    noJobs: 'Hiện chưa có việc phù hợp với mong muốn của bạn.\nKhi có việc mới, chúng tôi sẽ báo qua LINE này.',
+    jobsHead: 'Việc làm phù hợp với bạn ({n})',
+    newJob: '[Việc làm mới]',
+    jobFields: { role: 'Ngành nghề', loc: 'Nơi làm việc', pay: 'Lương' },
+    applyHint: 'Để ứng tuyển hoặc hỏi, hãy gửi "apply {id}".',
+    applied: 'Chúng tôi đã nhận đơn ứng tuyển (Mã việc: {id}).\nNhân viên sẽ liên lạc qua LINE này.',
+    askPrompt: 'Hãy gửi câu hỏi vào cuộc trò chuyện này.\nAI sẽ trả lời ngay, và nhân viên sẽ liên lạc nếu cần.',
+    fallback: 'Cảm ơn tin nhắn của bạn. Nhân viên sẽ kiểm tra và trả lời.',
+    handoff: '\n\n(Chúng tôi đã chuyển cho nhân viên. Nhân viên sẽ liên lạc qua LINE này.)',
+    aiNote: '* Câu trả lời tự động bởi AI'
   },
   ne: {
     welcome: 'साथी थप्नुभएकोमा धन्यवाद!\nयो Job Change Japan (Fairly connecting Inc.) हो।\n\nहामी जापानमा काम खोज्ने विदेशीहरूलाई निःशुल्क सहयोग गर्छौं।',
@@ -66,17 +110,51 @@ var T = {
     q1: '1/6 तपाईं कस्तो काम गर्न चाहनुहुन्छ?', q2: '2/6 तपाईंको हालको भिसा के हो?', q3: '3/6 जापानी भाषाको स्तर?',
     q4: '4/6 कहाँ काम गर्न चाहनुहुन्छ?', q5: '5/6 कहिलेदेखि काम सुरु गर्न सक्नुहुन्छ?',
     q6: '6/6 अन्तमा, आफ्नो नाम अंग्रेजी अक्षरमा पठाउनुहोस्।\n(जस्तै: SHARMA RAM)',
-    done: 'धन्यवाद {name}! दर्ता भयो।\nदर्ता नम्बर: {id}\n\nहाम्रो कर्मचारीले २ कार्य दिनभित्र यही LINE मा सम्पर्क गर्नेछ।\nउपयुक्त काम भेटिएमा यहीँ जानकारी दिनेछौं।',
-    already: 'तपाईं पहिले नै दर्ता हुनुहुन्छ। जानकारी बदल्न "दर्ता" पठाउनुहोस्।',
+    done: 'धन्यवाद {name}! दर्ता भयो।\nदर्ता नम्बर: {id}\n\nहाम्रो कर्मचारीले २ कार्य दिनभित्र यही LINE मा सम्पर्क गर्नेछ।\nउपयुक्त काम भेटिएमा यहीँ जानकारी दिनेछौं।\n\nतलको मेनुमा "Jobs" थिचेर अहिलेका कामहरू हेर्न सक्नुहुन्छ।',
+    updated: '{name}, तपाईंको जानकारी अपडेट भयो।',
     other: 'अन्य', none: 'छैन',
-    fallback: 'सन्देशको लागि धन्यवाद। हाम्रो कर्मचारीले हेरेर जवाफ दिनेछ।\n\nदर्ता गर्न "दर्ता", भाषा बदल्न "भाषा" पठाउनुहोस्।',
-    nameRetry: 'कृपया नाम अंग्रेजी अक्षरमा पठाउनुहोस्।'
+    nameRetry: 'कृपया नाम अंग्रेजी अक्षरमा पठाउनुहोस्।',
+    needRegister: 'तपाईं अझै दर्ता हुनुभएको छैन। तलको बटन थिचेर दर्ता गर्नुहोस् (३० सेकेन्ड)।',
+    noJobs: 'अहिले तपाईंको इच्छा अनुसारको काम छैन।\nनयाँ काम आएमा यही LINE मा जानकारी दिनेछौं।',
+    jobsHead: 'तपाईंलाई मिल्ने कामहरू ({n})',
+    newJob: '[नयाँ काम]',
+    jobFields: { role: 'काम', loc: 'स्थान', pay: 'तलब' },
+    applyHint: 'आवेदन वा प्रश्नका लागि "apply {id}" पठाउनुहोस्।',
+    applied: 'तपाईंको आवेदन प्राप्त भयो (काम ID: {id})।\nहाम्रो कर्मचारीले यही LINE मा सम्पर्क गर्नेछ।',
+    askPrompt: 'आफ्नो प्रश्न यही च्याटमा पठाउनुहोस्।\nAI ले तुरुन्तै जवाफ दिनेछ, आवश्यक परे कर्मचारीले सम्पर्क गर्नेछ।',
+    fallback: 'सन्देशको लागि धन्यवाद। हाम्रो कर्मचारीले हेरेर जवाफ दिनेछ।',
+    handoff: '\n\n(हामीले कर्मचारीलाई पनि जानकारी दियौं। उहाँले यही LINE मा सम्पर्क गर्नुहुनेछ।)',
+    aiNote: '* AI द्वारा स्वचालित जवाफ'
   }
 };
 
-// 「登録」「言語」として受け付ける言葉
+// ステップ配信の本文（登録から 1日後 / 3日後 / 7日後）
+var STEPS = {
+  1: {
+    ja: '【Job Change Japan の使い方】\n\n① 担当者とLINEや電話で面談\n② あなたに合う求人をご紹介\n③ 面接の準備・日程調整もお手伝い\n④ 内定後の在留資格の手続きもサポート\n\n求職者の方から手数料をいただくことは一切ありません。\n「紹介料を払って」と言われることもありませんので、安心してご相談ください。\n\n下のメニューの「求人を見る」で、いまの求人をチェックできます。',
+    en: '[How Job Change Japan works]\n\n1. Talk with our staff on LINE or by phone\n2. We introduce jobs that suit you\n3. We help you prepare for interviews\n4. We support your visa procedures after you get an offer\n\nWe never charge job seekers any fee.\nNo one from us will ever ask you to pay an introduction fee.\n\nTap "Jobs" in the menu below to see current openings.',
+    vi: '[Cách sử dụng Job Change Japan]\n\n1. Trao đổi với nhân viên qua LINE hoặc điện thoại\n2. Chúng tôi giới thiệu việc làm phù hợp\n3. Hỗ trợ chuẩn bị phỏng vấn\n4. Hỗ trợ thủ tục tư cách lưu trú sau khi có kết quả\n\nChúng tôi tuyệt đối không thu phí của người tìm việc.\nSẽ không có ai yêu cầu bạn trả phí giới thiệu.\n\nBấm "Jobs" ở menu bên dưới để xem việc làm hiện có.',
+    ne: '[Job Change Japan कसरी प्रयोग गर्ने]\n\n१. LINE वा फोनमा हाम्रो कर्मचारीसँग कुरा गर्नुहोस्\n२. तपाईंलाई मिल्ने काम परिचय गराउँछौं\n३. अन्तर्वार्ताको तयारीमा सहयोग गर्छौं\n४. काम पक्का भएपछि भिसा प्रक्रियामा सहयोग गर्छौं\n\nहामी काम खोज्नेहरूबाट कुनै पनि शुल्क लिँदैनौं।\nपरिचय शुल्क तिर्न कसैले भन्ने छैन।\n\nतलको मेनुमा "Jobs" थिचेर अहिलेका कामहरू हेर्नुहोस्।'
+  },
+  3: {
+    ja: '【転職するときの大切な注意】\n\n・会社を変えるときは、在留資格の手続きが必要になることがあります（特定技能の方は、新しい会社で働く前に「在留資格変更許可申請」が必要です）。\n・許可が出る前に新しい会社で働くと、不法就労になるおそれがあります。\n・在留カードの期限も確認しておきましょう。\n・高い手数料を求める業者には注意してください。\n\nあなたの場合はどうなるか、気になることがあれば「相談する」からお気軽にどうぞ。',
+    en: '[Important when changing jobs]\n\n- When you change companies, you may need visa procedures. (Specified Skilled Workers must apply for a change of status of residence BEFORE working at the new company.)\n- Working at a new company before permission is granted may be illegal work.\n- Check the expiry date of your residence card.\n- Be careful of agents who ask for high fees.\n\nIf you want to know what applies to you, tap "Ask us" anytime.',
+    vi: '[Lưu ý quan trọng khi chuyển việc]\n\n- Khi đổi công ty, có thể cần làm thủ tục tư cách lưu trú (người Kỹ năng đặc định phải xin "thay đổi tư cách lưu trú" TRƯỚC khi làm ở công ty mới).\n- Làm việc ở công ty mới trước khi được cấp phép có thể bị coi là lao động bất hợp pháp.\n- Hãy kiểm tra thời hạn thẻ lưu trú.\n- Cẩn thận với các bên đòi phí cao.\n\nNếu muốn biết trường hợp của bạn, hãy bấm "Ask us" bất cứ lúc nào.',
+    ne: '[काम बदल्दा ध्यान दिनुपर्ने कुरा]\n\n- कम्पनी बदल्दा भिसा (在留資格) सम्बन्धी प्रक्रिया आवश्यक पर्न सक्छ (विशिष्ट सीप (Tokutei Ginou) भएकाले नयाँ कम्पनीमा काम सुरु गर्नु अघि "स्थिति परिवर्तन अनुमति" लिनुपर्छ)।\n- अनुमति नपाई नयाँ कम्पनीमा काम गरे गैरकानुनी काम हुन सक्छ।\n- आफ्नो रेसिडेन्स कार्डको म्याद जाँच गर्नुहोस्।\n- धेरै शुल्क माग्ने एजेन्टहरूबाट सावधान रहनुहोस्।\n\nतपाईंको अवस्थामा के हुन्छ जान्न "Ask us" थिच्नुहोस्।'
+  },
+  7: {
+    ja: '【いつでも相談できます】\n\n・希望の仕事や勤務地が変わったら、メニューの「登録」からいつでも更新できます。\n・わからないことは、このトークに送ってください。AIがすぐ答え、必要なときは担当者からご連絡します。\n・日本で仕事を探している友だちがいたら、このLINEを教えてあげてください。\n\nあなたの「次の仕事」を、一緒に見つけましょう。',
+    en: '[You can ask us anytime]\n\n- If your preferred job or location changes, tap "Register" in the menu to update.\n- Send any question in this chat. Our AI answers right away, and our staff will follow up if needed.\n- If you have friends looking for work in Japan, please share this LINE with them.\n\nLet\'s find your next job together.',
+    vi: '[Bạn có thể hỏi bất cứ lúc nào]\n\n- Nếu thay đổi mong muốn về công việc hoặc nơi làm, hãy bấm "Register" ở menu để cập nhật.\n- Gửi câu hỏi vào cuộc trò chuyện này. AI sẽ trả lời ngay, nhân viên sẽ liên lạc nếu cần.\n- Nếu có bạn bè đang tìm việc ở Nhật, hãy giới thiệu LINE này nhé.\n\nCùng nhau tìm công việc tiếp theo của bạn!',
+    ne: '[जुनसुकै बेला सोध्न सक्नुहुन्छ]\n\n- चाहेको काम वा स्थान बदलियो भने मेनुको "Register" बाट अपडेट गर्नुहोस्।\n- कुनै प्रश्न भए यही च्याटमा पठाउनुहोस्। AI ले तुरुन्तै जवाफ दिन्छ, आवश्यक परे कर्मचारीले सम्पर्क गर्नेछ।\n- जापानमा काम खोजिरहेका साथीहरू भए यो LINE बताइदिनुहोस्।\n\nसँगै तपाईंको अर्को काम खोजौं।'
+  }
+};
+
+// 文字で送られたときに受け付ける言葉
 var KW_REGISTER = ['登録', 'register', 'đăng ký', 'dang ky', 'दर्ता', 'start'];
 var KW_LANG = ['言語', 'language', 'ngôn ngữ', 'भाषा', 'lang'];
+var KW_JOBS = ['求人', 'jobs', 'job', 'việc làm', 'काम'];
+var RE_APPLY = /^(応募|apply|ứng tuyển|आवेदन)\s*[:：]?\s*(\S+)/i;
 
 // 質問（v はスプレッドシートに保存する日本語の値）
 var Q = {
@@ -120,7 +198,11 @@ var Q = {
   ]}
 };
 
-var HEADERS = ['登録日時', '受付ID', 'LINE userId', 'LINE表示名', '言語', 'お名前', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始', '対応状況', 'メモ'];
+// シートの列（名前で探すので、列の順番を入れ替えても動きます）
+var REG_SHEET = 'LINE登録';
+var REG_HEADERS = ['登録日時', '受付ID', 'LINE userId', 'LINE表示名', '言語', 'お名前', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始', '対応状況', 'メモ', 'ステップ送信済', 'ブロック', '最終更新'];
+var JOB_SHEET = '求人';
+var JOB_HEADERS = ['求人ID', '公開', '職種', '勤務地', 'タイトル', '給与', '内容', '詳細URL', '配信日時', '配信人数', '応募数'];
 
 // ============================================================
 // Webhook
@@ -129,7 +211,7 @@ function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
     (body.events || []).forEach(function (ev) {
-      try { handleEvent_(ev); } catch (err) { console.error(err); }
+      try { handleEvent_(ev); } catch (err) { console.error(err && err.stack || err); }
     });
   } catch (err) {
     console.error(err);
@@ -145,22 +227,33 @@ function handleEvent_(ev) {
   var uid = ev.source && ev.source.userId;
   if (!uid) return;
   var st = getState_(uid);
+  if (!st.lang && ev.type !== 'follow') {  // 会話の記録がない人は、シートの言語を使う
+    var known = findReg_(uid);
+    if (known && known['言語']) { st.lang = langCode_(known['言語']); st.registeredId = known['受付ID']; setState_(uid, st); }
+  }
+  var L = T[st.lang || 'ja'];
 
   if (ev.type === 'follow') {
+    setRegField_(uid, 'ブロック', '');
     reply_(ev.replyToken, [text_(T.ja.welcome), langMenu_()]);
     return;
   }
-  if (ev.type === 'unfollow') { clearState_(uid); return; }
+  if (ev.type === 'unfollow') { setRegField_(uid, 'ブロック', '○'); return; }
 
   if (ev.type === 'postback') {
     var p = parseQs_(ev.postback.data);
     if (p.lang && T[p.lang]) {
       st.lang = p.lang; setState_(uid, st);
-      var L = T[st.lang];
-      reply_(ev.replyToken, [quick_(L.intro, [[L.startBtn, 'go=1']])]);
+      setRegField_(uid, '言語', langLabel_(p.lang));
+      L = T[st.lang];
+      if (st.registeredId) reply_(ev.replyToken, [text_('OK: ' + langLabel_(p.lang))]);
+      else reply_(ev.replyToken, [quick_(L.intro, [[L.startBtn, 'go=1']])]);
       return;
     }
-    if (p.go) { startFlow_(ev.replyToken, uid, st); return; }
+    if (p.menu === 'register' || p.go) { startFlow_(ev.replyToken, uid, st); return; }
+    if (p.menu === 'lang') { reply_(ev.replyToken, [langMenu_()]); return; }
+    if (p.menu === 'jobs') { replyJobs_(ev.replyToken, uid, st); return; }
+    if (p.menu === 'ask') { reply_(ev.replyToken, [text_(L.askPrompt)]); return; }
     if (p.q && Q[p.q] && st.step === p.q) {
       var q = Q[p.q], opt = q.opts[+p.i];
       if (!opt) return;
@@ -169,7 +262,7 @@ function handleEvent_(ev) {
       var n = +p.q.slice(1) + 1;
       st.step = n <= 5 ? 'q' + n : 'name';
       setState_(uid, st);
-      reply_(ev.replyToken, [n <= 5 ? question_(st.step, st.lang) : text_(T[st.lang].q6)]);
+      reply_(ev.replyToken, [n <= 5 ? question_(st.step, st.lang) : text_(L.q6)]);
     }
     return;
   }
@@ -177,32 +270,259 @@ function handleEvent_(ev) {
   if (ev.type === 'message' && ev.message.type === 'text') {
     var msg = String(ev.message.text || '').trim();
     var low = msg.toLowerCase();
-    var L2 = T[st.lang || 'ja'];
 
     if (KW_LANG.indexOf(low) >= 0) { reply_(ev.replyToken, [langMenu_()]); return; }
-    if (KW_REGISTER.indexOf(low) >= 0) {
-      if (!st.lang) { reply_(ev.replyToken, [langMenu_()]); return; }
-      startFlow_(ev.replyToken, uid, st); return;
-    }
+    if (KW_REGISTER.indexOf(low) >= 0) { startFlow_(ev.replyToken, uid, st); return; }
+    if (KW_JOBS.indexOf(low) >= 0) { replyJobs_(ev.replyToken, uid, st); return; }
+
     if (st.step === 'name') {
-      if (!/[A-Za-z]/.test(msg) || msg.length > 60) { reply_(ev.replyToken, [text_(L2.nameRetry)]); return; }
-      var id = saveRegistration_(uid, st, msg);
-      st.step = 'done'; st.ans = {}; st.registeredId = id; setState_(uid, st);
-      reply_(ev.replyToken, [text_(L2.done.replace('{name}', msg).replace('{id}', id))]);
+      if (!/[A-Za-z]/.test(msg) || msg.length > 60) { reply_(ev.replyToken, [text_(L.nameRetry)]); return; }
+      var res = saveRegistration_(uid, st, msg);
+      st.step = 'done'; st.ans = {}; st.registeredId = res.id; setState_(uid, st);
+      var tpl = res.isNew ? L.done : L.updated;
+      reply_(ev.replyToken, [text_(tpl.replace('{name}', msg).replace('{id}', res.id))]);
       return;
     }
     if (st.step && /^q\d$/.test(st.step)) { reply_(ev.replyToken, [question_(st.step, st.lang)]); return; }
 
-    // その他のメッセージ：返信＋運営へ通知
-    reply_(ev.replyToken, [text_(L2.fallback)]);
-    notifyMail_('【Job Change Japan LINE】メッセージ受信', 'userId: ' + uid + '\n登録ID: ' + (st.registeredId || '未登録') + '\n\n' + msg +
-      '\n\n※返信はLINE公式アカウントのチャット画面から行ってください。');
+    var m = msg.match(RE_APPLY);
+    if (m) { handleApply_(ev.replyToken, uid, st, m[2]); return; }
+
+    handleQuestion_(ev.replyToken, uid, st, msg);
   }
 }
 
 function startFlow_(token, uid, st) {
+  if (!st.lang) { reply_(token, [langMenu_()]); return; }
   st.step = 'q1'; st.ans = {}; setState_(uid, st);
   reply_(token, [question_('q1', st.lang)]);
+}
+
+// ============================================================
+// 求人（「求人を見る」・応募）
+// ============================================================
+function replyJobs_(token, uid, st) {
+  var L = T[st.lang || 'ja'];
+  var user = findReg_(uid);
+  if (!user) { reply_(token, [quick_(L.needRegister, [[L.startBtn, 'menu=register']])]); return; }
+  var jobs = openJobs_().filter(function (j) { return jobMatches_(j, user); }).slice(0, 4);
+  if (!jobs.length) { reply_(token, [text_(L.noJobs)]); return; }
+  var msgs = [text_(L.jobsHead.replace('{n}', jobs.length))];
+  jobs.forEach(function (j) { msgs.push(text_(jobText_(j, st.lang || 'ja', false))); });
+  reply_(token, msgs);
+}
+
+function handleApply_(token, uid, st, jobId) {
+  var L = T[st.lang || 'ja'];
+  var job = openJobs_().filter(function (j) { return String(j['求人ID']).toLowerCase() === jobId.toLowerCase(); })[0];
+  var user = findReg_(uid);
+  if (job) bumpJobCount_(job._row, '応募数');
+  reply_(token, [text_(L.applied.replace('{id}', jobId))]);
+  notifyMail_('【Job Change Japan LINE】応募：' + (user ? user['お名前'] : uid) + ' → ' + jobId,
+    '求人: ' + (job ? job['タイトル'] : '（該当なし: ' + jobId + '）') + '\n' + userSummary_(uid, user) +
+    '\n\n※返信はLINE公式アカウントのチャット画面から行ってください。');
+}
+
+function openJobs_() {
+  var sh = jobSheet_();
+  var rows = sheetObjects_(sh);
+  return rows.filter(function (r) { return r['求人ID'] && String(r['公開']).trim() !== '×' && r['タイトル']; });
+}
+
+function jobMatches_(job, user) {
+  var jr = String(job['職種'] || ''), jl = String(job['勤務地'] || '');
+  var ur = String(user['希望職種'] || ''), ul = String(user['希望勤務地'] || '');
+  var roleOk = !jr || jr === ur || ur === 'その他';
+  var locOk = !jl || jl === '全国' || jl === ul || ul === '全国' || ul === 'その他';
+  return roleOk && locOk;
+}
+
+function jobText_(j, lang, isNew) {
+  var L = T[lang] || T.ja, f = L.jobFields;
+  var body = [
+    (isNew ? L.newJob + ' ' : '') + tr_(j['タイトル'], lang),
+    '',
+    f.role + ': ' + tr_(j['職種'], lang),
+    f.loc + ': ' + tr_(j['勤務地'], lang),
+    j['給与'] ? f.pay + ': ' + tr_(j['給与'], lang) : '',
+    j['内容'] ? '\n' + tr_(j['内容'], lang) : '',
+    j['詳細URL'] ? '\n' + j['詳細URL'] : '',
+    '',
+    L.applyHint.replace('{id}', j['求人ID']) + '  (ID: ' + j['求人ID'] + ')'
+  ];
+  return body.join('\n').replace(/\n{3,}/g, '\n\n').slice(0, 4900);
+}
+
+var TR_CACHE_ = {};
+function tr_(s, lang) {
+  s = String(s == null ? '' : s);
+  if (!s || lang === 'ja') return s;
+  var k = lang + '|' + s;
+  if (TR_CACHE_[k]) return TR_CACHE_[k];
+  try { TR_CACHE_[k] = LanguageApp.translate(s, 'ja', lang); } catch (e) { TR_CACHE_[k] = s; }
+  return TR_CACHE_[k];
+}
+
+// ============================================================
+// AI自動応答
+// ============================================================
+var AI_SYSTEM = [
+  'あなたは「Job Change Japan」（運営：株式会社Fairly connecting、大阪、有料職業紹介事業 許可番号 27-ユ-304918）の公式LINEの案内係です。',
+  '日本で働きたい外国人の求職者からの質問に答えます。',
+  '',
+  '# 会社について',
+  '- 外国人の転職・就職を支援する人材紹介会社。代表は現役のCoCo壱番屋フランチャイズオーナー。',
+  '- 求職者から手数料を取ることは一切ない（無料）。紹介料を求めることもない。',
+  '- 飲食（外食業）・食品製造・ホテル・介護・製造・物流などの求人を扱う。特に関西（大阪）が中心。',
+  '- グループ会社の株式会社Solaeは登録支援機関で、特定技能の方の生活支援も行う。',
+  '- 担当者はこのLINEで連絡する。面談はLINE・電話で可能。',
+  '',
+  '# 答え方のルール',
+  '- 相手と同じ言語で答える（日本語・英語・ベトナム語・ネパール語など）。やさしい言葉で、LINEで読みやすい短さ（300字程度まで）にする。',
+  '- 一般的な情報（在留資格の種類、転職の一般的な流れ、日本語試験、当社の使い方）は答えてよい。',
+  '- 個別のビザ判断（「私は転職できますか」「許可されますか」など）は断定せず、一般論を伝えたうえで担当者が確認すると伝える。',
+  '- 求人の有無・給料・内定を約束しない。具体的な求人はメニューの「求人を見る」を案内する。',
+  '- わからないことは推測で答えず、担当者が確認すると伝える。',
+  '- 次のどれかに当てはまる場合は、回答の最後に必ず [ESCALATE] とだけ書いた行を付ける：',
+  '  応募したい／面談したい／担当者と話したい、個別のビザ・在留期限の相談、トラブルや苦情、緊急の内容、あなたが答えられない内容。'
+].join('\n');
+
+function handleQuestion_(token, uid, st, msg) {
+  var L = T[st.lang || 'ja'];
+  var user = findReg_(uid);
+  var key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+  var answer = null, escalate = true;
+
+  if (key) {
+    try {
+      var hist = (st.hist || []).slice(-6);
+      var ctx = user ? '\n\n# この人の登録内容\n' + userSummary_(uid, user) : '\n\n# この人はまだ未登録（メニューの「登録」を案内してよい）';
+      var out = callClaude_(key, AI_SYSTEM + ctx, hist.concat([{ role: 'user', content: msg }]));
+      escalate = /\[ESCALATE\]/.test(out);
+      answer = out.replace(/\[ESCALATE\]/g, '').trim();
+      st.hist = hist.concat([{ role: 'user', content: msg }, { role: 'assistant', content: answer }]).slice(-6);
+      setState_(uid, st);
+    } catch (e) {
+      console.error(e);
+      answer = null; escalate = true;
+    }
+  }
+
+  var text = answer ? answer + '\n\n' + L.aiNote + (escalate ? L.handoff : '') : L.fallback;
+  reply_(token, [text_(text.slice(0, 4900))]);
+
+  if (escalate) {
+    notifyMail_('【Job Change Japan LINE】' + (answer ? '担当者対応が必要な相談' : 'メッセージ受信') + '：' + (user ? user['お名前'] : '未登録'),
+      '受信メッセージ:\n' + msg + '\n\n' + (answer ? 'AIの回答:\n' + answer + '\n\n' : '') + userSummary_(uid, user) +
+      '\n\n※返信はLINE公式アカウントのチャット画面から行ってください。');
+  }
+}
+
+function callClaude_(key, system, messages) {
+  var model = PropertiesService.getScriptProperties().getProperty('AI_MODEL') || 'claude-haiku-5-5';
+  var r = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify({ model: model, max_tokens: 700, system: system, messages: messages })
+  });
+  var j = JSON.parse(r.getContentText());
+  if (r.getResponseCode() !== 200) throw new Error('Claude API ' + r.getResponseCode() + ': ' + r.getContentText());
+  return (j.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('\n');
+}
+
+// ============================================================
+// 毎日の自動実行：ステップ配信 ＋ 新着求人の配信
+// ============================================================
+function runDaily() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var s = sendSteps_();
+    var j = sendNewJobs_();
+    console.log('ステップ配信: ' + s + '件 / 求人配信: ' + j + '件');
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function sendSteps_() {
+  var sh = regSheet_(), rows = sheetObjects_(sh), sent = 0;
+  var today = dayNum_(new Date());
+  var col = colIndex_(sh, 'ステップ送信済');
+  rows.forEach(function (r) {
+    if (!r['LINE userId'] || r['ブロック'] === '○' || !(r['登録日時'] instanceof Date)) return;
+    var days = today - dayNum_(r['登録日時']);
+    var done = String(r['ステップ送信済'] || '').split(',').filter(String);
+    var due = STEP_DAYS.filter(function (d) { return days >= d && days <= d + 2 && done.indexOf(String(d)) < 0; });
+    if (!due.length) return;
+    var d = due[due.length - 1];  // 遅れて複数たまっていても、送るのは最新の1通だけ
+    var lang = langCode_(r['言語']);
+    if (push_(r['LINE userId'], [text_(STEPS[d][lang] || STEPS[d].ja)])) {
+      STEP_DAYS.forEach(function (x) { if (x <= d && done.indexOf(String(x)) < 0) done.push(String(x)); });
+      sh.getRange(r._row, col).setValue(done.join(','));
+      sent++;
+    }
+  });
+  return sent;
+}
+
+function sendNewJobs_() {
+  var jsh = jobSheet_(), jobs = openJobs_().filter(function (j) { return !j['配信日時']; });
+  if (!jobs.length) return 0;
+  var users = sheetObjects_(regSheet_()).filter(function (u) { return u['LINE userId'] && u['ブロック'] !== '○'; });
+  var total = 0;
+  jobs.forEach(function (job) {
+    var byLang = {};
+    users.filter(function (u) { return jobMatches_(job, u); }).forEach(function (u) {
+      var lg = langCode_(u['言語']); (byLang[lg] = byLang[lg] || []).push(u['LINE userId']);
+    });
+    var n = 0;
+    Object.keys(byLang).forEach(function (lg) {
+      var ids = byLang[lg];
+      for (var i = 0; i < ids.length; i += 500) {
+        if (multicast_(ids.slice(i, i + 500), [text_(jobText_(job, lg, true))])) n += Math.min(500, ids.length - i);
+      }
+    });
+    jsh.getRange(job._row, colIndex_(jsh, '配信日時')).setValue(new Date());
+    jsh.getRange(job._row, colIndex_(jsh, '配信人数')).setValue(n);
+    total += n;
+  });
+  return total;
+}
+
+function dayNum_(d) {
+  return Math.floor((d.getTime() + 9 * 3600 * 1000) / 86400000);  // 日本時間の日付
+}
+
+// ============================================================
+// リッチメニュー
+// ============================================================
+function setupRichMenu() {
+  var h = { Authorization: 'Bearer ' + token_() };
+  // 古いメニューを削除
+  var list = JSON.parse(UrlFetchApp.fetch('https://api.line.me/v2/bot/richmenu/list', { headers: h }).getContentText());
+  (list.richmenus || []).forEach(function (m) {
+    UrlFetchApp.fetch('https://api.line.me/v2/bot/richmenu/' + m.richMenuId, { method: 'delete', headers: h, muteHttpExceptions: true });
+  });
+  var w = 625;
+  var menu = {
+    size: { width: 2500, height: 843 }, selected: true, name: 'Job Change Japan main', chatBarText: 'Menu / メニュー',
+    areas: [['register', '登録 / Register'], ['jobs', '求人 / Jobs'], ['ask', '相談 / Ask'], ['lang', '言語 / Language']].map(function (a, i) {
+      return { bounds: { x: i * w, y: 0, width: w, height: 843 }, action: { type: 'postback', data: 'menu=' + a[0], displayText: a[1] } };
+    })
+  };
+  var res = UrlFetchApp.fetch('https://api.line.me/v2/bot/richmenu', {
+    method: 'post', contentType: 'application/json', headers: h, payload: JSON.stringify(menu), muteHttpExceptions: true
+  });
+  if (res.getResponseCode() !== 200) throw new Error('リッチメニュー作成失敗: ' + res.getContentText());
+  var id = JSON.parse(res.getContentText()).richMenuId;
+  var img = UrlFetchApp.fetch(RICHMENU_IMAGE_URL).getBlob().setContentType('image/png');
+  var up = UrlFetchApp.fetch('https://api-data.line.me/v2/bot/richmenu/' + id + '/content', {
+    method: 'post', contentType: 'image/png', headers: h, payload: img.getBytes(), muteHttpExceptions: true
+  });
+  if (up.getResponseCode() !== 200) throw new Error('画像アップロード失敗: ' + up.getContentText());
+  var def = UrlFetchApp.fetch('https://api.line.me/v2/bot/user/all/richmenu/' + id, { method: 'post', headers: h, muteHttpExceptions: true });
+  console.log('リッチメニュー設定: ' + def.getResponseCode() + ' (' + id + ')');
 }
 
 // ============================================================
@@ -221,6 +541,8 @@ function question_(qid, lang) {
 function langMenu_() {
   return quick_(T.ja.chooseLang, LANGS.map(function (l) { return [l[1], 'lang=' + l[0]]; }));
 }
+function langLabel_(code) { return (LANGS.filter(function (l) { return l[0] === code; })[0] || ['', ''])[1]; }
+function langCode_(label) { return (LANGS.filter(function (l) { return l[1] === label; })[0] || ['ja'])[0]; }
 function text_(s) { return { type: 'text', text: s }; }
 function quick_(s, items) {
   return {
@@ -245,14 +567,18 @@ function token_() {
   if (!t) throw new Error('スクリプトプロパティ LINE_TOKEN が未設定です');
   return t;
 }
-function reply_(replyToken, messages) {
-  UrlFetchApp.fetch('https://api.line.me/v2/bot/message/reply', {
+function lineApi_(path, payload) {
+  var r = UrlFetchApp.fetch('https://api.line.me/v2/bot/' + path, {
     method: 'post', contentType: 'application/json',
     headers: { Authorization: 'Bearer ' + token_() },
-    payload: JSON.stringify({ replyToken: replyToken, messages: messages }),
-    muteHttpExceptions: true
+    payload: JSON.stringify(payload), muteHttpExceptions: true
   });
+  if (r.getResponseCode() !== 200) { console.error(path + ' ' + r.getResponseCode() + ' ' + r.getContentText()); return false; }
+  return true;
 }
+function reply_(replyToken, messages) { return lineApi_('message/reply', { replyToken: replyToken, messages: messages.slice(0, 5) }); }
+function push_(to, messages) { return lineApi_('message/push', { to: to, messages: messages }); }
+function multicast_(ids, messages) { return lineApi_('message/multicast', { to: ids, messages: messages }); }
 function profileName_(uid) {
   try {
     var r = UrlFetchApp.fetch('https://api.line.me/v2/bot/profile/' + uid, {
@@ -263,53 +589,115 @@ function profileName_(uid) {
 }
 
 // ============================================================
-// 状態（会話の途中経過）
+// 会話の途中経過
 // ============================================================
 function getState_(uid) {
   var v = PropertiesService.getScriptProperties().getProperty('u_' + uid);
   return v ? JSON.parse(v) : {};
 }
 function setState_(uid, st) { PropertiesService.getScriptProperties().setProperty('u_' + uid, JSON.stringify(st)); }
-function clearState_(uid) { PropertiesService.getScriptProperties().deleteProperty('u_' + uid); }
 
 // ============================================================
-// 保存・通知
+// スプレッドシート
 // ============================================================
-function sheet_() {
+function ss_() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty('SHEET_ID');
-  var ss = id ? SpreadsheetApp.openById(id) : null;
-  if (!ss) {
-    ss = SpreadsheetApp.create('Job Change Japan LINE登録者');
-    props.setProperty('SHEET_ID', ss.getId());
-  }
-  var sh = ss.getSheetByName('LINE登録');
+  if (id) return SpreadsheetApp.openById(id);
+  var ss = SpreadsheetApp.create('Job Change Japan LINE登録者');
+  props.setProperty('SHEET_ID', ss.getId());
+  return ss;
+}
+function sheetWithHeaders_(name, headers) {
+  var ss = ss_(), sh = ss.getSheetByName(name);
   if (!sh) {
-    sh = ss.insertSheet('LINE登録');
-    sh.appendRow(HEADERS);
+    sh = ss.insertSheet(name);
+    sh.appendRow(headers);
     sh.setFrozenRows(1);
-    sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold').setBackground('#f1f1f1');
+    sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#f1f1f1');
+    var def = ss.getSheetByName('シート1') || ss.getSheetByName('Sheet1');
+    if (def && def.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def);
+    return sh;
   }
+  // 足りない列を右端に追加（古いシートからの移行用）
+  var cur = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0];
+  headers.forEach(function (h) {
+    if (cur.indexOf(h) < 0) {
+      var c = sh.getLastColumn() + 1;
+      sh.getRange(1, c).setValue(h).setFontWeight('bold').setBackground('#f1f1f1');
+      cur.push(h);
+    }
+  });
   return sh;
+}
+function regSheet_() { return sheetWithHeaders_(REG_SHEET, REG_HEADERS); }
+function jobSheet_() {
+  var sh = sheetWithHeaders_(JOB_SHEET, JOB_HEADERS);
+  return sh;
+}
+function colIndex_(sh, name) {
+  var h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  var i = h.indexOf(name);
+  if (i < 0) throw new Error('列が見つかりません: ' + name);
+  return i + 1;
+}
+function sheetObjects_(sh) {
+  var v = sh.getDataRange().getValues();
+  var h = v[0] || [];
+  return v.slice(1).map(function (row, i) {
+    var o = { _row: i + 2 };
+    h.forEach(function (k, j) { o[k] = row[j]; });
+    return o;
+  });
+}
+function findReg_(uid) {
+  return sheetObjects_(regSheet_()).filter(function (r) { return r['LINE userId'] === uid; })[0] || null;
+}
+function setRegField_(uid, field, value) {
+  var sh = regSheet_(), r = findReg_(uid);
+  if (r) sh.getRange(r._row, colIndex_(sh, field)).setValue(value);
+}
+function bumpJobCount_(row, field) {
+  var sh = jobSheet_(), c = colIndex_(sh, field);
+  var cell = sh.getRange(row, c); cell.setValue((+cell.getValue() || 0) + 1);
+}
+function safe_(v) {
+  v = v == null ? '' : v;
+  return (typeof v === 'string' && /^[=+@-]/.test(v)) ? "'" + v : v;
 }
 
 function saveRegistration_(uid, st, name) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    var id = 'JCL-' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
-    var a = st.ans || {};
-    var langLabel = (LANGS.filter(function (l) { return l[0] === st.lang; })[0] || ['', ''])[1];
-    var row = [new Date(), id, uid, profileName_(uid), langLabel, name, a.role, a.visa, a.jp, a.location, a.start, '未対応', '']
-      .map(function (v) { v = v == null ? '' : v; return (typeof v === 'string' && /^[=+@-]/.test(v)) ? "'" + v : v; });
-    var sh = sheet_();
-    sh.appendRow(row);
-    notifyMail_('【Job Change Japan LINE】新規登録：' + name + '（' + id + '）',
-      HEADERS.slice(0, 11).map(function (h, i) { return h + ': ' + row[i]; }).join('\n') + '\n\n一覧: ' + sh.getParent().getUrl());
-    return id;
+    var sh = regSheet_(), a = st.ans || {}, existing = findReg_(uid);
+    var vals = {
+      'LINE userId': uid, 'LINE表示名': profileName_(uid), '言語': langLabel_(st.lang), 'お名前': name,
+      '希望職種': a.role, '在留資格': a.visa, '日本語': a.jp, '希望勤務地': a.location, '就業開始': a.start,
+      'ブロック': '', '最終更新': new Date()
+    };
+    var id, isNew = !existing;
+    if (existing) {
+      id = existing['受付ID'];
+      Object.keys(vals).forEach(function (k) { sh.getRange(existing._row, colIndex_(sh, k)).setValue(safe_(vals[k])); });
+    } else {
+      id = 'JCL-' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
+      vals['登録日時'] = new Date(); vals['受付ID'] = id; vals['対応状況'] = '未対応';
+      var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+      sh.appendRow(header.map(function (h) { return safe_(vals[h]); }));
+    }
+    notifyMail_('【Job Change Japan LINE】' + (isNew ? '新規登録' : '登録内容の更新') + '：' + name + '（' + id + '）',
+      userSummary_(uid, findReg_(uid)) + '\n\n一覧: ' + sh.getParent().getUrl());
+    return { id: id, isNew: isNew };
   } finally {
     lock.releaseLock();
   }
+}
+
+function userSummary_(uid, u) {
+  if (!u) return 'LINE userId: ' + uid + '（未登録）';
+  return ['受付ID', 'お名前', 'LINE表示名', '言語', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始']
+    .map(function (k) { return k + ': ' + (u[k] instanceof Date ? u[k].toLocaleString('ja-JP') : (u[k] || '')); }).join('\n');
 }
 
 function notifyMail_(subject, body) {
@@ -319,9 +707,32 @@ function notifyMail_(subject, body) {
   } catch (e) { console.error(e); }
 }
 
-// 初回だけエディタから実行：権限の許可・保存先シートの作成・トークン確認
+// ============================================================
+// 初期設定（エディタから実行）
+// ============================================================
 function setup() {
-  console.log('保存先: ' + sheet_().getParent().getUrl());
+  regSheet_();
+  var jsh = jobSheet_();
+  // 求人シートの「職種」「勤務地」「公開」にプルダウンを付ける
+  var roles = Q.q1.opts.map(function (o) { return o[0]; });
+  var locs = Q.q4.opts.map(function (o) { return o[0]; });
+  jsh.getRange(2, colIndex_(jsh, '職種'), 500).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(roles, true).build());
+  jsh.getRange(2, colIndex_(jsh, '勤務地'), 500).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(locs, true).build());
+  jsh.getRange(2, colIndex_(jsh, '公開'), 500).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['○', '×'], true).build());
+  console.log('保存先: ' + jsh.getParent().getUrl());
+
+  // 毎朝10時の自動実行
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'runDaily') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('runDaily').timeBased().everyDays(1).atHour(DAILY_HOUR).inTimezone('Asia/Tokyo').create();
+  console.log('自動実行: 毎日 ' + DAILY_HOUR + '時台に runDaily');
+
   var r = UrlFetchApp.fetch('https://api.line.me/v2/bot/info', { headers: { Authorization: 'Bearer ' + token_() }, muteHttpExceptions: true });
   console.log('LINE接続確認: ' + r.getResponseCode() + ' ' + r.getContentText());
+  console.log('AI自動応答: ' + (PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') ? 'ON' : 'OFF（ANTHROPIC_API_KEY 未設定）'));
+}
+
+// AIの動作確認（エディタから実行）
+function testAI() {
+  var key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+  console.log(callClaude_(key, AI_SYSTEM, [{ role: 'user', content: 'Do I have to pay any fee to use your service?' }]));
 }
