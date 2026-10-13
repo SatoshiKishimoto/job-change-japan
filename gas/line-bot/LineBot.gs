@@ -35,9 +35,9 @@ var T = {
     chooseLang: '言語を選んでください。\nPlease choose your language.',
     intro: '6つの質問に答えるだけで、30秒で登録できます。\n登録・相談はすべて無料です。',
     startBtn: '登録をはじめる',
-    q1: '1/6 どんな仕事をしたいですか？', q2: '2/6 いまの在留資格は？', q3: '3/6 日本語のレベルは？',
-    q4: '4/6 どこで働きたいですか？', q5: '5/6 いつから働けますか？',
-    q6: '6/6 最後に、お名前をローマ字で送ってください。\n（例: NGUYEN THI LAN）',
+    q1: 'どんな仕事をしたいですか？', q2: 'いまの在留資格は？', q3: '日本語のレベルは？',
+    q4: 'どこで働きたいですか？', q5: 'いつから働けますか？',
+    q6: '最後に、お名前をローマ字で送ってください。\n（例: NGUYEN THI LAN）',
     done: '{name} さん、登録できました！\n受付ID: {id}\n\n担当者から、このLINEで2営業日以内にご連絡します。\nあなたに合う求人が見つかったら、ここでお知らせします。\n\n下のメニューの「求人を見る」から、いまの求人も見られます。',
     updated: '{name} さん、登録内容を更新しました。',
     other: 'その他', none: '資格なし',
@@ -59,9 +59,9 @@ var T = {
     chooseLang: '言語を選んでください。\nPlease choose your language.',
     intro: 'Answer 6 quick questions to register in 30 seconds.\nRegistration and consultation are free.',
     startBtn: 'Start registration',
-    q1: '1/6 What kind of work do you want?', q2: '2/6 What is your current visa status?', q3: '3/6 What is your Japanese level?',
-    q4: '4/6 Where do you want to work?', q5: '5/6 When can you start working?',
-    q6: '6/6 Finally, please send your full name in English letters.\n(e.g. NGUYEN THI LAN)',
+    q1: 'What kind of work do you want?', q2: 'What is your current visa status?', q3: 'What is your Japanese level?',
+    q4: 'Where do you want to work?', q5: 'When can you start working?',
+    q6: 'Finally, please send your full name in English letters.\n(e.g. NGUYEN THI LAN)',
     done: 'Thank you, {name}! You are registered.\nReceipt ID: {id}\n\nOur staff will contact you on this LINE within 2 business days.\nWe will let you know here when we find a job that suits you.\n\nTap "Jobs" in the menu below to see current openings.',
     updated: '{name}, your information has been updated.',
     other: 'Other', none: 'No certificate',
@@ -83,9 +83,9 @@ var T = {
     chooseLang: '言語を選んでください。\nPlease choose your language.',
     intro: 'Chỉ cần trả lời 6 câu hỏi, đăng ký trong 30 giây.\nĐăng ký và tư vấn đều miễn phí.',
     startBtn: 'Bắt đầu đăng ký',
-    q1: '1/6 Bạn muốn làm công việc gì?', q2: '2/6 Tư cách lưu trú hiện tại?', q3: '3/6 Trình độ tiếng Nhật?',
-    q4: '4/6 Bạn muốn làm việc ở đâu?', q5: '5/6 Khi nào bạn có thể bắt đầu?',
-    q6: '6/6 Cuối cùng, hãy gửi họ tên bằng chữ La-tinh.\n(VD: NGUYEN THI LAN)',
+    q1: 'Bạn muốn làm công việc gì?', q2: 'Tư cách lưu trú hiện tại?', q3: 'Trình độ tiếng Nhật?',
+    q4: 'Bạn muốn làm việc ở đâu?', q5: 'Khi nào bạn có thể bắt đầu?',
+    q6: 'Cuối cùng, hãy gửi họ tên bằng chữ La-tinh.\n(VD: NGUYEN THI LAN)',
     done: 'Cảm ơn {name}! Bạn đã đăng ký thành công.\nMã tiếp nhận: {id}\n\nNhân viên sẽ liên lạc qua LINE này trong vòng 2 ngày làm việc.\nKhi có việc phù hợp, chúng tôi sẽ báo tại đây.\n\nBấm "Jobs" ở menu bên dưới để xem việc làm hiện có.',
     updated: '{name}, thông tin của bạn đã được cập nhật.',
     other: 'Khác', none: 'Chưa có',
@@ -107,9 +107,9 @@ var T = {
     chooseLang: '言語を選んでください。\nPlease choose your language.',
     intro: '६ वटा प्रश्नको उत्तर दिनुहोस्, ३० सेकेन्डमा दर्ता हुन्छ।\nदर्ता र परामर्श निःशुल्क छ।',
     startBtn: 'दर्ता सुरु गर्नुहोस्',
-    q1: '1/6 तपाईं कस्तो काम गर्न चाहनुहुन्छ?', q2: '2/6 तपाईंको हालको भिसा के हो?', q3: '3/6 जापानी भाषाको स्तर?',
-    q4: '4/6 कहाँ काम गर्न चाहनुहुन्छ?', q5: '5/6 कहिलेदेखि काम सुरु गर्न सक्नुहुन्छ?',
-    q6: '6/6 अन्तमा, आफ्नो नाम अंग्रेजी अक्षरमा पठाउनुहोस्।\n(जस्तै: SHARMA RAM)',
+    q1: 'तपाईं कस्तो काम गर्न चाहनुहुन्छ?', q2: 'तपाईंको हालको भिसा के हो?', q3: 'जापानी भाषाको स्तर?',
+    q4: 'कहाँ काम गर्न चाहनुहुन्छ?', q5: 'कहिलेदेखि काम सुरु गर्न सक्नुहुन्छ?',
+    q6: 'अन्तमा, आफ्नो नाम अंग्रेजी अक्षरमा पठाउनुहोस्।\n(जस्तै: SHARMA RAM)',
     done: 'धन्यवाद {name}! दर्ता भयो।\nदर्ता नम्बर: {id}\n\nहाम्रो कर्मचारीले २ कार्य दिनभित्र यही LINE मा सम्पर्क गर्नेछ।\nउपयुक्त काम भेटिएमा यहीँ जानकारी दिनेछौं।\n\nतलको मेनुमा "Jobs" थिचेर अहिलेका कामहरू हेर्न सक्नुहुन्छ।',
     updated: '{name}, तपाईंको जानकारी अपडेट भयो।',
     other: 'अन्य', none: 'छैन',
@@ -150,14 +150,75 @@ var STEPS = {
   }
 };
 
+// アルバイト登録の人には、3日後の配信をこちらに差し替える
+var STEPS_BAITO = {
+  3: {
+    ja: '【留学生のアルバイト 大切なルール】\n\n・アルバイトをするには「資格外活動許可」が必要です。在留カードの裏面で確認できます。\n・働けるのは原則として週28時間まで。学校の長期休みの間は1日8時間までです。\n・アルバイトを掛け持ちする場合は、すべての合計で数えます。\n・風俗営業に関係するお店では働けません。\n・ルールを守らないと、在留資格の更新や、卒業後の就職に影響することがあります。\n\n気になることは「相談する」からお気軽にどうぞ。',
+    en: '[Important rules for student part-time work]\n\n- You need "permission to engage in activities other than those permitted" (資格外活動許可). You can check it on the back of your residence card.\n- In principle, up to 28 hours a week. During long school holidays, up to 8 hours a day.\n- If you have more than one job, all hours are added together.\n- You cannot work at adult entertainment businesses (風俗営業).\n- Breaking these rules may affect your visa renewal or your job after graduation.\n\nIf you have questions, tap "Ask us" anytime.',
+    vi: '[Quy định quan trọng khi du học sinh làm thêm]\n\n- Cần có "giấy phép hoạt động ngoài tư cách" (資格外活動許可). Có thể kiểm tra ở mặt sau thẻ lưu trú.\n- Về nguyên tắc tối đa 28 giờ/tuần. Trong kỳ nghỉ dài của trường tối đa 8 giờ/ngày.\n- Nếu làm nhiều nơi, tính tổng tất cả số giờ.\n- Không được làm ở các cơ sở kinh doanh giải trí người lớn (風俗営業).\n- Vi phạm có thể ảnh hưởng đến việc gia hạn tư cách lưu trú hoặc xin việc sau khi tốt nghiệp.\n\nCó thắc mắc, hãy bấm "Ask us" bất cứ lúc nào.',
+    ne: '[विद्यार्थीको पार्ट-टाइम: महत्वपूर्ण नियम]\n\n- पार्ट-टाइम गर्न "資格外活動許可" (अनुमति) चाहिन्छ। रेसिडेन्स कार्डको पछाडि हेर्न सकिन्छ।\n- सामान्यतया हप्तामा २८ घण्टासम्म। स्कूलको लामो बिदामा दिनको ८ घण्टासम्म।\n- धेरै ठाउँमा काम गरे सबैको घण्टा जोडिन्छ।\n- वयस्क मनोरञ्जन व्यवसाय (風俗営業) मा काम गर्न पाइँदैन।\n- नियम नमाने भिसा नवीकरण वा पढाइ सकेपछिको काममा असर पर्न सक्छ।\n\nप्रश्न भए "Ask us" थिच्नुहोस्।'
+  }
+};
+
 // 文字で送られたときに受け付ける言葉
 var KW_REGISTER = ['登録', 'register', 'đăng ký', 'dang ky', 'दर्ता', 'start'];
 var KW_LANG = ['言語', 'language', 'ngôn ngữ', 'भाषा', 'lang'];
 var KW_JOBS = ['求人', 'jobs', 'job', 'việc làm', 'काम'];
 var RE_APPLY = /^(応募|apply|ứng tuyển|आवेदन)\s*[:：]?\s*(\S+)/i;
 
+// アルバイト（留学生）コース用の文言
+var T_BAITO = {
+  ja: {
+    q0: 'どんな働き方を探していますか？',
+    b2: '資格外活動許可（アルバイトをするための許可）はありますか？',
+    b5: '1週間に何時間くらい働きたいですか？',
+    baitoRule: '\n\n※留学生のアルバイトには「資格外活動許可」が必要です。働ける時間は原則として週28時間まで（学校の長期休みの間は1日8時間まで）で、アルバイトを掛け持ちする場合は合計で数えます。',
+    noPermit: '資格外活動許可がまだの場合は、アルバイトを始める前に出入国在留管理局での申請が必要です。許可が出るまでは働けませんのでご注意ください。わからないことは「相談する」からどうぞ。'
+  },
+  en: {
+    q0: 'What kind of work are you looking for?',
+    b2: 'Do you have permission to work part-time (資格外活動許可)?',
+    b5: 'How many hours a week do you want to work?',
+    baitoRule: '\n\n* International students need "permission to engage in activities other than those permitted" (資格外活動許可) to work part-time. In principle you can work up to 28 hours a week (up to 8 hours a day during long school holidays). If you have more than one part-time job, the hours are added together.',
+    noPermit: 'If you do not have the permission yet, you must apply at the Immigration Services Bureau before starting a part-time job. You cannot work until it is granted. If you have questions, tap "Ask us".'
+  },
+  vi: {
+    q0: 'Bạn đang tìm hình thức làm việc nào?',
+    b2: 'Bạn đã có giấy phép hoạt động ngoài tư cách (資格外活動許可) để làm thêm chưa?',
+    b5: 'Bạn muốn làm khoảng bao nhiêu giờ mỗi tuần?',
+    baitoRule: '\n\n* Du học sinh cần có "giấy phép hoạt động ngoài tư cách" (資格外活動許可) để làm thêm. Về nguyên tắc chỉ được làm tối đa 28 giờ/tuần (trong kỳ nghỉ dài của trường là tối đa 8 giờ/ngày). Nếu làm nhiều nơi thì tính tổng số giờ.',
+    noPermit: 'Nếu chưa có giấy phép, bạn phải xin tại Cục Quản lý Xuất nhập cảnh trước khi bắt đầu làm thêm. Chưa được cấp phép thì chưa được làm. Có thắc mắc, hãy bấm "Ask us".'
+  },
+  ne: {
+    q0: 'तपाईं कस्तो किसिमको काम खोज्दै हुनुहुन्छ?',
+    b2: 'पार्ट-टाइम काम गर्ने अनुमति (資格外活動許可) छ?',
+    b5: 'हप्तामा कति घण्टा काम गर्न चाहनुहुन्छ?',
+    baitoRule: '\n\n* विद्यार्थीलाई पार्ट-टाइम काम गर्न "資格外活動許可" (अनुमति) चाहिन्छ। सामान्यतया हप्तामा २८ घण्टासम्म मात्र काम गर्न पाइन्छ (स्कूलको लामो बिदामा दिनको ८ घण्टासम्म)। धेरै ठाउँमा काम गरे सबैको घण्टा जोडिन्छ।',
+    noPermit: 'अनुमति छैन भने पार्ट-टाइम सुरु गर्नु अघि इमिग्रेसन कार्यालयमा आवेदन दिनुपर्छ। अनुमति नपाएसम्म काम गर्न पाइँदैन। प्रश्न भए "Ask us" थिच्नुहोस्।'
+  }
+};
+Object.keys(T_BAITO).forEach(function (l) { Object.keys(T_BAITO[l]).forEach(function (k) { T[l][k] = T_BAITO[l][k]; }); });
+
+// 登録コースごとの質問の順番（最後に名前を聞く）
+var FLOW_FULL = ['q0', 'q1', 'q2', 'q3', 'q4', 'q5'];
+var FLOW_BAITO = ['q0', 'q1', 'b2', 'q3', 'q4', 'b5'];
+
 // 質問（v はスプレッドシートに保存する日本語の値）
 var Q = {
+  q0: { key: 'type', opts: [
+    ['正社員・フルタイム', { ja: '正社員・フルタイム', en: 'Full-time job', vi: 'Việc toàn thời gian', ne: 'पूर्णकालीन काम' }],
+    ['アルバイト', { ja: 'アルバイト（留学生）', en: 'Part-time (student)', vi: 'Làm thêm (du học sinh)', ne: 'पार्ट-टाइम (विद्यार्थी)' }]
+  ]},
+  b2: { key: 'permit', opts: [
+    ['あり', { ja: 'あり', en: 'Yes', vi: 'Có', ne: 'छ' }],
+    ['申請中', { ja: '申請中', en: 'Applying', vi: 'Đang xin', ne: 'आवेदन गर्दै' }],
+    ['なし・わからない', { ja: 'なし・わからない', en: 'No / Not sure', vi: 'Chưa / Không rõ', ne: 'छैन / थाहा छैन' }]
+  ]},
+  b5: { key: 'hours', opts: [
+    ['週10時間まで', { ja: '週10時間まで', en: 'Up to 10 h', vi: 'Tối đa 10 giờ', ne: '१० घण्टासम्म' }],
+    ['週10〜20時間', { ja: '週10〜20時間', en: '10–20 h', vi: '10–20 giờ', ne: '१०–२० घण्टा' }],
+    ['週20〜28時間', { ja: '週20〜28時間', en: '20–28 h', vi: '20–28 giờ', ne: '२०–२८ घण्टा' }]
+  ]},
   q1: { key: 'role', opts: [
     ['外食業', { ja: '飲食店・外食', en: 'Restaurant', vi: 'Nhà hàng', ne: 'रेस्टुरेन्ट' }],
     ['食品製造', { ja: '食品製造', en: 'Food factory', vi: 'Chế biến thực phẩm', ne: 'खाद्य उत्पादन' }],
@@ -200,9 +261,9 @@ var Q = {
 
 // シートの列（名前で探すので、列の順番を入れ替えても動きます）
 var REG_SHEET = 'LINE登録';
-var REG_HEADERS = ['登録日時', '受付ID', 'LINE userId', 'LINE表示名', '言語', 'お名前', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始', '対応状況', 'メモ', 'ステップ送信済', 'ブロック', '最終更新'];
+var REG_HEADERS = ['登録日時', '受付ID', 'LINE userId', 'LINE表示名', '言語', 'お名前', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始', '対応状況', 'メモ', 'ステップ送信済', 'ブロック', '最終更新', '雇用形態', '資格外活動許可', '週の勤務時間'];
 var JOB_SHEET = '求人';
-var JOB_HEADERS = ['求人ID', '公開', '職種', '勤務地', 'タイトル', '給与', '内容', '詳細URL', '配信日時', '配信人数', '応募数'];
+var JOB_HEADERS = ['求人ID', '公開', '職種', '勤務地', 'タイトル', '給与', '内容', '詳細URL', '配信日時', '配信人数', '応募数', '雇用形態'];
 
 // ============================================================
 // Webhook
@@ -259,10 +320,14 @@ function handleEvent_(ev) {
       if (!opt) return;
       st.ans = st.ans || {};
       st.ans[q.key] = opt[0];
-      var n = +p.q.slice(1) + 1;
-      st.step = n <= 5 ? 'q' + n : 'name';
+      if (p.q === 'q0') st.flow = opt[0] === 'アルバイト' ? 'baito' : 'full';
+      var seq = flow_(st), idx = seq.indexOf(p.q);
+      st.step = idx + 1 < seq.length ? seq[idx + 1] : 'name';
       setState_(uid, st);
-      reply_(ev.replyToken, [n <= 5 ? question_(st.step, st.lang) : text_(L.q6)]);
+      var out = [];
+      if (p.q === 'b2' && opt[0] === 'なし・わからない') out.push(text_(L.noPermit));
+      out.push(st.step === 'name' ? text_(stepNo_(st, 'name') + L.q6) : question_(st.step, st.lang, st));
+      reply_(ev.replyToken, out);
     }
     return;
   }
@@ -279,11 +344,11 @@ function handleEvent_(ev) {
       if (!/[A-Za-z]/.test(msg) || msg.length > 60) { reply_(ev.replyToken, [text_(L.nameRetry)]); return; }
       var res = saveRegistration_(uid, st, msg);
       st.step = 'done'; st.ans = {}; st.registeredId = res.id; setState_(uid, st);
-      var tpl = res.isNew ? L.done : L.updated;
+      var tpl = (res.isNew ? L.done : L.updated) + (res.baito ? L.baitoRule : '');
       reply_(ev.replyToken, [text_(tpl.replace('{name}', msg).replace('{id}', res.id))]);
       return;
     }
-    if (st.step && /^q\d$/.test(st.step)) { reply_(ev.replyToken, [question_(st.step, st.lang)]); return; }
+    if (st.step && Q[st.step]) { reply_(ev.replyToken, [question_(st.step, st.lang, st)]); return; }
 
     var m = msg.match(RE_APPLY);
     if (m) { handleApply_(ev.replyToken, uid, st, m[2]); return; }
@@ -294,8 +359,15 @@ function handleEvent_(ev) {
 
 function startFlow_(token, uid, st) {
   if (!st.lang) { reply_(token, [langMenu_()]); return; }
-  st.step = 'q1'; st.ans = {}; setState_(uid, st);
-  reply_(token, [question_('q1', st.lang)]);
+  st.step = 'q0'; st.ans = {}; st.flow = ''; setState_(uid, st);
+  reply_(token, [question_('q0', st.lang, st)]);
+}
+
+function flow_(st) { return st.flow === 'baito' ? FLOW_BAITO : FLOW_FULL; }
+// 「2/7 」のような番号（全体 = 質問の数 + 名前）
+function stepNo_(st, qid) {
+  var seq = flow_(st), n = qid === 'name' ? seq.length + 1 : seq.indexOf(qid) + 1;
+  return n > 0 ? n + '/' + (seq.length + 1) + ' ' : '';
 }
 
 // ============================================================
@@ -357,7 +429,10 @@ function jobMatches_(job, user) {
   var ur = norm_(user['希望職種'], 'q1'), ul = norm_(user['希望勤務地'], 'q4');
   var roleOk = !jr || jr === ur || ur === 'その他';
   var locOk = !jl || jl === '全国' || jl === ul || ul === '全国' || ul === 'その他';
-  return roleOk && locOk;
+  // 雇用形態：求人が「アルバイト」ならアルバイト希望者だけ、「正社員・フルタイム」ならそれ以外の人に
+  var jt = String(job['雇用形態'] || '').trim(), ut = String(user['雇用形態'] || '').trim() || '正社員・フルタイム';
+  var typeOk = !jt || jt === 'どちらも' || jt === ut;
+  return roleOk && locOk && typeOk;
 }
 
 function jobText_(j, lang, isNew) {
@@ -407,7 +482,11 @@ var AI_SYSTEM = [
   '- 求人の有無・給料・内定を約束しない。具体的な求人はメニューの「求人を見る」を案内する。',
   '- わからないことは推測で答えず、担当者が確認すると伝える。',
   '- 次のどれかに当てはまる場合は、回答の最後に必ず [ESCALATE] とだけ書いた行を付ける：',
-  '  応募したい／面談したい／担当者と話したい、個別のビザ・在留期限の相談、トラブルや苦情、緊急の内容、あなたが答えられない内容。'
+  '  応募したい／面談したい／担当者と話したい、個別のビザ・在留期限の相談、トラブルや苦情、緊急の内容、あなたが答えられない内容。',
+  '',
+  '# 留学生のアルバイトについて（一般的なルール）',
+  '- アルバイトには資格外活動許可が必要。原則として週28時間以内、学校の長期休業中は1日8時間以内。掛け持ちは合計で数える。',
+  '- 風俗営業に関係する仕事はできない。許可が出る前に働くことはできない。個別の判断は担当者が確認すると伝える。'
 ].join('\n');
 
 function handleQuestion_(token, uid, st, msg) {
@@ -480,7 +559,8 @@ function sendSteps_() {
     if (!due.length) return;
     var d = due[due.length - 1];  // 遅れて複数たまっていても、送るのは最新の1通だけ
     var lang = langCode_(r['言語']);
-    if (push_(r['LINE userId'], [text_(STEPS[d][lang] || STEPS[d].ja)])) {
+    var set = (r['雇用形態'] === 'アルバイト' && STEPS_BAITO[d]) ? STEPS_BAITO[d] : STEPS[d];
+    if (push_(r['LINE userId'], [text_(set[lang] || set.ja)])) {
       STEP_DAYS.forEach(function (x) { if (x <= d && done.indexOf(String(x)) < 0) done.push(String(x)); });
       sh.getRange(r._row, col).setValue(done.join(','));
       sent++;
@@ -556,10 +636,10 @@ function label_(o, lang) {
   if (o === 'none') return T[lang].none;
   return typeof o === 'string' ? o : (o[lang] || o.ja);
 }
-function question_(qid, lang) {
+function question_(qid, lang, st) {
   lang = lang || 'ja';
   var items = Q[qid].opts.map(function (o, i) { return [label_(o[1], lang), 'q=' + qid + '&i=' + i]; });
-  return quick_(T[lang][qid], items);
+  return quick_((st ? stepNo_(st, qid) : '') + T[lang][qid], items);
 }
 function langMenu_() {
   return quick_(T.ja.chooseLang, LANGS.map(function (l) { return [l[1], 'lang=' + l[0]]; }));
@@ -696,7 +776,8 @@ function saveRegistration_(uid, st, name) {
     var sh = regSheet_(), a = st.ans || {}, existing = findReg_(uid);
     var vals = {
       'LINE userId': uid, 'LINE表示名': profileName_(uid), '言語': langLabel_(st.lang), 'お名前': name,
-      '希望職種': a.role, '在留資格': a.visa, '日本語': a.jp, '希望勤務地': a.location, '就業開始': a.start,
+      '希望職種': a.role, '在留資格': st.flow === 'baito' ? '留学' : a.visa, '日本語': a.jp, '希望勤務地': a.location,
+      '就業開始': a.start || '', '雇用形態': a.type || '正社員・フルタイム', '資格外活動許可': a.permit || '', '週の勤務時間': a.hours || '',
       'ブロック': '', '最終更新': new Date()
     };
     var id, isNew = !existing;
@@ -711,7 +792,7 @@ function saveRegistration_(uid, st, name) {
     }
     notifyMail_('【Job Change Japan LINE】' + (isNew ? '新規登録' : '登録内容の更新') + '：' + name + '（' + id + '）',
       userSummary_(uid, findReg_(uid)) + '\n\n一覧: ' + sh.getParent().getUrl());
-    return { id: id, isNew: isNew };
+    return { id: id, isNew: isNew, baito: st.flow === 'baito' };
   } finally {
     lock.releaseLock();
   }
@@ -719,7 +800,7 @@ function saveRegistration_(uid, st, name) {
 
 function userSummary_(uid, u) {
   if (!u) return 'LINE userId: ' + uid + '（未登録）';
-  return ['受付ID', 'お名前', 'LINE表示名', '言語', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始']
+  return ['受付ID', 'お名前', 'LINE表示名', '言語', '雇用形態', '希望職種', '在留資格', '資格外活動許可', '日本語', '希望勤務地', '就業開始', '週の勤務時間']
     .map(function (k) { return k + ': ' + (u[k] instanceof Date ? u[k].toLocaleString('ja-JP') : (u[k] || '')); }).join('\n');
 }
 
@@ -741,6 +822,7 @@ function setup() {
   var locs = Q.q4.opts.map(function (o) { return o[0]; });
   jsh.getRange(2, colIndex_(jsh, '職種'), 500).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(roles, true).build());
   jsh.getRange(2, colIndex_(jsh, '勤務地'), 500).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(locs, true).build());
+  jsh.getRange(2, colIndex_(jsh, '雇用形態'), 500).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['正社員・フルタイム', 'アルバイト', 'どちらも'], true).build());
   jsh.getRange(2, colIndex_(jsh, '公開'), 500).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['○', '×'], true).build());
   console.log('保存先: ' + jsh.getParent().getUrl());
 
