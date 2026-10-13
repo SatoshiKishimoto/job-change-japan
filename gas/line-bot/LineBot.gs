@@ -326,6 +326,17 @@ function handleApply_(token, uid, st, jobId) {
 function openJobs_() {
   var sh = jobSheet_();
   var rows = sheetObjects_(sh);
+  // 求人IDが空欄の行には、J001, J002 … を自動で振る
+  var max = 0;
+  rows.forEach(function (r) { var m = String(r['求人ID']).match(/^J(\d+)$/i); if (m) max = Math.max(max, +m[1]); });
+  var idCol = colIndex_(sh, '求人ID');
+  rows.forEach(function (r) {
+    if (!r['求人ID'] && (r['タイトル'] || r['職種'])) {
+      r['求人ID'] = 'J' + ('00' + (++max)).slice(-3);
+      sh.getRange(r._row, idCol).setValue(r['求人ID']);
+    }
+    if (!r['タイトル'] && r['職種']) r['タイトル'] = r['職種'] + '（' + (r['勤務地'] || '') + '）';
+  });
   return rows.filter(function (r) { return r['求人ID'] && String(r['公開']).trim() !== '×' && r['タイトル']; });
 }
 
