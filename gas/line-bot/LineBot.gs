@@ -329,9 +329,21 @@ function openJobs_() {
   return rows.filter(function (r) { return r['求人ID'] && String(r['公開']).trim() !== '×' && r['タイトル']; });
 }
 
+// 表記ゆれをそろえる（「大阪」「大阪府」、「飲食店・外食」「外食業」など）
+function norm_(s, qid) {
+  s = String(s == null ? '' : s).replace(/[\s　]/g, '');
+  if (!s) return '';
+  var hit = Q[qid].opts.filter(function (o) {
+    var ja = typeof o[1] === 'object' ? o[1].ja : o[1];
+    return s === o[0] || s === String(ja).replace(/[\s　]/g, '');
+  })[0];
+  if (hit) s = hit[0];
+  return s.replace(/(府|県|都)$/, '').replace(/^全国.*$/, '全国');
+}
+
 function jobMatches_(job, user) {
-  var jr = String(job['職種'] || ''), jl = String(job['勤務地'] || '');
-  var ur = String(user['希望職種'] || ''), ul = String(user['希望勤務地'] || '');
+  var jr = norm_(job['職種'], 'q1'), jl = norm_(job['勤務地'], 'q4');
+  var ur = norm_(user['希望職種'], 'q1'), ul = norm_(user['希望勤務地'], 'q4');
   var roleOk = !jr || jr === ur || ur === 'その他';
   var locOk = !jl || jl === '全国' || jl === ul || ul === '全国' || ul === 'その他';
   return roleOk && locOk;
