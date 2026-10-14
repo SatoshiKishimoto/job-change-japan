@@ -410,9 +410,9 @@ function stepNo_(st, qid) {
 // ============================================================
 function replyJobs_(token, uid, st) {
   var L = TL_(st.lang);
-  var user = findReg_(uid);
-  if (!user) { reply_(token, [quick_(L.needRegister, [[L.startBtn, 'menu=register']])]); return; }
-  var jobs = openJobs_().filter(function (j) { return jobMatches_(j, user); }).slice(0, 4);
+  var rows = findRegs_(uid);
+  if (!rows.length) { reply_(token, [quick_(L.needRegister, [[L.startBtn, 'menu=register']])]); return; }
+  var jobs = openJobs_().filter(function (j) { return rows.some(function (u) { return jobMatches_(j, u); }); }).slice(0, 4);
   if (!jobs.length) { reply_(token, [text_(L.noJobs)]); return; }
   var msgs = [text_(fmt_(L.jobsHead, { n: jobs.length }))];
   jobs.forEach(function (j) { msgs.push(text_(jobText_(j, st.lang || 'ja', false))); });
@@ -422,10 +422,10 @@ function replyJobs_(token, uid, st) {
 function handleApply_(token, uid, st, jobId) {
   var L = TL_(st.lang);
   var job = openJobs_().filter(function (j) { return String(j['求人ID']).toLowerCase() === jobId.toLowerCase(); })[0];
-  var user = findReg_(uid);
+  var user = findRegs_(uid);
   if (job) bumpJobCount_(job._row, '応募数');
   reply_(token, [text_(fmt_(L.applied, { id: jobId }))]);
-  notifyMail_('【Job Change Japan LINE】応募：' + (user ? user['お名前'] : uid) + ' → ' + jobId,
+  notifyMail_('【Job Change Japan LINE】応募：' + (user.length ? user[0]['お名前'] : uid) + ' → ' + jobId,
     '求人: ' + (job ? job['タイトル'] : '（該当なし: ' + jobId + '）') + '\n' + userSummary_(uid, user) +
     '\n\n※返信はLINE公式アカウントのチャット画面から行ってください。');
 }
@@ -534,14 +534,14 @@ var AI_SYSTEM = [
 
 function handleQuestion_(token, uid, st, msg) {
   var L = TL_(st.lang);
-  var user = findReg_(uid);
+  var user = findRegs_(uid);
   var key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
   var answer = null, escalate = true;
 
   if (key) {
     try {
       var hist = (st.hist || []).slice(-6);
-      var ctx = user ? '\n\n# この人の登録内容\n' + userSummary_(uid, user) : '\n\n# この人はまだ未登録（メニューの「登録」を案内してよい）';
+      var ctx = user.length ? '\n\n# この人の登録内容\n' + userSummary_(uid, user) : '\n\n# この人はまだ未登録（メニューの「登録」を案内してよい）';
       if (tk_(st.lang) === 'jaen') ctx += '\n\n# 回答の言語\nこの人には、日本語と英語を併記して答える（日本語の段落のあとに英語の段落）。';
       var out = callClaude_(key, AI_SYSTEM + ctx, hist.concat([{ role: 'user', content: msg }]));
       escalate = /\[ESCALATE\]/.test(out);
@@ -558,7 +558,7 @@ function handleQuestion_(token, uid, st, msg) {
   reply_(token, [text_(text.slice(0, 4900))]);
 
   if (escalate) {
-    notifyMail_('【Job Change Japan LINE】' + (answer ? '担当者対応が必要な相談' : 'メッセージ受信') + '：' + (user ? user['お名前'] : '未登録'),
+    notifyMail_('【Job Change Japan LINE】' + (answer ? '担当者対応が必要な相談' : 'メッセージ受信') + '：' + (user.length ? user[0]['お名前'] : '未登録'),
       '受信メッセージ:\n' + msg + '\n\n' + (answer ? 'AIの回答:\n' + answer + '\n\n' : '') + userSummary_(uid, user) +
       '\n\n※返信はLINE公式アカウントのチャット画面から行ってください。');
   }
@@ -595,6 +595,10 @@ function sendSteps_() {
   var sh = regSheet_(), rows = sheetObjects_(sh), sent = 0;
   var today = dayNum_(new Date());
   var col = colIndex_(sh, 'ステップ送信済');
+  var sentTo = {};   // 同じ人に同じ内容（1日後・7日後）を二重に送らない
+  rows.forEach(function (r) {
+    String(r['ステップ送信済'] || '').split(',').filter(String).forEach(function (d) { sentTo[r['LINE userId'] + '|' + d] = 1; });
+  });
   rows.forEach(function (r) {
     if (!r['LINE userId'] || r['ブロック'] === '○' || !(r['登録日時'] instanceof Date)) return;
     var days = today - dayNum_(r['登録日時']);
@@ -603,11 +607,19 @@ function sendSteps_() {
     if (!due.length) return;
     var d = due[due.length - 1];  // 遅れて複数たまっていても、送るのは最新の1通だけ
     var lang = langCode_(r['言語']);
-    var set = (r['雇用形態'] === 'アルバイト' && STEPS_BAITO[d]) ? STEPS_BAITO[d] : STEPS[d];
+    var baitoMsg = r['雇用形態'] === 'アルバイト' && STEPS_BAITO[d];
+    var set = baitoMsg ? STEPS_BAITO[d] : STEPS[d];
+    var dupKey = r['LINE userId'] + '|' + d + (baitoMsg ? 'b' : '');
+    if (!baitoMsg && sentTo[r['LINE userId'] + '|' + d]) {   // 別の行ですでに送った
+      STEP_DAYS.forEach(function (x) { if (x <= d && done.indexOf(String(x)) < 0) done.push(String(x)); });
+      sh.getRange(r._row, col).setValue(done.join(','));
+      return;
+    }
     var body = tk_(lang) === 'jaen' ? set.ja + '\n\n― English ―\n' + set.en : (set[lang] || set.ja);
     if (push_(r['LINE userId'], [text_(body)])) {
       STEP_DAYS.forEach(function (x) { if (x <= d && done.indexOf(String(x)) < 0) done.push(String(x)); });
       sh.getRange(r._row, col).setValue(done.join(','));
+      sentTo[r['LINE userId'] + '|' + d] = 1; sentTo[dupKey] = 1;
       sent++;
     }
   });
@@ -620,8 +632,10 @@ function sendNewJobs_() {
   var users = sheetObjects_(regSheet_()).filter(function (u) { return u['LINE userId'] && u['ブロック'] !== '○'; });
   var total = 0;
   jobs.forEach(function (job) {
-    var byLang = {};
+    var byLang = {}, seen = {};
     users.filter(function (u) { return jobMatches_(job, u); }).forEach(function (u) {
+      if (seen[u['LINE userId']]) return;   // 同じ人には1回だけ
+      seen[u['LINE userId']] = 1;
       var lg = langCode_(u['言語']); (byLang[lg] = byLang[lg] || []).push(u['LINE userId']);
     });
     var n = 0;
@@ -809,13 +823,21 @@ function sheetObjects_(sh) {
     return o;
   });
 }
-function findReg_(uid) {
-  return sheetObjects_(regSheet_()).filter(function (r) { return r['LINE userId'] === uid; })[0] || null;
+// 同じ人が「フルタイム」と「アルバイト」で別々の行を持てる
+function typeOf_(r) { return String((r && r['雇用形態']) || '').trim() || '正社員・フルタイム'; }
+function findRegs_(uid) {
+  return sheetObjects_(regSheet_()).filter(function (r) { return r['LINE userId'] === uid; });
+}
+function findReg_(uid, type) {
+  var rows = findRegs_(uid);
+  if (type) rows = rows.filter(function (r) { return typeOf_(r) === type; });
+  return rows[0] || null;
 }
 function setRegField_(uid, field, value) {
-  var sh = regSheet_(), r = findReg_(uid);
-  if (r) sh.getRange(r._row, colIndex_(sh, field)).setValue(value);
+  var sh = regSheet_(), c = colIndex_(sh, field);
+  findRegs_(uid).forEach(function (r) { sh.getRange(r._row, c).setValue(value); });
 }
+function histSheet_() { return sheetWithHeaders_('登録履歴', ['履歴日時'].concat(REG_HEADERS)); }
 function bumpJobCount_(row, field) {
   var sh = jobSheet_(), c = colIndex_(sh, field);
   var cell = sh.getRange(row, c); cell.setValue((+cell.getValue() || 0) + 1);
@@ -830,7 +852,8 @@ function saveRegistration_(uid, st, name) {
   var mine = !lock.hasLock();          // すでにロック中（Webhook処理中）なら取り直さない
   if (mine) lock.waitLock(20000);
   try {
-    var sh = regSheet_(), a = st.ans || {}, existing = findReg_(uid);
+    var sh = regSheet_(), a = st.ans || {}, type = a.type || '正社員・フルタイム';
+    var existing = findReg_(uid, type);   // 同じ雇用形態の行があれば上書き、なければ新しい行
     var vals = {
       'LINE userId': uid, 'LINE表示名': profileName_(uid), '言語': langLabel_(st.lang), 'お名前': name,
       '希望職種': a.role, '在留資格': st.flow === 'baito' ? '留学' : a.visa, '日本語': a.jp, '希望勤務地': a.location,
@@ -840,6 +863,9 @@ function saveRegistration_(uid, st, name) {
     var id, isNew = !existing;
     if (existing) {
       id = existing['受付ID'];
+      // 上書きする前の内容を「登録履歴」タブに残す
+      var hs = histSheet_(), hh = hs.getRange(1, 1, 1, hs.getLastColumn()).getValues()[0];
+      hs.appendRow(hh.map(function (h) { return h === '履歴日時' ? new Date() : safe_(existing[h]); }));
       Object.keys(vals).forEach(function (k) { sh.getRange(existing._row, colIndex_(sh, k)).setValue(safe_(vals[k])); });
     } else {
       id = 'JCL-' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
@@ -848,7 +874,8 @@ function saveRegistration_(uid, st, name) {
       sh.appendRow(header.map(function (h) { return safe_(vals[h]); }));
     }
     notifyMail_('【Job Change Japan LINE】' + (isNew ? '新規登録' : '登録内容の更新') + '：' + name + '（' + id + '）',
-      userSummary_(uid, findReg_(uid)) + '\n\n一覧: ' + sh.getParent().getUrl());
+      userSummary_(uid, findReg_(uid, type)) + (findRegs_(uid).length > 1 ? '\n\n※この方は複数の雇用形態で登録しています（' + findRegs_(uid).map(typeOf_).join('・') + '）' : '') +
+      '\n\n一覧: ' + sh.getParent().getUrl());
     return { id: id, isNew: isNew, baito: st.flow === 'baito' };
   } finally {
     if (mine) lock.releaseLock();
@@ -856,6 +883,10 @@ function saveRegistration_(uid, st, name) {
 }
 
 function userSummary_(uid, u) {
+  if (Array.isArray(u)) {
+    if (!u.length) return 'LINE userId: ' + uid + '（未登録）';
+    return u.map(function (r) { return userSummary_(uid, r); }).join('\n---\n');
+  }
   if (!u) return 'LINE userId: ' + uid + '（未登録）';
   return ['受付ID', 'お名前', 'LINE表示名', '言語', '雇用形態', '希望職種', '在留資格', '資格外活動許可', '日本語', '希望勤務地', '就業開始', '週の勤務時間']
     .map(function (k) { return k + ': ' + (u[k] instanceof Date ? u[k].toLocaleString('ja-JP') : (u[k] || '')); }).join('\n');
@@ -873,6 +904,7 @@ function notifyMail_(subject, body) {
 // ============================================================
 function setup() {
   regSheet_();
+  histSheet_();
   var jsh = jobSheet_();
   // 求人シートの「職種」「勤務地」「公開」にプルダウンを付ける
   var roles = Q.q1.opts.map(function (o) { return o[0]; });
