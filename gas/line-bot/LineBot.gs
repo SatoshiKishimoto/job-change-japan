@@ -199,6 +199,30 @@ var T_BAITO = {
 };
 Object.keys(T_BAITO).forEach(function (l) { Object.keys(T_BAITO[l]).forEach(function (k) { T[l][k] = T_BAITO[l][k]; }); });
 
+// 日本語・英語を選んだ人には、日英併記の文章を使う
+function bi_(a, b, short) {
+  if (a === b) return a;
+  if (short) return a + '\n' + b;
+  return a + '\n\n― English ―\n' + b;
+}
+var SHORT_KEYS = ['chooseLang', 'startBtn', 'q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'b2', 'b5', 'other', 'none', 'nameRetry', 'jobsHead', 'newJob', 'applyHint', 'aiNote', 'updated'];
+T.jaen = {};
+Object.keys(T.ja).forEach(function (k) {
+  var a = T.ja[k], b = T.en[k];
+  if (k === 'jobFields') { T.jaen[k] = { role: '職種 / Job', loc: '勤務地 / Location', pay: '給与 / Salary' }; return; }
+  if (k === 'chooseLang') { T.jaen[k] = a; return; }
+  if (k === 'startBtn') { T.jaen[k] = '登録 / Register'; return; }
+  if (k === 'other') { T.jaen[k] = 'その他 / Other'; return; }
+  if (k === 'none') { T.jaen[k] = 'なし / None'; return; }
+  if (k === 'newJob') { T.jaen[k] = '【新着求人 / New job】'; return; }
+  if (k === 'baitoRule' || k === 'handoff') { T.jaen[k] = a + '\n' + b.replace(/^\n+/, ''); return; }
+  T.jaen[k] = bi_(a, b, SHORT_KEYS.indexOf(k) >= 0);
+});
+// 文章を選ぶ：日本語・英語 → 日英併記、それ以外 → その言語
+function tk_(lang) { return (!lang || lang === 'ja' || lang === 'en') ? 'jaen' : lang; }
+function TL_(lang) { return T[tk_(lang)]; }
+function fmt_(s, o) { Object.keys(o).forEach(function (k) { s = String(s).split('{' + k + '}').join(o[k]); }); return s; }
+
 // 登録コースごとの質問の順番（最後に名前を聞く）
 var FLOW_FULL = ['q0', 'q1', 'q2', 'q3', 'q4', 'q5'];
 var FLOW_BAITO = ['q0', 'q1', 'b2', 'q3', 'q4', 'b5'];
@@ -206,13 +230,13 @@ var FLOW_BAITO = ['q0', 'q1', 'b2', 'q3', 'q4', 'b5'];
 // 質問（v はスプレッドシートに保存する日本語の値）
 var Q = {
   q0: { key: 'type', opts: [
-    ['正社員・フルタイム', { ja: '正社員・フルタイム', en: 'Full-time job', vi: 'Việc toàn thời gian', ne: 'पूर्णकालीन काम' }],
-    ['アルバイト', { ja: 'アルバイト（留学生）', en: 'Part-time (student)', vi: 'Làm thêm (du học sinh)', ne: 'पार्ट-टाइम (विद्यार्थी)' }]
+    ['正社員・フルタイム', { jaen: 'フルタイム/Full-time', ja: '正社員・フルタイム', en: 'Full-time job', vi: 'Việc toàn thời gian', ne: 'पूर्णकालीन काम' }],
+    ['アルバイト', { jaen: 'アルバイト(留学生)/Part-time', ja: 'アルバイト（留学生）', en: 'Part-time (student)', vi: 'Làm thêm (du học sinh)', ne: 'पार्ट-टाइम (विद्यार्थी)' }]
   ]},
   b2: { key: 'permit', opts: [
     ['あり', { ja: 'あり', en: 'Yes', vi: 'Có', ne: 'छ' }],
     ['申請中', { ja: '申請中', en: 'Applying', vi: 'Đang xin', ne: 'आवेदन गर्दै' }],
-    ['なし・わからない', { ja: 'なし・わからない', en: 'No / Not sure', vi: 'Chưa / Không rõ', ne: 'छैन / थाहा छैन' }]
+    ['なし・わからない', { jaen: 'なし・不明 / No, Not sure', ja: 'なし・わからない', en: 'No / Not sure', vi: 'Chưa / Không rõ', ne: 'छैन / थाहा छैन' }]
   ]},
   b5: { key: 'hours', opts: [
     ['週10時間まで', { ja: '週10時間まで', en: 'Up to 10 h', vi: 'Tối đa 10 giờ', ne: '१० घण्टासम्म' }],
@@ -233,11 +257,11 @@ var Q = {
   ]},
   q2: { key: 'visa', opts: [
     ['特定技能1号', { ja: '特定技能1号', en: 'SSW (i)', vi: 'Tokutei Ginou 1', ne: 'Tokutei Ginou 1' }],
-    ['技能実習', { ja: '技能実習', en: 'Technical Intern', vi: 'Thực tập sinh', ne: 'Ginou Jisshu' }],
+    ['技能実習', { jaen: '技能実習 / Intern', ja: '技能実習', en: 'Technical Intern', vi: 'Thực tập sinh', ne: 'Ginou Jisshu' }],
     ['留学', { ja: '留学', en: 'Student', vi: 'Du học sinh', ne: 'विद्यार्थी' }],
-    ['技術・人文知識・国際業務', { ja: '技人国', en: 'Engineer/Humanities', vi: 'Gijinkoku', ne: 'Gijinkoku' }],
-    ['永住者・配偶者等', { ja: '永住・配偶者など', en: 'PR / Spouse', vi: 'Vĩnh trú/Vợ chồng', ne: 'स्थायी / जीवनसाथी' }],
-    ['海外在住', { ja: 'いま海外にいる', en: 'Living abroad', vi: 'Đang ở nước ngoài', ne: 'जापान बाहिर' }],
+    ['技術・人文知識・国際業務', { jaen: '技人国 / Engineer', ja: '技人国', en: 'Engineer/Humanities', vi: 'Gijinkoku', ne: 'Gijinkoku' }],
+    ['永住者・配偶者等', { jaen: '永住・配偶者等/PR, Spouse', ja: '永住・配偶者など', en: 'PR / Spouse', vi: 'Vĩnh trú/Vợ chồng', ne: 'स्थायी / जीवनसाथी' }],
+    ['海外在住', { jaen: 'いま海外 / Abroad', ja: 'いま海外にいる', en: 'Living abroad', vi: 'Đang ở nước ngoài', ne: 'जापान बाहिर' }],
     ['その他', 'other']
   ]},
   q3: { key: 'jp', opts: [
@@ -245,17 +269,17 @@ var Q = {
   ]},
   q4: { key: 'location', opts: [
     ['大阪府', { ja: '大阪', en: 'Osaka', vi: 'Osaka', ne: 'ओसाका' }],
-    ['関西（大阪以外）', { ja: '関西（大阪以外）', en: 'Kansai', vi: 'Kansai', ne: 'कान्साई' }],
-    ['関東', { ja: '関東（東京など）', en: 'Kanto (Tokyo)', vi: 'Kanto (Tokyo)', ne: 'कान्तो (टोकियो)' }],
-    ['中部・東海', { ja: '中部・東海', en: 'Chubu (Nagoya)', vi: 'Chubu (Nagoya)', ne: 'चुबु (नागोया)' }],
+    ['関西（大阪以外）', { jaen: '関西(大阪以外)/Kansai', ja: '関西（大阪以外）', en: 'Kansai', vi: 'Kansai', ne: 'कान्साई' }],
+    ['関東', { jaen: '関東・東京 / Kanto', ja: '関東（東京など）', en: 'Kanto (Tokyo)', vi: 'Kanto (Tokyo)', ne: 'कान्तो (टोकियो)' }],
+    ['中部・東海', { jaen: '中部・東海 / Chubu', ja: '中部・東海', en: 'Chubu (Nagoya)', vi: 'Chubu (Nagoya)', ne: 'चुबु (नागोया)' }],
     ['全国', { ja: 'どこでもOK', en: 'Anywhere', vi: 'Ở đâu cũng được', ne: 'जहाँ पनि' }],
     ['その他', 'other']
   ]},
   q5: { key: 'start', opts: [
     ['すぐに働ける', { ja: 'すぐに', en: 'Right away', vi: 'Ngay lập tức', ne: 'तुरुन्तै' }],
-    ['1ヶ月以内', { ja: '1ヶ月以内', en: 'Within 1 month', vi: 'Trong 1 tháng', ne: '१ महिनाभित्र' }],
-    ['3ヶ月以内', { ja: '3ヶ月以内', en: 'Within 3 months', vi: 'Trong 3 tháng', ne: '३ महिनाभित्र' }],
-    ['未定', { ja: 'まだ決めていない', en: 'Not decided', vi: 'Chưa quyết định', ne: 'निश्चित छैन' }]
+    ['1ヶ月以内', { jaen: '1ヶ月以内 / 1 month', ja: '1ヶ月以内', en: 'Within 1 month', vi: 'Trong 1 tháng', ne: '१ महिनाभित्र' }],
+    ['3ヶ月以内', { jaen: '3ヶ月以内 / 3 months', ja: '3ヶ月以内', en: 'Within 3 months', vi: 'Trong 3 tháng', ne: '३ महिनाभित्र' }],
+    ['未定', { jaen: '未定 / Not decided', ja: 'まだ決めていない', en: 'Not decided', vi: 'Chưa quyết định', ne: 'निश्चित छैन' }]
   ]}
 };
 
@@ -284,19 +308,27 @@ function doGet() {
   return ContentService.createTextOutput('Job Change Japan LINE bot is running.');
 }
 
+var CUR_UID_ = null;
 function handleEvent_(ev) {
   var uid = ev.source && ev.source.userId;
   if (!uid) return;
+  CUR_UID_ = uid;
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { console.error('lock timeout'); }
+  try { handleEventLocked_(ev, uid); } finally { try { lock.releaseLock(); } catch (e) {} }
+}
+
+function handleEventLocked_(ev, uid) {
   var st = getState_(uid);
   if (!st.lang && ev.type !== 'follow') {  // 会話の記録がない人は、シートの言語を使う
     var known = findReg_(uid);
     if (known && known['言語']) { st.lang = langCode_(known['言語']); st.registeredId = known['受付ID']; setState_(uid, st); }
   }
-  var L = T[st.lang || 'ja'];
+  var L = TL_(st.lang);
 
   if (ev.type === 'follow') {
     setRegField_(uid, 'ブロック', '');
-    reply_(ev.replyToken, [text_(T.ja.welcome), langMenu_()]);
+    reply_(ev.replyToken, [text_(T.jaen.welcome), langMenu_()]);
     return;
   }
   if (ev.type === 'unfollow') { setRegField_(uid, 'ブロック', '○'); return; }
@@ -306,7 +338,7 @@ function handleEvent_(ev) {
     if (p.lang && T[p.lang]) {
       st.lang = p.lang; setState_(uid, st);
       setRegField_(uid, '言語', langLabel_(p.lang));
-      L = T[st.lang];
+      L = TL_(st.lang);
       if (st.registeredId) reply_(ev.replyToken, [text_('OK: ' + langLabel_(p.lang))]);
       else reply_(ev.replyToken, [quick_(L.intro, [[L.startBtn, 'go=1']])]);
       return;
@@ -315,14 +347,17 @@ function handleEvent_(ev) {
     if (p.menu === 'lang') { reply_(ev.replyToken, [langMenu_()]); return; }
     if (p.menu === 'jobs') { replyJobs_(ev.replyToken, uid, st); return; }
     if (p.menu === 'ask') { reply_(ev.replyToken, [text_(L.askPrompt)]); return; }
-    if (p.q && Q[p.q] && st.step === p.q) {
+    if (p.q && Q[p.q]) {
       var q = Q[p.q], opt = q.opts[+p.i];
       if (!opt) return;
+      // 登録中でないとき（古いボタンを押した等）は、登録を最初から始める
+      if (!st.step || st.step === 'done') { startFlow_(ev.replyToken, uid, st); return; }
       st.ans = st.ans || {};
       st.ans[q.key] = opt[0];
       if (p.q === 'q0') st.flow = opt[0] === 'アルバイト' ? 'baito' : 'full';
-      var seq = flow_(st), idx = seq.indexOf(p.q);
-      st.step = idx + 1 < seq.length ? seq[idx + 1] : 'name';
+      // まだ答えていない最初の質問へ進む（ボタンを押す順番がずれても止まらない）
+      var seq = flow_(st);
+      st.step = seq.filter(function (k) { return !st.ans[Q[k].key]; })[0] || 'name';
       setState_(uid, st);
       var out = [];
       if (p.q === 'b2' && opt[0] === 'なし・わからない') out.push(text_(L.noPermit));
@@ -345,7 +380,7 @@ function handleEvent_(ev) {
       var res = saveRegistration_(uid, st, msg);
       st.step = 'done'; st.ans = {}; st.registeredId = res.id; setState_(uid, st);
       var tpl = (res.isNew ? L.done : L.updated) + (res.baito ? L.baitoRule : '');
-      reply_(ev.replyToken, [text_(tpl.replace('{name}', msg).replace('{id}', res.id))]);
+      reply_(ev.replyToken, [text_(fmt_(tpl, { name: msg, id: res.id }))]);
       return;
     }
     if (st.step && Q[st.step]) { reply_(ev.replyToken, [question_(st.step, st.lang, st)]); return; }
@@ -374,22 +409,22 @@ function stepNo_(st, qid) {
 // 求人（「求人を見る」・応募）
 // ============================================================
 function replyJobs_(token, uid, st) {
-  var L = T[st.lang || 'ja'];
+  var L = TL_(st.lang);
   var user = findReg_(uid);
   if (!user) { reply_(token, [quick_(L.needRegister, [[L.startBtn, 'menu=register']])]); return; }
   var jobs = openJobs_().filter(function (j) { return jobMatches_(j, user); }).slice(0, 4);
   if (!jobs.length) { reply_(token, [text_(L.noJobs)]); return; }
-  var msgs = [text_(L.jobsHead.replace('{n}', jobs.length))];
+  var msgs = [text_(fmt_(L.jobsHead, { n: jobs.length }))];
   jobs.forEach(function (j) { msgs.push(text_(jobText_(j, st.lang || 'ja', false))); });
   reply_(token, msgs);
 }
 
 function handleApply_(token, uid, st, jobId) {
-  var L = T[st.lang || 'ja'];
+  var L = TL_(st.lang);
   var job = openJobs_().filter(function (j) { return String(j['求人ID']).toLowerCase() === jobId.toLowerCase(); })[0];
   var user = findReg_(uid);
   if (job) bumpJobCount_(job._row, '応募数');
-  reply_(token, [text_(L.applied.replace('{id}', jobId))]);
+  reply_(token, [text_(fmt_(L.applied, { id: jobId }))]);
   notifyMail_('【Job Change Japan LINE】応募：' + (user ? user['お名前'] : uid) + ' → ' + jobId,
     '求人: ' + (job ? job['タイトル'] : '（該当なし: ' + jobId + '）') + '\n' + userSummary_(uid, user) +
     '\n\n※返信はLINE公式アカウントのチャット画面から行ってください。');
@@ -436,17 +471,25 @@ function jobMatches_(job, user) {
 }
 
 function jobText_(j, lang, isNew) {
-  var L = T[lang] || T.ja, f = L.jobFields;
+  var L = TL_(lang), f = L.jobFields, tl = tk_(lang);
+  // 日英併記のときは「日本語 / 英訳」、それ以外はその言語に翻訳
+  var t = function (s, long) {
+    s = String(s == null ? '' : s);
+    if (!s) return s;
+    if (tl !== 'jaen') return tr_(s, tl);
+    var e = tr_(s, 'en');
+    return e === s ? s : s + (long ? '\n' : ' / ') + e;
+  };
   var body = [
-    (isNew ? L.newJob + ' ' : '') + tr_(j['タイトル'], lang),
+    (isNew ? L.newJob + ' ' : '') + t(j['タイトル']),
     '',
-    f.role + ': ' + tr_(j['職種'], lang),
-    f.loc + ': ' + tr_(j['勤務地'], lang),
-    j['給与'] ? f.pay + ': ' + tr_(j['給与'], lang) : '',
-    j['内容'] ? '\n' + tr_(j['内容'], lang) : '',
+    f.role + ': ' + t(j['職種']),
+    f.loc + ': ' + t(j['勤務地']),
+    j['給与'] ? f.pay + ': ' + t(j['給与']) : '',
+    j['内容'] ? '\n' + t(j['内容'], true) : '',
     j['詳細URL'] ? '\n' + j['詳細URL'] : '',
     '',
-    L.applyHint.replace('{id}', j['求人ID']) + '  (ID: ' + j['求人ID'] + ')'
+    fmt_(L.applyHint, { id: j['求人ID'] })
   ];
   return body.join('\n').replace(/\n{3,}/g, '\n\n').slice(0, 4900);
 }
@@ -490,7 +533,7 @@ var AI_SYSTEM = [
 ].join('\n');
 
 function handleQuestion_(token, uid, st, msg) {
-  var L = T[st.lang || 'ja'];
+  var L = TL_(st.lang);
   var user = findReg_(uid);
   var key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
   var answer = null, escalate = true;
@@ -499,6 +542,7 @@ function handleQuestion_(token, uid, st, msg) {
     try {
       var hist = (st.hist || []).slice(-6);
       var ctx = user ? '\n\n# この人の登録内容\n' + userSummary_(uid, user) : '\n\n# この人はまだ未登録（メニューの「登録」を案内してよい）';
+      if (tk_(st.lang) === 'jaen') ctx += '\n\n# 回答の言語\nこの人には、日本語と英語を併記して答える（日本語の段落のあとに英語の段落）。';
       var out = callClaude_(key, AI_SYSTEM + ctx, hist.concat([{ role: 'user', content: msg }]));
       escalate = /\[ESCALATE\]/.test(out);
       answer = out.replace(/\[ESCALATE\]/g, '').trim();
@@ -560,7 +604,8 @@ function sendSteps_() {
     var d = due[due.length - 1];  // 遅れて複数たまっていても、送るのは最新の1通だけ
     var lang = langCode_(r['言語']);
     var set = (r['雇用形態'] === 'アルバイト' && STEPS_BAITO[d]) ? STEPS_BAITO[d] : STEPS[d];
-    if (push_(r['LINE userId'], [text_(set[lang] || set.ja)])) {
+    var body = tk_(lang) === 'jaen' ? set.ja + '\n\n― English ―\n' + set.en : (set[lang] || set.ja);
+    if (push_(r['LINE userId'], [text_(body)])) {
       STEP_DAYS.forEach(function (x) { if (x <= d && done.indexOf(String(x)) < 0) done.push(String(x)); });
       sh.getRange(r._row, col).setValue(done.join(','));
       sent++;
@@ -632,14 +677,20 @@ function setupRichMenu() {
 // メッセージ部品
 // ============================================================
 function label_(o, lang) {
-  if (o === 'other') return T[lang].other;
-  if (o === 'none') return T[lang].none;
-  return typeof o === 'string' ? o : (o[lang] || o.ja);
+  if (o === 'other') return TL_(lang).other;
+  if (o === 'none') return TL_(lang).none;
+  if (typeof o === 'string') return o;
+  if (tk_(lang) === 'jaen') {
+    if (o.jaen) return o.jaen;
+    var both = o.ja === o.en ? o.ja : o.ja + ' / ' + o.en;
+    return Array.from(both).length <= 20 ? both : o.ja;   // ボタンは20文字まで
+  }
+  return o[lang] || o.ja;
 }
 function question_(qid, lang, st) {
   lang = lang || 'ja';
   var items = Q[qid].opts.map(function (o, i) { return [label_(o[1], lang), 'q=' + qid + '&i=' + i]; });
-  return quick_((st ? stepNo_(st, qid) : '') + T[lang][qid], items);
+  return quick_((st ? stepNo_(st, qid) : '') + TL_(lang)[qid], items);
 }
 function langMenu_() {
   return quick_(T.ja.chooseLang, LANGS.map(function (l) { return [l[1], 'lang=' + l[0]]; }));
@@ -679,7 +730,12 @@ function lineApi_(path, payload) {
   if (r.getResponseCode() !== 200) { console.error(path + ' ' + r.getResponseCode() + ' ' + r.getContentText()); return false; }
   return true;
 }
-function reply_(replyToken, messages) { return lineApi_('message/reply', { replyToken: replyToken, messages: messages.slice(0, 5) }); }
+function reply_(replyToken, messages) {
+  var ok = lineApi_('message/reply', { replyToken: replyToken, messages: messages.slice(0, 5) });
+  // 返信の期限切れなどで送れなかったときは、プッシュで送り直す
+  if (!ok && CUR_UID_) ok = push_(CUR_UID_, messages.slice(0, 5));
+  return ok;
+}
 function push_(to, messages) { return lineApi_('message/push', { to: to, messages: messages }); }
 function multicast_(ids, messages) { return lineApi_('message/multicast', { to: ids, messages: messages }); }
 function profileName_(uid) {
@@ -771,7 +827,8 @@ function safe_(v) {
 
 function saveRegistration_(uid, st, name) {
   var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+  var mine = !lock.hasLock();          // すでにロック中（Webhook処理中）なら取り直さない
+  if (mine) lock.waitLock(20000);
   try {
     var sh = regSheet_(), a = st.ans || {}, existing = findReg_(uid);
     var vals = {
@@ -794,7 +851,7 @@ function saveRegistration_(uid, st, name) {
       userSummary_(uid, findReg_(uid)) + '\n\n一覧: ' + sh.getParent().getUrl());
     return { id: id, isNew: isNew, baito: st.flow === 'baito' };
   } finally {
-    lock.releaseLock();
+    if (mine) lock.releaseLock();
   }
 }
 
