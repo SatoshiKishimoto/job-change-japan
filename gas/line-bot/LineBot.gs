@@ -626,9 +626,11 @@ function sendSteps_() {
   return sent;
 }
 
-function sendNewJobs_() {
+// dryRun = true のときは送らずに、配信予定（求人ごとの人数）だけ返す
+function sendNewJobs_(dryRun) {
   var jsh = jobSheet_(), jobs = openJobs_().filter(function (j) { return !j['配信日時']; });
-  if (!jobs.length) return 0;
+  var plan = [];
+  if (!jobs.length) return dryRun ? plan : 0;
   var users = sheetObjects_(regSheet_()).filter(function (u) { return u['LINE userId'] && u['ブロック'] !== '○'; });
   var total = 0;
   jobs.forEach(function (job) {
@@ -638,6 +640,7 @@ function sendNewJobs_() {
       seen[u['LINE userId']] = 1;
       var lg = langCode_(u['言語']); (byLang[lg] = byLang[lg] || []).push(u['LINE userId']);
     });
+    if (dryRun) { plan.push({ id: job['求人ID'], title: job['タイトル'], n: Object.keys(seen).length }); return; }
     var n = 0;
     Object.keys(byLang).forEach(function (lg) {
       var ids = byLang[lg];
@@ -649,7 +652,44 @@ function sendNewJobs_() {
     jsh.getRange(job._row, colIndex_(jsh, '配信人数')).setValue(n);
     total += n;
   });
-  return total;
+  return dryRun ? plan : total;
+}
+
+// ============================================================
+// スプレッドシートのメニュー「LINE配信」
+// ============================================================
+function onSheetOpen() {
+  SpreadsheetApp.getUi().createMenu('LINE配信')
+    .addItem('新着求人を今すぐ送る', 'menuSendJobsNow')
+    .addItem('配信予定を確認する（送りません）', 'menuPreviewJobs')
+    .addToUi();
+}
+
+function previewText_(plan) {
+  return plan.map(function (p) { return '・' + p.id + ' ' + p.title + ' → ' + p.n + '人'; }).join('\n');
+}
+
+function menuPreviewJobs() {
+  var ui = SpreadsheetApp.getUi(), plan = sendNewJobs_(true);
+  ui.alert('配信予定', plan.length ? 'まだ配信していない求人：\n\n' + previewText_(plan) : 'まだ配信していない求人はありません。', ui.ButtonSet.OK);
+}
+
+function menuSendJobsNow() {
+  var ui = SpreadsheetApp.getUi();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var plan = sendNewJobs_(true);
+    if (!plan.length) { ui.alert('新着求人', 'まだ配信していない求人はありません。', ui.ButtonSet.OK); return; }
+    var total = plan.reduce(function (a, p) { return a + p.n; }, 0);
+    var ans = ui.alert('新着求人を今すぐ送りますか？',
+      previewText_(plan) + '\n\n合計 ' + total + '通（LINEの月200通の無料枠を使います）', ui.ButtonSet.YES_NO);
+    if (ans !== ui.Button.YES) return;
+    var sent = sendNewJobs_(false);
+    ui.alert('送信しました', sent + '通を送りました。「配信日時」「配信人数」に記録しました。', ui.ButtonSet.OK);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function dayNum_(d) {
@@ -919,6 +959,11 @@ function setup() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'runDaily') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('runDaily').timeBased().everyDays(1).atHour(DAILY_HOUR).inTimezone('Asia/Tokyo').create();
   console.log('自動実行: 毎日 ' + DAILY_HOUR + '時台に runDaily');
+
+  // スプレッドシートを開いたときに「LINE配信」メニューを出す
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'onSheetOpen') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('onSheetOpen').forSpreadsheet(jsh.getParent()).onOpen().create();
+  console.log('メニュー: スプレッドシートを開き直すと「LINE配信」メニューが出ます');
 
   var r = UrlFetchApp.fetch('https://api.line.me/v2/bot/info', { headers: { Authorization: 'Bearer ' + token_() }, muteHttpExceptions: true });
   console.log('LINE接続確認: ' + r.getResponseCode() + ' ' + r.getContentText());
