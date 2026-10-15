@@ -46,7 +46,7 @@ var T = {
     noJobs: 'いま、あなたの希望に合う求人はありません。\n新しい求人が出たら、このLINEでお知らせします。',
     jobsHead: 'あなたの希望に合う求人です（{n}件）',
     newJob: '【新着求人】',
-    jobFields: { role: '職種', loc: '勤務地', pay: '給与' },
+    jobFields: { role: '職種', loc: '勤務地', pay: '給与', type: '雇用形態' },
     applyHint: '応募・質問は「応募 {id}」と送ってください。',
     applied: '応募を受け付けました（求人ID: {id}）。\n担当者から、このLINEでご連絡します。',
     askPrompt: '質問をこのトークに送ってください。\nAIがすぐにお答えし、必要なときは担当者からご連絡します。',
@@ -70,7 +70,7 @@ var T = {
     noJobs: 'There are no openings that match your wishes right now.\nWe will let you know on this LINE when new jobs come in.',
     jobsHead: 'Jobs that match your wishes ({n})',
     newJob: '[New job]',
-    jobFields: { role: 'Job', loc: 'Location', pay: 'Salary' },
+    jobFields: { role: 'Job type', loc: 'Location', pay: 'Salary', type: 'Employment' },
     applyHint: 'To apply or ask, send "apply {id}".',
     applied: 'We received your application (Job ID: {id}).\nOur staff will contact you on this LINE.',
     askPrompt: 'Please send your question in this chat.\nOur AI will answer right away, and our staff will follow up if needed.',
@@ -94,7 +94,7 @@ var T = {
     noJobs: 'Hiện chưa có việc phù hợp với mong muốn của bạn.\nKhi có việc mới, chúng tôi sẽ báo qua LINE này.',
     jobsHead: 'Việc làm phù hợp với bạn ({n})',
     newJob: '[Việc làm mới]',
-    jobFields: { role: 'Ngành nghề', loc: 'Nơi làm việc', pay: 'Lương' },
+    jobFields: { role: 'Ngành nghề', loc: 'Nơi làm việc', pay: 'Lương', type: 'Hình thức' },
     applyHint: 'Để ứng tuyển hoặc hỏi, hãy gửi "apply {id}".',
     applied: 'Chúng tôi đã nhận đơn ứng tuyển (Mã việc: {id}).\nNhân viên sẽ liên lạc qua LINE này.',
     askPrompt: 'Hãy gửi câu hỏi vào cuộc trò chuyện này.\nAI sẽ trả lời ngay, và nhân viên sẽ liên lạc nếu cần.',
@@ -118,7 +118,7 @@ var T = {
     noJobs: 'अहिले तपाईंको इच्छा अनुसारको काम छैन।\nनयाँ काम आएमा यही LINE मा जानकारी दिनेछौं।',
     jobsHead: 'तपाईंलाई मिल्ने कामहरू ({n})',
     newJob: '[नयाँ काम]',
-    jobFields: { role: 'काम', loc: 'स्थान', pay: 'तलब' },
+    jobFields: { role: 'कामको प्रकार', loc: 'स्थान', pay: 'तलब', type: 'रोजगारीको किसिम' },
     applyHint: 'आवेदन वा प्रश्नका लागि "apply {id}" पठाउनुहोस्।',
     applied: 'तपाईंको आवेदन प्राप्त भयो (काम ID: {id})।\nहाम्रो कर्मचारीले यही LINE मा सम्पर्क गर्नेछ।',
     askPrompt: 'आफ्नो प्रश्न यही च्याटमा पठाउनुहोस्।\nAI ले तुरुन्तै जवाफ दिनेछ, आवश्यक परे कर्मचारीले सम्पर्क गर्नेछ।',
@@ -209,7 +209,7 @@ var SHORT_KEYS = ['chooseLang', 'startBtn', 'q0', 'q1', 'q2', 'q3', 'q4', 'q5', 
 T.jaen = {};
 Object.keys(T.ja).forEach(function (k) {
   var a = T.ja[k], b = T.en[k];
-  if (k === 'jobFields') { T.jaen[k] = { role: '職種 / Job', loc: '勤務地 / Location', pay: '給与 / Salary' }; return; }
+  if (k === 'jobFields') { T.jaen[k] = { role: '職種 / Job type', loc: '勤務地 / Location', pay: '給与 / Salary', type: '雇用形態 / Employment' }; return; }
   if (k === 'chooseLang') { T.jaen[k] = a; return; }
   if (k === 'startBtn') { T.jaen[k] = '登録 / Register'; return; }
   if (k === 'other') { T.jaen[k] = 'その他 / Other'; return; }
@@ -483,6 +483,7 @@ function jobText_(j, lang, isNew) {
   var body = [
     (isNew ? L.newJob + ' ' : '') + t(j['タイトル']),
     '',
+    jobType_(j, lang, f),
     f.role + ': ' + t(j['職種']),
     f.loc + ': ' + t(j['勤務地']),
     j['給与'] ? f.pay + ': ' + t(j['給与']) : '',
@@ -492,6 +493,18 @@ function jobText_(j, lang, isNew) {
     fmt_(L.applyHint, { id: j['求人ID'] })
   ];
   return body.join('\n').replace(/\n{3,}/g, '\n\n').slice(0, 4900);
+}
+
+// 雇用形態の行（アルバイト / Part-time など）。空欄・どちらもの求人は表示しない
+var TYPE_LABEL = {
+  'アルバイト': { ja: 'アルバイト', en: 'Part-time', vi: 'Làm thêm (part-time)', ne: 'पार्ट-टाइम' },
+  '正社員・フルタイム': { ja: '正社員・フルタイム', en: 'Full-time', vi: 'Toàn thời gian', ne: 'पूर्णकालीन' }
+};
+function jobType_(j, lang, f) {
+  var l = TYPE_LABEL[String(j['雇用形態'] || '').trim()];
+  if (!l) return '';
+  var tl = tk_(lang), v = tl === 'jaen' ? l.ja + ' / ' + l.en : (l[tl] || l.ja);
+  return f.type + ': ' + v;
 }
 
 var TR_CACHE_ = {};
