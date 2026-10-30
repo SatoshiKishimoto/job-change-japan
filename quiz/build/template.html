@@ -196,8 +196,9 @@ async function boot(){
   TOKEN = liff.getAccessToken();
   try {
     ME = await api({ api:'me' });
+    if (!ME.counts) throw { error:'gas_not_updated' };   // GASに練習問題の機能がまだ入っていない
     home();
-  } catch (e) { showError(e); }
+  } catch (e) { console.error(e); showError(e && e.error ? e : { error:'page', detail: String(e && e.message || e) }); }
 }
 
 function loginGate(){
