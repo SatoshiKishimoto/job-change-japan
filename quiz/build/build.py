@@ -33,7 +33,7 @@ import html as H                      # noqa: E402
 import terms                          # noqa: E402
 
 # プライバシーポリシーのURL（わかったら入れる。空なら、リンクを出さない）
-PRIVACY_URL = ""
+PRIVACY_URL = "https://fairlyconnecting.blog.jp/archives/11232068.html"
 
 # 問題ID：学科は E/C/S/U＋番号、実技・判断は H＋分野、実技・計画立案は K＋分野
 LETTER = {"eisei": "E", "chori": "C", "sekkyaku": "S", "unei": "U"}

@@ -106,6 +106,8 @@ def render(F, privacy_url=""):
     summary = "".join(f"<li>{F(t)}</li>" for t in SUMMARY)
     summary_en = "".join(f"<li>{H.escape(t)}</li>" for t in SUMMARY_EN)
     arts = "".join(f"<section><h2>{F(h)}</h2>{''.join(p(t) for t in body)}</section>" for h, body in TERMS)
+    if privacy_url:
+        arts = arts.replace(F("当社のプライバシーポリシー"), f'<a href="{H.escape(privacy_url)}">' + F("当社のプライバシーポリシー") + "</a>", 1)
     priv = (f'<p><a href="{H.escape(privacy_url)}">{F("プライバシーポリシー")}</a></p>' if privacy_url else "")
     return f"""<!doctype html>
 <html lang="ja">
