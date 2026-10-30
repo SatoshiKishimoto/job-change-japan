@@ -19,6 +19,10 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from questions import Q, CATS, KINDS  # noqa: E402
 from questions_n3 import N3, N3_KINDS, N3_SECTION, N3_SECTIONS  # noqa: E402
+from questions_n3_reading import P as N3_PASSAGES, N3_READING_KINDS, N3_READING_SECTION  # noqa: E402
+N3_KINDS = {**N3_KINDS, **N3_READING_KINDS}
+N3_SECTION = {**N3_SECTION, **N3_READING_SECTION}
+N3_SECTIONS = {**N3_SECTIONS, "dokkai": "読解"}
 from furi import furigana as F       # noqa: E402
 import html as H                      # noqa: E402
 
@@ -62,6 +66,23 @@ for row in N3:
                      "ch": [H.escape(c) for c in (ok, w1, w2, w3)], "e": F(e)})
     n3n += 1
 
+# 文章つき問題（文章の文法・読解）：文章は QUIZ_PASSAGES に1回だけ入れ、問題は p（文章ID）と pi（文章の中の順番）を持つ
+def passage_html(t):
+    return n3text(t).replace("\n", "<br>")
+
+PASSAGES = {}
+PP = {"bunsho": "RB", "tanbun": "RT", "chubun": "RC", "chobun": "RL", "joho": "RJ"}
+for row in N3_PASSAGES:
+    k = row["k"]
+    seq[PP[k]] = seq.get(PP[k], 0) + 1
+    pid = f"{PP[k]}{seq[PP[k]]:02d}"
+    PASSAGES[pid] = passage_html(row["text"])
+    for i, (q, ok, w1, w2, w3, e) in enumerate(row["qs"]):
+        assert len({ok, w1, w2, w3}) == 4, q
+        bank.append({"id": f"{pid}-{i + 1}", "x": "n3", "c": N3_SECTION[k], "k": k, "p": pid, "pi": i,
+                     "q": n3text(q), "ch": [H.escape(c) for c in (ok, w1, w2, w3)], "e": F(e)})
+        n3n += 1
+
 N3_META = {"sections": N3_SECTIONS, "kinds": {k: v[0] for k, v in N3_KINDS.items()}}
 
 gs = (
@@ -70,6 +91,7 @@ gs = (
     f"var QUIZ_CATS = {json.dumps(CATS, ensure_ascii=False)};\n"
     f"var QUIZ_KINDS = {json.dumps(KINDS, ensure_ascii=False)};\n"
     f"var QUIZ_N3 = {json.dumps(N3_META, ensure_ascii=False)};\n"
+    "var QUIZ_PASSAGES = {\n" + ",\n".join(json.dumps(k, ensure_ascii=False) + ": " + json.dumps(v, ensure_ascii=False) for k, v in PASSAGES.items()) + "\n};\n"
     "var QUIZ_BANK = [\n" + ",\n".join(json.dumps(b, ensure_ascii=False) for b in bank) + "\n];\n"
 )
 open(os.path.join(ROOT, "gas", "line-bot", "QuizBank.gs"), "w").write(gs)
@@ -130,10 +152,12 @@ L = {k: F(v) for k, v in {
     "skillLead": "外食業特定技能2号技能測定試験（学科・実技）の練習です。",
     "n3Lead": "日本語能力試験（JLPT）N3の練習です。本番と同じく、問題にはふりがながありません（解説にはあります）。",
     "n3Mock": "N3 模擬テスト",
-    "n3MockSub": "{name}：本番と同じ{n}問・{m}分。回数券は技能測定試験の模擬テストと共通です。",
-    "n3Soon": "「文法・読解」と「聴解」は準備中です。",
+    "n3MockSub": "{name}：本番と同じ{n}問・{m}分",
+    "sharedCredits": "回数券は、技能測定試験の模擬テストと共通です。1回受けるごとに1回分を使います。",
+    "n3Soon": "「聴解」は準備中です。",
+    "showPassage": "文章を見る",
     "n3Line": "N3の合否は、総合得点（180点満点）が95点以上で、さらに「言語知識」「読解」「聴解」がそれぞれ19点以上必要です。本番の得点は、正答数から計算された尺度得点なので、この正答率とは一致しません。目安として使ってください。",
-    "n3All": "N3 全問チャレンジ", "n3AllSub": "文字・語彙と文法の問題を、ランダムな順番で出します",
+    "n3All": "N3 全問チャレンジ", "n3AllSub": "文字・語彙・文法・読解の問題を、ランダムな順番で出します",
     "byType": "問題の種類別の正解数",
 }.items()}
 L["price"] = F("模擬テストは有料です。") + "<b>" + F("{yen}円で{n}回") + "</b>" + F("受けられます（使い切ったら、また{yen}円で{n}回）。")
@@ -152,6 +176,6 @@ html = html.replace("__CATS__", json.dumps({k: F(v) for k, v in CATS.items()}, e
 html = html.replace("__KINDS__", json.dumps({k: F(v) for k, v in KINDS.items()}, ensure_ascii=False))
 html = html.replace("__LBL__", json.dumps(L, ensure_ascii=False))
 html = html.replace("__N3__", json.dumps({"sections": {k: F(v) for k, v in N3_SECTIONS.items()},
-                                          "kinds": {k: {"name": F(v[0]), "inst": H.escape(v[1])} for k, v in N3_KINDS.items()}}, ensure_ascii=False))
+                                          "kinds": {k: {"name": F(v[0]), "inst": H.escape(v[1]), "sec": N3_SECTION[k]} for k, v in N3_KINDS.items()}}, ensure_ascii=False))
 open(os.path.join(ROOT, "quiz", "index.html"), "w").write(html)
 print(f"QuizBank.gs: {len(bank)}問（うちN3 {n3n}問） / quiz/index.html を作成しました")

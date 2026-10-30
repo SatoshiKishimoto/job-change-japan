@@ -55,7 +55,7 @@ var T = {
     fallback: 'メッセージありがとうございます。担当者が確認してご返信します。',
     handoff: '\n\n（担当者にも伝えました。このLINEでご連絡します）',
     aiNote: '※AIによる自動回答です',
-    quizInfo: '【特定技能2号 外食業 練習問題】\n公式LINEの友だちは、技能測定試験の練習問題を無料で使えます（ふりがな付き）。\n・学科と実技（判断・計画立案）の練習：無料\n・本番と同じ55問・70分の模擬テスト：500円で10回\n・日本語能力試験N3（文字・語彙・文法）の練習：無料\n\n下のリンクか、メニューの「練習問題」から開いてください。\n{url}'
+    quizInfo: '【特定技能2号 外食業 練習問題】\n公式LINEの友だちは、技能測定試験の練習問題を無料で使えます（ふりがな付き）。\n・学科と実技（判断・計画立案）の練習：無料\n・本番と同じ55問・70分の模擬テスト：500円で10回\n・日本語能力試験N3（文字・語彙・文法・読解）の練習：無料\n\n下のリンクか、メニューの「練習問題」から開いてください。\n{url}'
   },
   en: {
     welcome: 'Thank you for adding us!\nThis is Job Change Japan (Fairly connecting Inc.).\n\nWe help foreign nationals find jobs in Japan — completely free.',
@@ -80,7 +80,7 @@ var T = {
     fallback: 'Thank you for your message. Our staff will check and reply.',
     handoff: '\n\n(We have also passed this to our staff. They will contact you on this LINE.)',
     aiNote: '* Automatic answer by AI',
-    quizInfo: '[Practice test: Specified Skilled Worker (ii), Food Service]\nFriends of our LINE account can use practice questions for the skills test for free (in Japanese with furigana).\n- Practice (written and practical): free\n- Mock exam in the same format as the real test (55 questions, 70 minutes): 500 yen for 10 tries\n- JLPT N3 practice (vocabulary and grammar): free\n\nOpen the link below, or tap "Practice test" in the menu.\n{url}'
+    quizInfo: '[Practice test: Specified Skilled Worker (ii), Food Service]\nFriends of our LINE account can use practice questions for the skills test for free (in Japanese with furigana).\n- Practice (written and practical): free\n- Mock exam in the same format as the real test (55 questions, 70 minutes): 500 yen for 10 tries\n- JLPT N3 practice (vocabulary, grammar and reading): free\n\nOpen the link below, or tap "Practice test" in the menu.\n{url}'
   },
   vi: {
     welcome: 'Cảm ơn bạn đã kết bạn!\nĐây là Job Change Japan (Công ty Fairly connecting).\n\nChúng tôi hỗ trợ người nước ngoài tìm việc tại Nhật Bản — hoàn toàn miễn phí.',
@@ -105,7 +105,7 @@ var T = {
     fallback: 'Cảm ơn tin nhắn của bạn. Nhân viên sẽ kiểm tra và trả lời.',
     handoff: '\n\n(Chúng tôi đã chuyển cho nhân viên. Nhân viên sẽ liên lạc qua LINE này.)',
     aiNote: '* Câu trả lời tự động bởi AI',
-    quizInfo: '[Đề luyện thi Kỹ năng đặc định số 2 – Ngành dịch vụ ăn uống]\nBạn bè của tài khoản LINE này có thể luyện đề thi kỹ năng miễn phí (tiếng Nhật có furigana).\n- Luyện tập (lý thuyết và thực hành): miễn phí\n- Thi thử giống đề thật (55 câu, 70 phút): 500 yên cho 10 lần\n- Luyện JLPT N3 (từ vựng, ngữ pháp): miễn phí\n\nMở đường link bên dưới, hoặc bấm "Practice test" ở menu.\n{url}'
+    quizInfo: '[Đề luyện thi Kỹ năng đặc định số 2 – Ngành dịch vụ ăn uống]\nBạn bè của tài khoản LINE này có thể luyện đề thi kỹ năng miễn phí (tiếng Nhật có furigana).\n- Luyện tập (lý thuyết và thực hành): miễn phí\n- Thi thử giống đề thật (55 câu, 70 phút): 500 yên cho 10 lần\n- Luyện JLPT N3 (từ vựng, ngữ pháp, đọc hiểu): miễn phí\n\nMở đường link bên dưới, hoặc bấm "Practice test" ở menu.\n{url}'
   },
   ne: {
     welcome: 'साथी थप्नुभएकोमा धन्यवाद!\nयो Job Change Japan (Fairly connecting Inc.) हो।\n\nहामी जापानमा काम खोज्ने विदेशीहरूलाई निःशुल्क सहयोग गर्छौं।',
@@ -130,7 +130,7 @@ var T = {
     fallback: 'सन्देशको लागि धन्यवाद। हाम्रो कर्मचारीले हेरेर जवाफ दिनेछ।',
     handoff: '\n\n(हामीले कर्मचारीलाई पनि जानकारी दियौं। उहाँले यही LINE मा सम्पर्क गर्नुहुनेछ।)',
     aiNote: '* AI द्वारा स्वचालित जवाफ',
-    quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूले सीप परीक्षाको अभ्यास प्रश्न निःशुल्क प्रयोग गर्न सक्नुहुन्छ (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक): निःशुल्क\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट): ५०० येनमा १० पटक\n- JLPT N3 अभ्यास (शब्द र व्याकरण): निःशुल्क\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
+    quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूले सीप परीक्षाको अभ्यास प्रश्न निःशुल्क प्रयोग गर्न सक्नुहुन्छ (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक): निःशुल्क\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट): ५०० येनमा १० पटक\n- JLPT N3 अभ्यास (शब्द, व्याकरण र पढाइ): निःशुल्क\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
   }
 };
 
@@ -560,7 +560,7 @@ var AI_SYSTEM = [
   '- 風俗営業に関係する仕事はできない。許可が出る前に働くことはできない。個別の判断は担当者が確認すると伝える。',
   '',
   '# 特定技能2号 外食業の練習問題（当社が提供）',
-  '- 公式LINEの友だちは、外食業特定技能2号技能測定試験の練習問題を無料で使える（学科・実技、ふりがな付き）。模擬テスト（本番と同じ55問・70分）は500円で10回。日本語能力試験N3（文字・語彙・文法）の練習問題もある（N3の文字・語彙の模擬テストは35問・30分、回数券は共通）。',
+  '- 公式LINEの友だちは、外食業特定技能2号技能測定試験の練習問題を無料で使える（学科・実技、ふりがな付き）。模擬テスト（本番と同じ55問・70分）は500円で10回。日本語能力試験N3（文字・語彙・文法・読解）の練習問題もある（N3の模擬テストは「文字・語彙」35問・30分と「文法・読解」39問・70分、回数券は共通）。',
   '- 試験・2号・練習問題について聞かれたら、このリンクを案内する（メニューの「練習問題」からも開ける）: ' + QUIZ_URL,
   '- 外食業で2号になるには、技能測定試験の合格に加えて、日本語能力試験N3以上の合格と、2年以上の指導等の実務経験（店舗管理の補助）が必要。',
   '- 練習問題は当社のオリジナル問題で、実際の試験問題ではない。模擬テストの購入方法は準備中なので、聞かれたら担当者が案内すると伝える。'

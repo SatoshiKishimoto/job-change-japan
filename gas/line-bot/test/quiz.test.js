@@ -163,7 +163,8 @@ assert.strictEqual(m2.credits, 8);
 
 // --- N3 ---
 r = call({ api: 'me', token: 'good' });
-assert.strictEqual(r.n3.all, 126); assert.strictEqual(r.n3.yomi, 20); assert.strictEqual(r.n3.moji, 84); assert.strictEqual(r.n3.bunpo, 42);
+assert.strictEqual(r.n3.all, 168); assert.strictEqual(r.n3.yomi, 20); assert.strictEqual(r.n3.moji, 84); assert.strictEqual(r.n3.bunpo, 52); assert.strictEqual(r.n3.dokkai, 32);
+assert.deepStrictEqual([r.mocks.n3bunpo.size, r.mocks.n3bunpo.minutes, r.mocks.n3bunpo.exam], [39, 70, 'n3']);
 assert.deepStrictEqual([r.mocks.n3moji.size, r.mocks.n3moji.minutes, r.mocks.n3moji.maxPoints], [35, 30, null]);
 assert.strictEqual(r.total, 175, 'skill total excludes N3');
 const n3p = call({ api: 'practice', token: 'good', exam: 'n3', cat: 'keishiki' }).questions;
@@ -172,6 +173,11 @@ n3p.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.st
 assert.ok(!/<rt>/.test(n3p.map(q => q.q + q.ch.join('')).join('')), 'no furigana in N3 questions/choices');
 assert.ok(n3p.some(q => /<rt>/.test(q.e)), 'furigana in explanations');
 const pos4 = [0, 0, 0, 0]; call({ api: 'practice', token: 'good', exam: 'n3', cat: 'all' }).questions.forEach(q => pos4[q.a]++);
+// 文章つき：練習でも同じ文章の問題は続けて、順番どおり
+const rc = call({ api: 'practice', token: 'good', exam: 'n3', cat: 'chubun' });
+assert.strictEqual(rc.questions.length, 12); assert.strictEqual(Object.keys(rc.passages).length, 4);
+for (let i = 0; i < 12; i += 3) { const g = rc.questions.slice(i, i + 3); assert.ok(g.every(q => q.p === g[0].p)); assert.deepStrictEqual(g.map(q => q.id.split('-')[1]), ['1', '2', '3']); }
+assert.ok(rc.passages[rc.questions[0].p].includes('<br>'));
 console.log('N3 answer positions', pos4); assert.ok(pos4.every(n => n > 10));
 assert.strictEqual(call({ api: 'practice', token: 'good', exam: 'n3', cat: 'moji' }).questions.length, 84);
 assert.ok(call({ api: 'practice', token: 'good', cat: 'all' }).questions.every(q => !q.x), 'skill practice has no N3');
@@ -197,6 +203,26 @@ assert.ok(sub.results.slice(30).every(x => x.you === null));
 const arow = ss.sheets['模擬テスト受験'].data.slice(-1)[0];
 console.log('N3 attempt row:', arow.slice(4, 9), arow[13]);
 assert.strictEqual(call({ api: 'mock_start', token: 'good', mock: 'nope' }).error, 'unknown');
+
+// N3 文法・読解の模擬テスト：39問、種類の順、文章ごとにまとまる
+const rb = call({ api: 'mock_start', token: 'good', mock: 'n3bunpo' });
+assert.strictEqual(rb.ok, true); assert.strictEqual(rb.questions.length, 39); assert.strictEqual(rb.minutes, 70);
+const ks = rb.questions.map(q => q.k);
+assert.deepStrictEqual([...new Set(ks)], ['keishiki', 'kumitate', 'bunsho', 'tanbun', 'chubun', 'chobun', 'joho']);
+assert.deepStrictEqual(['keishiki', 'kumitate', 'bunsho', 'tanbun', 'chubun', 'chobun', 'joho'].map(k => ks.filter(x => x === k).length), [13, 5, 5, 4, 6, 4, 2]);
+const pids = rb.questions.filter(q => q.p).map(q => q.p);
+assert.strictEqual(new Set(pids).size, 1 + 4 + 2 + 1 + 1, 'passage count');
+// 同じ文章の問題は連続している
+const firstIdx = {}, lastIdx = {}; rb.questions.forEach((q, i) => { if (q.p) { if (firstIdx[q.p] === undefined) firstIdx[q.p] = i; lastIdx[q.p] = i; } });
+Object.keys(firstIdx).forEach(pid => assert.strictEqual(lastIdx[pid] - firstIdx[pid] + 1, pids.filter(x => x === pid).length, pid));
+assert.deepStrictEqual(Object.keys(rb.passages).sort(), [...new Set(pids)].sort());
+const rbs = call({ api: 'mock_submit', token: 'good', attemptId: rb.attemptId, answers: rb.questions.map(() => 0) });
+assert.strictEqual(rbs.ok, true); assert.ok(rbs.passages && Object.keys(rbs.passages).length === 9);
+// 2回目は、前回と違う文章が出る（文章の文法2題・中文4題・長文2題・情報検索2題）
+const rb2 = call({ api: 'mock_start', token: 'good', mock: 'n3bunpo' });
+const p1 = new Set(pids), p2 = rb2.questions.filter(q => q.p).map(q => q.p);
+console.log('N3 reading 2nd mock passage overlap:', p2.filter(x => p1.has(x)).length);
+assert.strictEqual(p2.filter(x => p1.has(x)).length, 0);
 
 // webhook path still works (no events)
 assert.deepStrictEqual(JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify({ destination: 'x', events: [] }) } }).s), { ok: true });

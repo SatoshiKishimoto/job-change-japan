@@ -5,7 +5,7 @@
  *  - 練習問題ページ（quiz/index.html, LIFF）が LINE ログインのアクセストークンを送ってくる
  *  - このGASで「本物のトークンか」「公式LINEの友だちか」を確認してから問題を返す
  *  - 練習（分野別・全問）は友だちなら無料。模擬テストは回数券（500円で10回）を1回分使う
- *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）。回数券は共通
+ *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）／N3 文法・読解（39問・70分）。回数券は共通
  *  - 問題の順番と選択肢の順番は毎回シャッフル。模擬テストはまだ出ていない問題を優先して出す
  *
  * スクリプトプロパティ（追加分）
@@ -39,6 +39,12 @@ var QUIZ_MOCKS = {
   n3moji: {
     name: 'N3 文字・語彙', minutes: 30, exam: 'n3',
     plan: [['moji', 'yomi', 8, 0], ['moji', 'hyoki', 6, 0], ['moji', 'bunmyaku', 11, 0], ['moji', 'iikae', 5, 0], ['moji', 'yoho', 5, 0]]
+  },
+  // 日本語能力試験N3 言語知識（文法）・読解：本番と同じ39問・70分。文章つきの問題は、文章ごとにまとめて出す
+  n3bunpo: {
+    name: 'N3 文法・読解', minutes: 70, exam: 'n3',
+    plan: [['bunpo', 'keishiki', 13, 0], ['bunpo', 'kumitate', 5, 0], ['bunpo', 'bunsho', 5, 0],
+           ['dokkai', 'tanbun', 4, 0], ['dokkai', 'chubun', 6, 0], ['dokkai', 'chobun', 4, 0], ['dokkai', 'joho', 2, 0]]
   }
 };
 
@@ -68,7 +74,9 @@ function quizRoute_(b) {
 
   switch (b.api) {
     case 'me': return quizMe_(user);
-    case 'practice': return { ok: true, questions: quizPractice_(String(b.cat || 'all'), String(b.exam || 'skill')) };
+    case 'practice':
+      var pq = quizPractice_(String(b.cat || 'all'), String(b.exam || 'skill'));
+      return { ok: true, questions: pq, passages: quizPassagesFor_(pq) };
     case 'mock_start': return quizWithLock_(function () { return quizMockStart_(user, String(b.mock || 'skill')); });
     case 'mock_resume': return quizMockResume_(user, String(b.attemptId || ''));
     case 'mock_submit': return quizWithLock_(function () { return quizMockSubmit_(user, String(b.attemptId || ''), b.answers); });
@@ -131,7 +139,7 @@ function quizMe_(user) {
   var mocks = {};
   Object.keys(QUIZ_MOCKS).forEach(function (id) {
     var m = QUIZ_MOCKS[id];
-    mocks[id] = { name: m.name, size: quizMockSize_(id), minutes: m.minutes, maxPoints: quizMaxPoints_(id) || null, passPoints: m.passPoints || null };
+    mocks[id] = { name: m.name, exam: m.exam || 'skill', size: quizMockSize_(id), minutes: m.minutes, maxPoints: quizMaxPoints_(id) || null, passPoints: m.passPoints || null };
   });
   var s = mocks.skill;
   return {
@@ -159,10 +167,32 @@ function quizPractice_(cat, exam) {
       return (cat === 'handan' || cat === 'keikaku') ? q.k === cat : (q.k === 'gakka' && q.c === cat);
     });
   }
-  return quizShuffle_(list).map(function (q) {
+  return quizShuffleKeepSets_(list).map(function (q) {
     var order = quizOrder_(q);
-    return { id: q.id, x: q.x || '', c: q.c, k: q.k, q: q.q, ch: order.map(function (i) { return q.ch[i]; }), a: order.indexOf(0), e: q.e };
+    return { id: q.id, x: q.x || '', c: q.c, k: q.k, p: q.p || '', q: q.q, ch: order.map(function (i) { return q.ch[i]; }), a: order.indexOf(0), e: q.e };
   });
+}
+
+// 文章つき問題は、同じ文章の問題をまとめて順番どおりに並べる（文章の順番はシャッフル）
+function quizShuffleKeepSets_(list) {
+  var groups = {}, keys = [];
+  list.forEach(function (q) {
+    var g = q.p || q.id;
+    if (!groups[g]) { groups[g] = []; keys.push(g); }
+    groups[g].push(q);
+  });
+  var out = [];
+  quizShuffle_(keys).forEach(function (g) {
+    out = out.concat(groups[g].sort(function (a, b) { return (a.pi || 0) - (b.pi || 0); }));
+  });
+  return out;
+}
+
+// 問題の一覧に出てくる文章だけを返す
+function quizPassagesFor_(qs) {
+  var out = {};
+  qs.forEach(function (q) { if (q.p && typeof QUIZ_PASSAGES !== 'undefined' && QUIZ_PASSAGES[q.p]) out[q.p] = QUIZ_PASSAGES[q.p]; });
+  return out;
 }
 
 // ============================================================
@@ -178,6 +208,25 @@ function quizMockIdOf_(r) { var m = String(r['種類'] || ''); return QUIZ_MOCKS
 function quizInPlan_(id, q) {
   var exam = QUIZ_MOCKS[id].exam || '';
   return (q.x || '') === exam && QUIZ_MOCKS[id].plan.some(function (p) { return p[0] === q.c && p[1] === q.k; });
+}
+
+// 問題を n 問選ぶ。文章つきの問題は文章ごと（全部の問題）選ぶ。まだ出ていないものを優先
+function quizPick_(pool, n, seen) {
+  var groups = {}, keys = [];
+  pool.forEach(function (q) {
+    var g = q.p || q.id;
+    if (!groups[g]) { groups[g] = []; keys.push(g); }
+    groups[g].push(q);
+  });
+  var fresh = [], old = [];
+  quizShuffle_(keys).forEach(function (g) {
+    (groups[g].some(function (q) { return seen[q.id]; }) ? old : fresh).push(g);
+  });
+  var out = [];
+  fresh.concat(old).forEach(function (g) {
+    if (out.length + groups[g].length <= n) out = out.concat(groups[g]);
+  });
+  return out;
 }
 
 function quizMockStart_(user, mockId) {
@@ -197,16 +246,14 @@ function quizMockStart_(user, mockId) {
   M.plan.forEach(function (p) {
     var exam = M.exam || '';
     var pool = QUIZ_BANK.filter(function (q) { return (q.x || '') === exam && q.c === p[0] && q.k === p[1]; });
-    var fresh = quizShuffle_(pool.filter(function (q) { return !seen[q.id]; }));
-    var old = quizShuffle_(pool.filter(function (q) { return seen[q.id]; }));
-    var take = fresh.concat(old).slice(0, p[2]);
+    var take = quizPick_(pool, p[2], seen);
     // 技能：学科のあとに実技（それぞれの中はシャッフル）。N3：問題の種類の順（種類の中はシャッフル）
     var g = M.groupOrder ? (p[1] === 'gakka' ? 'gakka' : 'jitsugi') : p[1];
     if (!groups[g]) { groups[g] = []; order.push(g); }
     groups[g] = groups[g].concat(take);
   });
   var list = [];
-  (M.groupOrder || order).forEach(function (g) { list = list.concat(quizShuffle_(groups[g] || [])); });
+  (M.groupOrder || order).forEach(function (g) { list = list.concat(quizShuffleKeepSets_(groups[g] || [])); });
   var items = list.map(function (q) { return [q.id, quizOrder_(q).join('')]; });
 
   var id = 'M' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyMMddHHmmss') + Math.floor(Math.random() * 9000 + 1000);
@@ -217,7 +264,8 @@ function quizMockStart_(user, mockId) {
   var vals = { '開始日時': new Date(), '受験ID': id, 'LINE userId': user.uid, 'LINE表示名': safe_(user.name), '状態': '受験中', '問題数': items.length, '出題データ': JSON.stringify(items), '種類': mockId };
   ash.appendRow(head.map(function (h) { return vals[h] == null ? '' : vals[h]; }));
 
-  return { ok: true, attemptId: id, mock: mockId, credits: left - 1, started: +vals['開始日時'], minutes: M.minutes, questions: quizMockQuestions_(items) };
+  var mq = quizMockQuestions_(items);
+  return { ok: true, attemptId: id, mock: mockId, credits: left - 1, started: +vals['開始日時'], minutes: M.minutes, questions: mq, passages: quizPassagesFor_(mq) };
 }
 
 function quizMockResume_(user, attemptId) {
@@ -227,13 +275,14 @@ function quizMockResume_(user, attemptId) {
   var items = quizParseItems_(r['出題データ']);
   if (!quizItemsValid_(items)) return { ok: false, error: 'done' };   // 問題の入れ替え前に始めた受験
   var mockId = quizMockIdOf_(r);
-  return { ok: true, attemptId: attemptId, mock: mockId, started: +new Date(r['開始日時']), minutes: QUIZ_MOCKS[mockId].minutes, questions: quizMockQuestions_(items) };
+  var mq = quizMockQuestions_(items);
+  return { ok: true, attemptId: attemptId, mock: mockId, started: +new Date(r['開始日時']), minutes: QUIZ_MOCKS[mockId].minutes, questions: mq, passages: quizPassagesFor_(mq) };
 }
 
 function quizMockQuestions_(items) {
   return items.map(function (it) {
     var q = quizById_(it[0]), order = it[1].split('').map(Number);
-    return { id: q.id, x: q.x || '', c: q.c, k: q.k, q: q.q, ch: order.map(function (i) { return q.ch[i]; }) };   // 正解は返さない
+    return { id: q.id, x: q.x || '', c: q.c, k: q.k, p: q.p || '', q: q.q, ch: order.map(function (i) { return q.ch[i]; }) };   // 正解は返さない
   });
 }
 
@@ -255,12 +304,12 @@ function quizMockSubmit_(user, attemptId, answers) {
     if (right) { ok++; points += quizPointOf_(mockId, q); }
     byCat[q.c] = byCat[q.c] || [0, 0]; byCat[q.c][1]++; if (right) byCat[q.c][0]++;
     byKind[q.k] = byKind[q.k] || [0, 0]; byKind[q.k][1]++; if (right) byKind[q.k][0]++;
-    return { id: q.id, x: q.x || '', c: q.c, k: q.k, q: q.q, ch: order.map(function (j) { return q.ch[j]; }), a: a, you: k, e: q.e };
+    return { id: q.id, x: q.x || '', c: q.c, k: q.k, p: q.p || '', q: q.q, ch: order.map(function (j) { return q.ch[j]; }), a: a, you: k, e: q.e };
   });
   var pct = Math.round(ok / items.length * 100);
   var maxPoints = quizMaxPoints_(mockId);
   var set = { '状態': '提出済', '正解数': ok, '正答率': pct + '%', '終了日時': new Date() };
-  var out = { ok: true, mock: mockId, correct: ok, total: items.length, pct: pct, byCat: byCat, byKind: byKind, results: results };
+  var out = { ok: true, mock: mockId, correct: ok, total: items.length, pct: pct, byCat: byCat, byKind: byKind, results: results, passages: quizPassagesFor_(results) };
   if (maxPoints) {
     points = Math.round(points * 10) / 10;
     out.points = points; out.maxPoints = maxPoints; out.passPoints = M.passPoints; out.pass = points >= M.passPoints;

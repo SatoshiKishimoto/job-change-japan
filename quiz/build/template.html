@@ -123,6 +123,10 @@ h1 .ln{display:inline-block}
 .qtext u{text-decoration-thickness:2px;text-underline-offset:5px}
 .qtext .word{font-size:1.3rem}
 .mockrow{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.passage{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;margin:0 0 14px;line-height:2;font-size:1rem}
+.passage u{text-decoration-thickness:2px;text-underline-offset:5px}
+.passage-sub{font-size:.85rem;color:var(--muted);margin:0 0 6px}
+details summary{cursor:pointer;color:var(--ai);font-weight:700}
 footer{font-size:.82rem;color:var(--muted);line-height:1.8}
 @media (prefers-reduced-motion: reduce){.progress > i{transition:none}}
 </style>
@@ -152,6 +156,9 @@ const FRIEND_URL = 'https://line.me/R/ti/p/@022akbvw';
 const N3 = __N3__;
 const markOf = q => q.x === 'n3' ? ['1','2','3','4'] : ['A','B','C'];
 const instOf = q => q.x === 'n3' && N3.kinds[q.k] ? `<p class="inst">${N3.kinds[q.k].inst}</p>` : '';
+let PASS = {};   // 文章つき問題の文章（サーバーから受け取る）
+const takePassages = j => { if (j && j.passages) Object.assign(PASS, j.passages); };
+const passageOf = q => q.p && PASS[q.p] ? `<div class="passage">${PASS[q.p]}</div>` : '';
 const app = document.getElementById('app');
 const furiBox = document.getElementById('furi');
 document.getElementById('title').innerHTML = L.title;
@@ -283,18 +290,19 @@ function home(){
         ${modeBtn('all', L.all, L.allSub, ME.total)}</div>
     </section>`;
 
+  const n3Mocks = Object.keys(mocks).filter(id => mocks[id].exam === 'n3' || (!mocks[id].exam && id.indexOf('n3') === 0));
   const n3Groups = Object.keys(N3.sections).map(sec => {
-    const kinds = Object.keys(N3.kinds).filter(k => n3c[k] && (sec === 'moji' ? ['yomi','hyoki','bunmyaku','iikae','yoho'] : ['keishiki','kumitate']).includes(k));
+    const kinds = Object.keys(N3.kinds).filter(k => n3c[k] && N3.kinds[k].sec === sec);
     if (!kinds.length) return '';
     return `<div class="free-group"><h3>${N3.sections[sec]}</h3>${kinds.map(k => modeBtn(k, N3.kinds[k].name, '', n3c[k], 'n3')).join('')}</div>`;
   }).join('');
   const n3Html = `
     <p class="muted">${L.n3Lead}</p>
-    ${mocks.n3moji ? `<section class="panel mock" aria-labelledby="mock-h">
+    ${n3Mocks.length ? `<section class="panel mock" aria-labelledby="mock-h">
       ${creditsHead(L.n3Mock)}
-      ${mockBlock('n3moji', fill(L.n3MockSub, { name: esc(mocks.n3moji.name), n: mocks.n3moji.size, m: mocks.n3moji.minutes }))}
+      ${n3Mocks.map(id => mockBlock(id, fill(L.n3MockSub, { name: esc(mocks[id].name), n: mocks[id].size, m: mocks[id].minutes }))).join('')}
       ${priceBox}
-      <p class="muted">${L.n3Soon}</p>
+      <p class="muted">${L.sharedCredits}<br>${L.n3Soon}</p>
     </section>` : ''}
     <section class="modes" aria-labelledby="free-h">
       <h2 id="free-h">${L.free}</h2>
@@ -336,6 +344,7 @@ async function startPractice(cat, exam){
   app.innerHTML = `<p class="center muted">${L.loading}</p>`;
   try {
     const j = await api({ api:'practice', cat, exam: exam || 'skill' });
+    takePassages(j);
     S = { mode:'practice', list:j.questions, i:0, ans:[] };
     practiceView();
   } catch (e) { showError(e, () => startPractice(cat, exam)); }
@@ -348,7 +357,7 @@ function practiceView(){
     <div class="progress" aria-hidden="true"><i style="width:${(S.i/n)*100}%"></i></div>
     <article class="ticket">
       <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
-      ${instOf(q)}<p class="qtext">${q.q}</p>
+      ${instOf(q)}${passageOf(q)}<p class="qtext">${q.q}</p>
       <div class="choices">${q.ch.map((t,k)=>`<button class="choice" data-k="${k}"><span class="mk">${markOf(q)[k]}</span><span>${t}</span></button>`).join('')}</div>
       <div id="fb"></div>
     </article>
@@ -388,6 +397,7 @@ async function startMock(mockId){
   app.innerHTML = `<p class="center muted">${L.loading}</p>`;
   try {
     const j = await api({ api:'mock_start', mock: mockId || 'skill' });
+    takePassages(j);
     ME.credits = j.credits;
     S = { mode:'mock', id:j.attemptId, list:j.questions, i:0, ans:new Array(j.questions.length).fill(null), end: j.started + j.minutes * 60000 };
     mockSave(); startClock(); mockView();
@@ -401,6 +411,7 @@ async function resumeMock(id){
   app.innerHTML = `<p class="center muted">${L.loading}</p>`;
   try {
     const j = await api({ api:'mock_resume', attemptId:id });
+    takePassages(j);
     const saved = store.get('mock_' + id) || {};
     S = { mode:'mock', id, list:j.questions, i:saved.i || 0, ans:(saved.ans && saved.ans.length === j.questions.length) ? saved.ans : new Array(j.questions.length).fill(null), end: j.started + j.minutes * 60000 };
     if (Date.now() >= S.end) { submitMock(true); return; }   // 時間切れ：保存していた答えで採点
@@ -441,7 +452,7 @@ function mockView(){
     </div>
     <article class="ticket">
       <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
-      ${instOf(q)}<p class="qtext">${q.q}</p>
+      ${instOf(q)}${passageOf(q)}<p class="qtext">${q.q}</p>
       <div class="choices">${q.ch.map((t,k)=>`<button class="choice ${cur===k?'sel':''}" data-k="${k}" aria-pressed="${cur===k}"><span class="mk">${markOf(q)[k]}</span><span>${t}</span></button>`).join('')}</div>
     </article>
     <div class="actions">
@@ -480,6 +491,7 @@ async function submitMock(timeUp){
   app.innerHTML = `<p class="center muted">${timeUp ? L.timeUp + '<br>' : ''}${L.grading}</p>`;
   try {
     const j = await api({ api:'mock_submit', attemptId:S.id, answers:S.ans });
+    takePassages(j);
     store.del('mock_' + S.id);
     resultView(j.results, 'mock', j);
   } catch (e) {
@@ -537,6 +549,7 @@ function resultView(items, mode, sum){
     ${wrong.length ? `<section class="panel review"><h2>${L.review}</h2>
       ${wrong.map(x => `<article>
         <div><span class="chip">${chipOf(x)}</span></div>
+        ${x.p && PASS[x.p] ? `<details><summary>${L.showPassage}</summary>${passageOf(x)}</details>` : ''}
         <div>${x.q}</div>
         <div class="k">${L.yours}：${x.you === null || x.you === undefined ? L.blank : x.ch[x.you]}</div>
         <div class="a">${L.ans}：${x.ch[x.a]}</div>
@@ -544,7 +557,7 @@ function resultView(items, mode, sum){
     </section>` : ''}
   </div>`;
   const r = document.getElementById('retry');
-  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, x:x.x, c:x.c, k:x.k, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
+  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, x:x.x, c:x.c, k:x.k, p:x.p, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
   document.getElementById('home').onclick = backHome;
 }
 
