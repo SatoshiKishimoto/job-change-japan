@@ -132,6 +132,8 @@ h1 .ln{display:inline-block}
 .passage-sub{font-size:.85rem;color:var(--muted);margin:0 0 6px}
 details summary{cursor:pointer;color:var(--ai);font-weight:700}
 footer{font-size:.82rem;color:var(--muted);line-height:1.8}
+footer p{margin:0 0 6px}
+a{color:var(--ai)}
 @media (prefers-reduced-motion: reduce){.progress > i{transition:none}}
 </style>
 </head>
@@ -193,7 +195,7 @@ function wireOnce(onStart){
 const app = document.getElementById('app');
 const furiBox = document.getElementById('furi');
 document.getElementById('title').innerHTML = L.title;
-document.getElementById('foot').innerHTML = L.foot;
+document.getElementById('foot').innerHTML = `<p>${L.foot}</p>${L.legal}`;
 
 const store = {
   get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
@@ -264,6 +266,7 @@ function loginGate(){
     <h2>${L.gateHead}</h2>
     <p>${L.gateBody}<span class="en">Free for friends of the Job Change Japan LINE account. Please log in with LINE.</span></p>
     <button class="btn line wide stacked" id="login"><span>${L.loginBtn}</span><small>Log in with LINE</small></button>
+    <p class="muted">${L.agree} <a href="terms.html">${L.terms}</a><span class="en">By using this service, you agree to the <a href="terms.html">Terms of Use</a>.</span></p>
   </section>`;
   document.getElementById('login').onclick = () => liff.login({ redirectUri: location.href });
 }
@@ -300,7 +303,8 @@ function home(){
         ${open && (open.mock || 'skill') === id ? `<button class="btn wide" data-resume="1">${L.resume}</button>` : ''}
         ${credits > 0 ? `<button class="btn ${open && (open.mock || 'skill') === id ? 'ghost' : ''} wide" data-mock="${id}">${L.mockStart}</button><div class="mconfirm" data-for="${id}"></div>` : ''}
       </div>`;
-  const priceBox = credits > 0 ? '' : `<div class="price">${fill(L.price, { yen: ME.pack.price, n: ME.pack.count })}<br><span class="muted">${L.soon}</span></div>`;
+  const priceBox = (credits > 0 ? '' : `<div class="price">${fill(L.price, { yen: ME.pack.price, n: ME.pack.count })}<br><span class="muted">${L.soon}</span></div>`)
+    + `<p class="muted">${L.mockNote}${L.noRefund}<br>${L.noGuarantee}</p>`;
   const creditsHead = (title) => `<div class="row"><h2 id="mock-h">${title}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>`;
 
   const skillHtml = `
@@ -575,6 +579,7 @@ function resultView(items, mode, sum){
         : `<div class="score"><span class="big">${pct}%</span><span class="num">${ok} / ${tot} ${L.correct}</span>${pill}</div>`}
       <div class="meter" role="img" aria-label="${Math.round(meterPct)}%"><i style="width:${meterPct}%"></i>${isN3 ? '' : `<b style="left:${linePct}%"></b>`}</div>
       <p class="muted">${isN3 ? L.n3Line : hasPoints ? fill(L.linePoints, { pass: sum.passPoints, max: sum.maxPoints }) : L.line}</p>
+      <p class="muted">${L.noGuarantee}</p>
     </section>
     <section class="panel">
       <h2>${isN3 ? L.byType : L.byKind}</h2>

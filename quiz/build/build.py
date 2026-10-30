@@ -30,6 +30,10 @@ for _k in N3_LISTEN_KINDS:
 N3_SECTIONS = {**N3_SECTIONS, "dokkai": "読解", "chokai": "聴解"}
 from furi import furigana as F       # noqa: E402
 import html as H                      # noqa: E402
+import terms                          # noqa: E402
+
+# プライバシーポリシーのURL（わかったら入れる。空なら、リンクを出さない）
+PRIVACY_URL = ""
 
 # 問題ID：学科は E/C/S/U＋番号、実技・判断は H＋分野、実技・計画立案は K＋分野
 LETTER = {"eisei": "E", "chori": "C", "sekkyaku": "S", "unei": "U"}
@@ -155,7 +159,7 @@ L = {k: F(v) for k, v in {
     "mockSub": "本番と同じ、学科35問＋実技20問（判断・計画立案）の{n}問・{m}分。最後にまとめて採点し、{max}点満点で合格基準{pass}点と比べます。問題と選択肢は毎回入れかわり、前に出た問題はなるべく出しません。",
     "left": "残り", "times": "回",
     "mockStart": "模擬テストを始める",
-    "mockConfirm": "1回分を使って始めます（残りは{n}回になります）。制限時間は{m}分で、時間になると自動で採点されます。途中で画面を閉じても、時間内なら続きから受けられます。",
+    "mockConfirm": "1回分を使って始めます（残りは{n}回になります）。制限時間は{m}分で、時間になると自動で採点されます。途中で画面を閉じても、時間内なら続きから受けられます。始めたあとは、途中でやめても1回分は戻りません。",
     "mockGo": "始める", "cancel": "やめる",
     "resume": "途中の模擬テストを続ける",
     "price": "模擬テストは有料です。<b>{yen}円で{n}回</b>受けられます（使い切ったら、また{yen}円で{n}回）。",
@@ -201,6 +205,11 @@ L = {k: F(v) for k, v in {
     "n3Line": "N3の合否は、総合得点（180点満点）が95点以上で、さらに「言語知識」「読解」「聴解」がそれぞれ19点以上必要です。本番の得点は、正答数から計算された尺度得点なので、この正答率とは一致しません。目安として使ってください。",
     "n3All": "N3 全問チャレンジ", "n3AllSub": "文字・語彙・文法・読解の問題を、ランダムな順番で出します",
     "byType": "問題の種類別の正解数",
+    "terms": "利用規約", "privacy": "プライバシーポリシー",
+    "agree": "このサービスを利用すると、利用規約に同意したものとみなします。",
+    "noGuarantee": "練習問題や模擬テストで合格点に達しても、本番の試験の合格を保証するものではありません。",
+    "noRefund": "一度お支払いいただいた代金は、回数券を使い切らなかった場合も含めて、返金できません。",
+    "mockNote": "始めた時点で1回分を使います。途中でやめても、時間切れでも、1回分は戻りません。",
 }.items()}
 L["price"] = F("模擬テストは有料です。") + "<b>" + F("{yen}円で{n}回") + "</b>" + F("受けられます（使い切ったら、また{yen}円で{n}回）。")
 L["title"] = '<span class="ln">' + F("外食業2号・N3") + '</span> <span class="ln">' + F("練習問題") + '</span>'
@@ -216,7 +225,10 @@ L["sub"] = {k: F(v) for k, v in {
 html = open(os.path.join(HERE, "template.html")).read()
 html = html.replace("__CATS__", json.dumps({k: F(v) for k, v in CATS.items()}, ensure_ascii=False))
 html = html.replace("__KINDS__", json.dumps({k: F(v) for k, v in KINDS.items()}, ensure_ascii=False))
+L["legal"] = ('<p>' + L["noGuarantee"] + '</p><p>' + L["agree"] + '</p><p><a href="terms.html">' + L["terms"] + '</a>'
+              + (' ／ <a href="' + H.escape(PRIVACY_URL) + '">' + L["privacy"] + '</a>' if PRIVACY_URL else '') + '</p>')
 html = html.replace("__LBL__", json.dumps(L, ensure_ascii=False))
+open(os.path.join(ROOT, "quiz", "terms.html"), "w").write(terms.render(F, PRIVACY_URL))
 html = html.replace("__N3__", json.dumps({"sections": {k: F(v) for k, v in N3_SECTIONS.items()},
                                           "kinds": {k: {"name": F(v[0]), "inst": H.escape(v[1]), "sec": N3_SECTION[k]} for k, v in N3_KINDS.items()}}, ensure_ascii=False))
 open(os.path.join(ROOT, "quiz", "index.html"), "w").write(html)
