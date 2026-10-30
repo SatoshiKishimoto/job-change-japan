@@ -163,7 +163,7 @@ assert.strictEqual(m2.credits, 8);
 
 // --- N3 ---
 r = call({ api: 'me', token: 'good' });
-assert.strictEqual(r.n3.all, 168); assert.strictEqual(r.n3.yomi, 20); assert.strictEqual(r.n3.moji, 84); assert.strictEqual(r.n3.bunpo, 52); assert.strictEqual(r.n3.dokkai, 32);
+assert.strictEqual(r.n3.all, 205); assert.strictEqual(r.n3.chokai, 37); assert.strictEqual(r.n3.yomi, 20); assert.strictEqual(r.n3.moji, 84); assert.strictEqual(r.n3.bunpo, 52); assert.strictEqual(r.n3.dokkai, 32);
 assert.deepStrictEqual([r.mocks.n3bunpo.size, r.mocks.n3bunpo.minutes, r.mocks.n3bunpo.exam], [39, 70, 'n3']);
 assert.deepStrictEqual([r.mocks.n3moji.size, r.mocks.n3moji.minutes, r.mocks.n3moji.maxPoints], [35, 30, null]);
 assert.strictEqual(r.total, 175, 'skill total excludes N3');
@@ -173,6 +173,14 @@ n3p.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.st
 assert.ok(!/<rt>/.test(n3p.map(q => q.q + q.ch.join('')).join('')), 'no furigana in N3 questions/choices');
 assert.ok(n3p.some(q => /<rt>/.test(q.e)), 'furigana in explanations');
 const pos4 = [0, 0, 0, 0]; call({ api: 'practice', token: 'good', exam: 'n3', cat: 'all' }).questions.forEach(q => pos4[q.a]++);
+// 聴解：音声つき。選択肢を読み上げる問題は順番が固定で、正解の番号がスクリプトどおり
+const lp = call({ api: 'practice', token: 'good', exam: 'n3', cat: 'chokai' }).questions;
+assert.strictEqual(lp.length, 37);
+assert.ok(lp.every(q => /^audio\/L[KPGHS]\d\d\.mp3$/.test(q.au)));
+lp.filter(q => q.hid).forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(JSON.stringify(q.ch), JSON.stringify(src.ch)); assert.strictEqual(q.a, src.ans); });
+lp.filter(q => !q.hid).forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(q.ch[q.a], src.ch[0]); });
+assert.ok(lp.filter(q => q.k === 'hatsuwa').every(q => q.sc));
+assert.strictEqual(lp.filter(q => q.hid).length, 4 + 5 + 12);
 // 文章つき：練習でも同じ文章の問題は続けて、順番どおり
 const rc = call({ api: 'practice', token: 'good', exam: 'n3', cat: 'chubun' });
 assert.strictEqual(rc.questions.length, 12); assert.strictEqual(Object.keys(rc.passages).length, 4);
@@ -218,6 +226,18 @@ Object.keys(firstIdx).forEach(pid => assert.strictEqual(lastIdx[pid] - firstIdx[
 assert.deepStrictEqual(Object.keys(rb.passages).sort(), [...new Set(pids)].sort());
 const rbs = call({ api: 'mock_submit', token: 'good', attemptId: rb.attemptId, answers: rb.questions.map(() => 0) });
 assert.strictEqual(rbs.ok, true); assert.ok(rbs.passages && Object.keys(rbs.passages).length === 9);
+// 聴解の模擬テスト：28問・40分、選択肢を読み上げる問題は文字を返さない
+const lc = call({ api: 'mock_start', token: 'good', mock: 'n3chokai' });
+assert.strictEqual(lc.ok, true); assert.strictEqual(lc.questions.length, 28); assert.strictEqual(lc.minutes, 40);
+assert.deepStrictEqual(['kadai', 'point', 'gaiyo', 'hatsuwa', 'sokuji'].map(k => lc.questions.filter(q => q.k === k).length), [6, 6, 3, 4, 9]);
+assert.deepStrictEqual([...new Set(lc.questions.map(q => q.k))], ['kadai', 'point', 'gaiyo', 'hatsuwa', 'sokuji']);
+lc.questions.forEach(q => { assert.ok(q.au); assert.strictEqual(q.q, ''); assert.strictEqual(q.e, undefined); if (q.hid) assert.ok(q.ch.every((c, i) => c === String(i + 1))); else assert.ok(q.ch[0].length > 2); });
+const lans = lc.questions.map(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); return q.hid ? src.ans : q.ch.indexOf(src.ch[0]); });
+const lsub = call({ api: 'mock_submit', token: 'good', attemptId: lc.attemptId, answers: lans });
+assert.strictEqual(lsub.correct, 28, 'all correct with script answers');
+assert.ok(lsub.results.filter(x => x.hid).every(x => x.ch.length >= 3 && x.ch[0].length > 2), 'texts revealed in results');
+assert.ok(lsub.results.every(x => x.q.length > 0 && x.e.includes('スクリプト')));
+
 // 2回目は、前回と違う文章が出る（文章の文法2題・中文4題・長文2題・情報検索2題）
 const rb2 = call({ api: 'mock_start', token: 'good', mock: 'n3bunpo' });
 const p1 = new Set(pids), p2 = rb2.questions.filter(q => q.p).map(q => q.p);

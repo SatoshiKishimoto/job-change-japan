@@ -123,6 +123,10 @@ h1 .ln{display:inline-block}
 .qtext u{text-decoration-thickness:2px;text-underline-offset:5px}
 .qtext .word{font-size:1.3rem}
 .mockrow{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.audio{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+.audio audio{width:100%}
+.scene{background:var(--ai-soft);border-radius:8px;padding:10px 12px;margin:0 0 12px;line-height:1.9}
+.review audio{width:100%;margin:4px 0}
 .passage{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;margin:0 0 14px;line-height:2;font-size:1rem}
 .passage u{text-decoration-thickness:2px;text-underline-offset:5px}
 .passage-sub{font-size:.85rem;color:var(--muted);margin:0 0 6px}
@@ -159,6 +163,33 @@ const instOf = q => q.x === 'n3' && N3.kinds[q.k] ? `<p class="inst">${N3.kinds[
 let PASS = {};   // 文章つき問題の文章（サーバーから受け取る）
 const takePassages = j => { if (j && j.passages) Object.assign(PASS, j.passages); };
 const passageOf = q => q.p && PASS[q.p] ? `<div class="passage">${PASS[q.p]}</div>` : '';
+// 聴解：音声と場面
+let CUR_AU = null;
+function stopAudio(){ if (CUR_AU) { try { CUR_AU.pause(); } catch (e) {} CUR_AU = null; } }
+const sceneOf = q => q.sc ? `<p class="scene">${q.sc}</p>` : '';
+function audioHtml(q, once, done){
+  if (!q.au) return '';
+  if (!once) return `<div class="audio"><audio id="au" controls preload="auto" src="${q.au}"></audio></div>`;
+  return `<div class="audio"><button class="btn" id="play" ${done ? 'disabled' : ''}>${done ? L.audioDone : L.audioPlay}</button>
+    <span class="muted" id="austat">${done ? '' : L.audioOnce}</span><audio id="au" preload="auto" src="${q.au}"></audio></div>`;
+}
+// 本番と同じく1回だけ再生（再生が始まったら、その問題ではもう押せない）
+function wireOnce(onStart){
+  const el = document.getElementById('au'), b = document.getElementById('play'), st = document.getElementById('austat');
+  if (!el) return;
+  CUR_AU = el;
+  if (!b || b.disabled) return;
+  let started = false;
+  const fail = () => { if (started) return; b.disabled = false; b.innerHTML = L.audioPlay; st.innerHTML = L.audioErr; };
+  b.onclick = () => {
+    b.disabled = true; b.innerHTML = L.audioPlaying; st.innerHTML = L.audioOnce;
+    const p = el.play();
+    if (p && p.catch) p.catch(fail);
+  };
+  el.onplaying = () => { if (!started) { started = true; onStart(); } };
+  el.onended = () => { b.innerHTML = L.audioDone; st.innerHTML = ''; };
+  el.onerror = fail;
+}
 const app = document.getElementById('app');
 const furiBox = document.getElementById('furi');
 document.getElementById('title').innerHTML = L.title;
@@ -255,6 +286,7 @@ let TAB = store.get('tab') === 'n3' ? 'n3' : 'skill';
 function home(){
   toTop();
   stopClock();
+  stopAudio();
   S = null;
   const credits = ME.credits;
   const open = ME.open;
@@ -302,7 +334,7 @@ function home(){
       ${creditsHead(L.n3Mock)}
       ${n3Mocks.map(id => mockBlock(id, fill(L.n3MockSub, { name: esc(mocks[id].name), n: mocks[id].size, m: mocks[id].minutes }))).join('')}
       ${priceBox}
-      <p class="muted">${L.sharedCredits}<br>${L.n3Soon}</p>
+      <p class="muted">${L.sharedCredits}${L.n3Soon ? '<br>' + L.n3Soon : ''}</p>
     </section>` : ''}
     <section class="modes" aria-labelledby="free-h">
       <h2 id="free-h">${L.free}</h2>
@@ -351,14 +383,15 @@ async function startPractice(cat, exam){
 }
 
 function practiceView(){
+  stopAudio();
   const q = S.list[S.i], n = S.list.length;
   app.innerHTML = `
   <div class="stack" style="gap:14px">
     <div class="progress" aria-hidden="true"><i style="width:${(S.i/n)*100}%"></i></div>
     <article class="ticket">
       <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
-      ${instOf(q)}${passageOf(q)}<p class="qtext">${q.q}</p>
-      <div class="choices">${q.ch.map((t,k)=>`<button class="choice" data-k="${k}"><span class="mk">${markOf(q)[k]}</span><span>${t}</span></button>`).join('')}</div>
+      ${instOf(q)}${passageOf(q)}${sceneOf(q)}${audioHtml(q, false)}${q.au ? '' : `<p class="qtext">${q.q}</p>`}
+      <div class="choices">${q.ch.map((t,k)=>`<button class="choice" data-k="${k}"><span class="mk">${markOf(q)[k]}</span><span>${q.hid ? '' : t}</span></button>`).join('')}</div>
       <div id="fb"></div>
     </article>
     <div class="actions">
@@ -367,6 +400,7 @@ function practiceView(){
     </div>
   </div>`;
   app.querySelectorAll('.choice').forEach(b => b.onclick = () => practiceAnswer(+b.dataset.k));
+  CUR_AU = document.getElementById('au');
   document.getElementById('next').onclick = () => { if (S.i+1<n) { S.i++; practiceView(); toTop(); } else practiceResult(); };
   document.getElementById('quit').onclick = () => { S.ans.length ? practiceResult() : home(); };
   if (S.ans[S.i] !== undefined) practiceAnswer(S.ans[S.i], true);
@@ -379,10 +413,11 @@ function practiceAnswer(k, replay){
   app.querySelectorAll('.choice').forEach(b => {
     const j = +b.dataset.k; b.disabled = true;
     if (j === q.a) b.classList.add('ok'); else if (j === k) b.classList.add('ng');
+    if (q.hid) b.lastElementChild.innerHTML = q.ch[j];   // 読み上げた選択肢を、答えたあとで見せる
   });
   const fb = document.getElementById('fb');
   fb.className = 'feedback ' + (right ? 'ok' : 'ng');
-  fb.innerHTML = `<span class="verdict">${right ? L.right : L.wrong + '　' + L.ans + '：' + markOf(q)[q.a]}</span>${q.e.replace(/\n/g, '<br>')}`;
+  fb.innerHTML = `<span class="verdict">${right ? L.right : L.wrong + '　' + L.ans + '：' + markOf(q)[q.a]}</span>${q.au ? `<b>${L.listenQ}：</b>${q.q}<br>` : ''}${q.e.replace(/\n/g, '<br>')}`;
   const nx = document.getElementById('next'); nx.hidden = false; nx.focus({ preventScroll:true });
 }
 
@@ -413,7 +448,7 @@ async function resumeMock(id){
     const j = await api({ api:'mock_resume', attemptId:id });
     takePassages(j);
     const saved = store.get('mock_' + id) || {};
-    S = { mode:'mock', id, list:j.questions, i:saved.i || 0, ans:(saved.ans && saved.ans.length === j.questions.length) ? saved.ans : new Array(j.questions.length).fill(null), end: j.started + j.minutes * 60000 };
+    S = { mode:'mock', id, list:j.questions, i:saved.i || 0, ans:(saved.ans && saved.ans.length === j.questions.length) ? saved.ans : new Array(j.questions.length).fill(null), played: saved.played || [], end: j.started + j.minutes * 60000 };
     if (Date.now() >= S.end) { submitMock(true); return; }   // 時間切れ：保存していた答えで採点
     startClock(); mockView();
   } catch (e) {
@@ -422,7 +457,7 @@ async function resumeMock(id){
   }
 }
 
-function mockSave(){ store.set('mock_' + S.id, { i:S.i, ans:S.ans }); }
+function mockSave(){ store.set('mock_' + S.id, { i:S.i, ans:S.ans, played:S.played || [] }); }
 
 // 残り時間（サーバーの開始時刻から数える）。0になったら自動で採点
 function clockText(){
@@ -442,7 +477,9 @@ function startClock(){
 function stopClock(){ if (TIMER) { clearInterval(TIMER); TIMER = null; } }
 
 function mockView(){
+  stopAudio();
   const q = S.list[S.i], n = S.list.length, cur = S.ans[S.i];
+  S.played = S.played || [];
   const answered = S.ans.filter(a => a !== null).length;
   app.innerHTML = `
   <div class="stack" style="gap:14px">
@@ -452,8 +489,8 @@ function mockView(){
     </div>
     <article class="ticket">
       <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
-      ${instOf(q)}${passageOf(q)}<p class="qtext">${q.q}</p>
-      <div class="choices">${q.ch.map((t,k)=>`<button class="choice ${cur===k?'sel':''}" data-k="${k}" aria-pressed="${cur===k}"><span class="mk">${markOf(q)[k]}</span><span>${t}</span></button>`).join('')}</div>
+      ${instOf(q)}${passageOf(q)}${sceneOf(q)}${audioHtml(q, true, S.played && S.played[S.i])}${q.q ? `<p class="qtext">${q.q}</p>` : ''}
+      <div class="choices">${q.ch.map((t,k)=>`<button class="choice ${cur===k?'sel':''}" data-k="${k}" aria-pressed="${cur===k}"><span class="mk">${markOf(q)[k]}</span><span>${q.hid ? '' : t}</span></button>`).join('')}</div>
     </article>
     <div class="actions">
       <button class="btn ghost" id="prev" ${S.i===0?'disabled':''}>${L.prev}</button>
@@ -468,10 +505,15 @@ function mockView(){
   </div>`;
   app.querySelectorAll('.choice').forEach(b => b.onclick = () => {
     S.ans[S.i] = +b.dataset.k; mockSave();
-    if (S.i+1 < n) { S.i++; mockSave(); }
+    // 聴解は、答えを選んでも次へ進まない（音声が止まらないように。「次へ」で進む）
+    const listening = !!q.au;
+    if (!listening && S.i+1 < n) { S.i++; mockSave(); }
+    if (listening) { app.querySelectorAll('.choice').forEach(x => { const on = +x.dataset.k === S.ans[S.i]; x.classList.toggle('sel', on); x.setAttribute('aria-pressed', on); }); return; }
     mockView(); toTop();
   });
   app.querySelectorAll('.pal button').forEach(b => b.onclick = () => { S.i = +b.dataset.i; mockSave(); mockView(); toTop(); });
+  const iNow = S.i;
+  wireOnce(() => { S.played[iNow] = true; mockSave(); });
   document.getElementById('prev').onclick = () => { if (S.i>0) { S.i--; mockSave(); mockView(); toTop(); } };
   const nx = document.getElementById('next');
   if (nx) nx.onclick = () => { S.i++; mockSave(); mockView(); toTop(); };
@@ -488,6 +530,7 @@ function mockView(){
 
 async function submitMock(timeUp){
   stopClock();
+  stopAudio();
   app.innerHTML = `<p class="center muted">${timeUp ? L.timeUp + '<br>' : ''}${L.grading}</p>`;
   try {
     const j = await api({ api:'mock_submit', attemptId:S.id, answers:S.ans });
@@ -503,6 +546,7 @@ async function submitMock(timeUp){
 // ---------- 結果 ----------
 function resultView(items, mode, sum){
   toTop();
+  stopAudio();
   const isN3 = items.length > 0 && items.every(x => x.x === 'n3');
   const tot = items.length, ok = items.filter(x => x.you === x.a).length;
   const pct = tot ? Math.round(ok / tot * 100) : 0;
@@ -550,6 +594,7 @@ function resultView(items, mode, sum){
       ${wrong.map(x => `<article>
         <div><span class="chip">${chipOf(x)}</span></div>
         ${x.p && PASS[x.p] ? `<details><summary>${L.showPassage}</summary>${passageOf(x)}</details>` : ''}
+        ${x.au ? `<audio controls preload="none" src="${x.au}"></audio>` : ''}${x.sc ? `<div class="muted">${x.sc}</div>` : ''}
         <div>${x.q}</div>
         <div class="k">${L.yours}：${x.you === null || x.you === undefined ? L.blank : x.ch[x.you]}</div>
         <div class="a">${L.ans}：${x.ch[x.a]}</div>
@@ -557,7 +602,7 @@ function resultView(items, mode, sum){
     </section>` : ''}
   </div>`;
   const r = document.getElementById('retry');
-  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, x:x.x, c:x.c, k:x.k, p:x.p, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
+  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, x:x.x, c:x.c, k:x.k, p:x.p, au:x.au, hid:x.hid, sc:x.sc, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
   document.getElementById('home').onclick = backHome;
 }
 

@@ -5,7 +5,7 @@
  *  - 練習問題ページ（quiz/index.html, LIFF）が LINE ログインのアクセストークンを送ってくる
  *  - このGASで「本物のトークンか」「公式LINEの友だちか」を確認してから問題を返す
  *  - 練習（分野別・全問）は友だちなら無料。模擬テストは回数券（500円で10回）を1回分使う
- *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）／N3 文法・読解（39問・70分）。回数券は共通
+ *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）／N3 文法・読解（39問・70分）／N3 聴解（28問・40分）。回数券は共通
  *  - 問題の順番と選択肢の順番は毎回シャッフル。模擬テストはまだ出ていない問題を優先して出す
  *
  * スクリプトプロパティ（追加分）
@@ -45,6 +45,11 @@ var QUIZ_MOCKS = {
     name: 'N3 文法・読解', minutes: 70, exam: 'n3',
     plan: [['bunpo', 'keishiki', 13, 0], ['bunpo', 'kumitate', 5, 0], ['bunpo', 'bunsho', 5, 0],
            ['dokkai', 'tanbun', 4, 0], ['dokkai', 'chubun', 6, 0], ['dokkai', 'chobun', 4, 0], ['dokkai', 'joho', 2, 0]]
+  },
+  // 日本語能力試験N3 聴解：本番と同じ28問・40分。音声は1回だけ（ページ側で制御）
+  n3chokai: {
+    name: 'N3 聴解', minutes: 40, exam: 'n3',
+    plan: [['chokai', 'kadai', 6, 0], ['chokai', 'point', 6, 0], ['chokai', 'gaiyo', 3, 0], ['chokai', 'hatsuwa', 4, 0], ['chokai', 'sokuji', 9, 0]]
   }
 };
 
@@ -152,7 +157,15 @@ function quizMe_(user) {
 }
 
 // 選択肢の順番をシャッフル（3択・4択どちらも）。order[i] ＝ 表示i番目に出す元の選択肢
-function quizOrder_(q) { var o = []; for (var i = 0; i < q.ch.length; i++) o.push(i); return quizShuffle_(o); }
+// 選択肢を音声で読み上げる問題（fx）は、順番を変えない
+function quizOrder_(q) { var o = []; for (var i = 0; i < q.ch.length; i++) o.push(i); return q.fx ? o : quizShuffle_(o); }
+function quizAnsOf_(q) { return q.ans || 0; }   // 元の選択肢の中の正解の番号
+// 問題の共通の項目（聴解は音声・場面・選択肢を隠すかどうかも）
+function quizBase_(q) {
+  var o = { id: q.id, x: q.x || '', c: q.c, k: q.k, p: q.p || '', q: q.q };
+  if (q.au) { o.au = q.au; o.hid = q.hid ? 1 : 0; if (q.sc) o.sc = q.sc; }
+  return o;
+}
 
 function quizPractice_(cat, exam) {
   var list;
@@ -168,8 +181,9 @@ function quizPractice_(cat, exam) {
     });
   }
   return quizShuffleKeepSets_(list).map(function (q) {
-    var order = quizOrder_(q);
-    return { id: q.id, x: q.x || '', c: q.c, k: q.k, p: q.p || '', q: q.q, ch: order.map(function (i) { return q.ch[i]; }), a: order.indexOf(0), e: q.e };
+    var order = quizOrder_(q), o = quizBase_(q);
+    o.ch = order.map(function (i) { return q.ch[i]; }); o.a = order.indexOf(quizAnsOf_(q)); o.e = q.e;
+    return o;
   });
 }
 
@@ -281,8 +295,11 @@ function quizMockResume_(user, attemptId) {
 
 function quizMockQuestions_(items) {
   return items.map(function (it) {
-    var q = quizById_(it[0]), order = it[1].split('').map(Number);
-    return { id: q.id, x: q.x || '', c: q.c, k: q.k, p: q.p || '', q: q.q, ch: order.map(function (i) { return q.ch[i]; }) };   // 正解は返さない
+    var q = quizById_(it[0]), order = it[1].split('').map(Number), o = quizBase_(q);
+    // 正解は返さない。選択肢を音声で読む問題は、選択肢の文字も返さない（番号だけ）
+    o.ch = order.map(function (i, n) { return q.hid ? String(n + 1) : q.ch[i]; });
+    if (q.au) o.q = '';   // 聴解の質問は音声で聞く
+    return o;
   });
 }
 
@@ -298,13 +315,15 @@ function quizMockSubmit_(user, attemptId, answers) {
   if (!quizItemsValid_(items)) return { ok: false, error: 'done' };
   var ok = 0, points = 0, byCat = {}, byKind = {};
   var results = items.map(function (it, i) {
-    var q = quizById_(it[0]), order = it[1].split('').map(Number), a = order.indexOf(0);
+    var q = quizById_(it[0]), order = it[1].split('').map(Number), a = order.indexOf(quizAnsOf_(q));
     var k = (typeof answers[i] === 'number' && answers[i] >= 0 && answers[i] < order.length && answers[i] % 1 === 0) ? answers[i] : null;
     var right = k === a;
     if (right) { ok++; points += quizPointOf_(mockId, q); }
     byCat[q.c] = byCat[q.c] || [0, 0]; byCat[q.c][1]++; if (right) byCat[q.c][0]++;
     byKind[q.k] = byKind[q.k] || [0, 0]; byKind[q.k][1]++; if (right) byKind[q.k][0]++;
-    return { id: q.id, x: q.x || '', c: q.c, k: q.k, p: q.p || '', q: q.q, ch: order.map(function (j) { return q.ch[j]; }), a: a, you: k, e: q.e };
+    var o = quizBase_(q);
+    o.ch = order.map(function (j) { return q.ch[j]; }); o.a = a; o.you = k; o.e = q.e;
+    return o;
   });
   var pct = Math.round(ok / items.length * 100);
   var maxPoints = quizMaxPoints_(mockId);

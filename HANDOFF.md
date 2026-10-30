@@ -55,7 +55,7 @@ LINE_TOKEN（必須）／NOTIFY_EMAIL（空ならGAS所有者）／SHEET_ID／AN
 ## 練習問題（特定技能2号 外食業）2026-10-30 追加
 - 公式LINEの友だち限定で無料。模擬テストは有料：500円で10回、使い切ったらまた500円で10回
 - 模擬テストは本番と同じ 学科35問＋実技20問（判断3＋計画立案2 ×4分野）＝55問・70分。採点は250点満点・合格163点（学科は実施要領の配点、実技は1問6.5点の目安）
-- N3（2026-10-31〜）：`quiz/build/questions_n3.py`。第1段階は文字・語彙（漢字読み20・表記15・文脈規定25・言い換え類義12・用法12）と文法（文法形式30・文の組み立て12）。問題文と選択肢はふりがななし、解説だけふりがな。4択。模擬テスト「n3moji」は35問・30分（回数券は技能と共通）。第2段階（文章の文法・読解）は `quiz/build/questions_n3_reading.py`：文章の文法2題・短文8・中文4題・長文2題・情報検索2題。文章は QUIZ_PASSAGES、問題は p（文章ID）・pi（順番）を持ち、出題は文章ごと。模擬テスト「n3bunpo」は39問・70分。第3段階：聴解（音声）
+- N3（2026-10-31〜）：`quiz/build/questions_n3.py`。第1段階は文字・語彙（漢字読み20・表記15・文脈規定25・言い換え類義12・用法12）と文法（文法形式30・文の組み立て12）。問題文と選択肢はふりがななし、解説だけふりがな。4択。模擬テスト「n3moji」は35問・30分（回数券は技能と共通）。第2段階（文章の文法・読解）は `quiz/build/questions_n3_reading.py`：文章の文法2題・短文8・中文4題・長文2題・情報検索2題。文章は QUIZ_PASSAGES、問題は p（文章ID）・pi（順番）を持ち、出題は文章ごと。模擬テスト「n3bunpo」は39問・70分。第3段階（聴解）は `quiz/build/questions_n3_listening.py`：課題理解8・ポイント理解8・概要理解4・発話表現5・即時応答12。音声は `python3 quiz/build/make_audio.py`（pyopenjtalk-plus の合成音声、男性の声は ffmpeg rubberband で作成）で `quiz/audio/*.mp3` に出力。概要・発話・即時は選択肢を読み上げる形（fx：順番固定、ans：正解番号、hid：模擬テストでは文字を返さない）。模擬テスト「n3chokai」は28問・40分、音声は1回だけ再生
 - 問題は175問：学科116問、実技・判断32問、実技・計画立案27問（questions.py の先頭の分類 "handan:eisei" など）
 - ページ：`quiz/index.html`（LIFF。設定は `quiz/config.js`）。GAS：`Quiz.gs`（API）＋ `QuizBank.gs`（問題データ・自動生成）を同じLINEボットのプロジェクトに追加。`doPost` は `body.api` があれば `quizApi_` へ
 - 問題・ふりがなの元データ：`quiz/build/`（`python3 quiz/build/build.py` で QuizBank.gs と index.html を生成）

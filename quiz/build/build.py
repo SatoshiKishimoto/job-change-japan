@@ -22,7 +22,12 @@ from questions_n3 import N3, N3_KINDS, N3_SECTION, N3_SECTIONS  # noqa: E402
 from questions_n3_reading import P as N3_PASSAGES, N3_READING_KINDS, N3_READING_SECTION  # noqa: E402
 N3_KINDS = {**N3_KINDS, **N3_READING_KINDS}
 N3_SECTION = {**N3_SECTION, **N3_READING_SECTION}
-N3_SECTIONS = {**N3_SECTIONS, "dokkai": "読解"}
+from questions_n3_listening import L as N3_LISTEN, N3_LISTEN_KINDS  # noqa: E402
+from make_audio import listening_ids  # noqa: E402
+N3_KINDS = {**N3_KINDS, **N3_LISTEN_KINDS}
+for _k in N3_LISTEN_KINDS:
+    N3_SECTION[_k] = "chokai"
+N3_SECTIONS = {**N3_SECTIONS, "dokkai": "読解", "chokai": "聴解"}
 from furi import furigana as F       # noqa: E402
 import html as H                      # noqa: E402
 
@@ -82,6 +87,39 @@ for row in N3_PASSAGES:
         bank.append({"id": f"{pid}-{i + 1}", "x": "n3", "c": N3_SECTION[k], "k": k, "p": pid, "pi": i,
                      "q": n3text(q), "ch": [H.escape(c) for c in (ok, w1, w2, w3)], "e": F(e)})
         n3n += 1
+
+# 聴解：音声は quiz/audio/<ID>.mp3（make_audio.py で作る）。
+#  kadai・point：選択肢を画面に出す（シャッフル可、ch[0]が正解）
+#  gaiyo・hatsuwa・sokuji：選択肢は音声だけ（fx＝順番固定、ans＝正解の番号、hid＝画面に文字を出さない）
+SPK = {"M": "男", "F": "女", "N": "ナレーター"}
+NUMS = ["１", "２", "３", "４"]
+for it, qid in zip(N3_LISTEN, listening_ids()):
+    k = it["k"]
+    assert os.path.exists(os.path.join(ROOT, "quiz", "audio", qid + ".mp3")), qid + ".mp3 がありません（make_audio.py を実行）"
+    spoken = k in ("gaiyo", "hatsuwa", "sokuji")
+    script = []
+    if it.get("intro") or it.get("q"):
+        script.append("ナレーター：" + it.get("intro", "") + it.get("q", ""))
+    for spk, text in it.get("lines", []):
+        script.append(SPK[spk] + "：" + text)
+    if spoken:
+        who = SPK.get(it.get("voice", "N"), "") if k != "gaiyo" else "ナレーター"
+        for i, c in enumerate(it["ch"]):
+            script.append(f"{NUMS[i]}　{who}：{c}")
+    e = "【スクリプト】\n" + "\n".join(script) + "\n\n【解説】" + it["e"]
+    if k == "sokuji":
+        qtext = "「" + it["lines"][0][1] + "」への返事として、最もよいものはどれか。"
+    else:
+        qtext = it["q"]
+    item = {"id": qid, "x": "n3", "c": "chokai", "k": k, "au": f"audio/{qid}.mp3",
+            "q": H.escape(qtext), "ch": [H.escape(c) for c in it["ch"]], "e": F(e)}
+    if spoken:
+        item.update({"fx": 1, "ans": it["ans"], "hid": 1})
+    if it.get("scene"):
+        item["sc"] = H.escape(it["scene"])
+    assert len(set(it["ch"])) == len(it["ch"]), qid
+    bank.append(item)
+    n3n += 1
 
 N3_META = {"sections": N3_SECTIONS, "kinds": {k: v[0] for k, v in N3_KINDS.items()}}
 
@@ -154,7 +192,11 @@ L = {k: F(v) for k, v in {
     "n3Mock": "N3 模擬テスト",
     "n3MockSub": "{name}：本番と同じ{n}問・{m}分",
     "sharedCredits": "回数券は、技能測定試験の模擬テストと共通です。1回受けるごとに1回分を使います。",
-    "n3Soon": "「聴解」は準備中です。",
+    "n3Soon": "",
+    "audioPlay": "▶ 音声を聞く", "audioPlaying": "再生中…", "audioReplay": "▶ もう一度聞く",
+    "audioOnce": "本番と同じく、音声は1回だけ聞けます。", "audioDone": "音声は聞き終わりました",
+    "audioErr": "音声を読み込めませんでした。電波のよい場所で、もう一度押してください。",
+    "listenQ": "質問",
     "showPassage": "文章を見る",
     "n3Line": "N3の合否は、総合得点（180点満点）が95点以上で、さらに「言語知識」「読解」「聴解」がそれぞれ19点以上必要です。本番の得点は、正答数から計算された尺度得点なので、この正答率とは一致しません。目安として使ってください。",
     "n3All": "N3 全問チャレンジ", "n3AllSub": "文字・語彙・文法・読解の問題を、ランダムな順番で出します",
