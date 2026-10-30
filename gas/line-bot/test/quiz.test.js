@@ -161,6 +161,43 @@ console.log('2nd mock overlap with 1st:', overlap);
 assert.strictEqual(overlap, 0);
 assert.strictEqual(m2.credits, 8);
 
+// --- N3 ---
+r = call({ api: 'me', token: 'good' });
+assert.strictEqual(r.n3.all, 126); assert.strictEqual(r.n3.yomi, 20); assert.strictEqual(r.n3.moji, 84); assert.strictEqual(r.n3.bunpo, 42);
+assert.deepStrictEqual([r.mocks.n3moji.size, r.mocks.n3moji.minutes, r.mocks.n3moji.maxPoints], [35, 30, null]);
+assert.strictEqual(r.total, 175, 'skill total excludes N3');
+const n3p = call({ api: 'practice', token: 'good', exam: 'n3', cat: 'keishiki' }).questions;
+assert.strictEqual(n3p.length, 30);
+n3p.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(q.ch.length, 4); assert.strictEqual(q.ch[q.a], src.ch[0]); assert.strictEqual(q.x, 'n3'); });
+assert.ok(!/<rt>/.test(n3p.map(q => q.q + q.ch.join('')).join('')), 'no furigana in N3 questions/choices');
+assert.ok(n3p.some(q => /<rt>/.test(q.e)), 'furigana in explanations');
+const pos4 = [0, 0, 0, 0]; call({ api: 'practice', token: 'good', exam: 'n3', cat: 'all' }).questions.forEach(q => pos4[q.a]++);
+console.log('N3 answer positions', pos4); assert.ok(pos4.every(n => n > 10));
+assert.strictEqual(call({ api: 'practice', token: 'good', exam: 'n3', cat: 'moji' }).questions.length, 84);
+assert.ok(call({ api: 'practice', token: 'good', cat: 'all' }).questions.every(q => !q.x), 'skill practice has no N3');
+const kum = ctx.QUIZ_BANK.filter(b => b.k === 'kumitate');
+kum.forEach(b => assert.ok(b.q.includes('★') && b.e.includes('★'), b.id));
+
+const credBefore = call({ api: 'me', token: 'good' }).credits;
+const n3m = call({ api: 'mock_start', token: 'good', mock: 'n3moji' });
+assert.strictEqual(n3m.ok, true); assert.strictEqual(n3m.mock, 'n3moji'); assert.strictEqual(n3m.minutes, 30);
+assert.strictEqual(n3m.credits, credBefore - 1, 'shared credits');
+assert.strictEqual(n3m.questions.length, 35);
+const kseq = n3m.questions.map(q => q.k);
+assert.deepStrictEqual([...new Set(kseq)], ['yomi', 'hyoki', 'bunmyaku', 'iikae', 'yoho'], 'ordered by type');
+assert.deepStrictEqual(['yomi', 'hyoki', 'bunmyaku', 'iikae', 'yoho'].map(k => kseq.filter(x => x === k).length), [8, 6, 11, 5, 5]);
+assert.ok(n3m.questions.every(q => q.a === undefined && q.e === undefined && q.ch.length === 4));
+assert.strictEqual(call({ api: 'me', token: 'good' }).open.mock, 'n3moji');
+const rs = call({ api: 'mock_resume', token: 'good', attemptId: n3m.attemptId });
+assert.strictEqual(rs.minutes, 30); assert.deepStrictEqual(rs.questions, n3m.questions);
+const ans4 = n3m.questions.map((q, i) => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); const c = q.ch.indexOf(src.ch[0]); return i < 30 ? c : 3.5; });
+const sub = call({ api: 'mock_submit', token: 'good', attemptId: n3m.attemptId, answers: ans4 });
+assert.strictEqual(sub.correct, 30); assert.strictEqual(sub.points, undefined); assert.strictEqual(sub.pass, undefined);
+assert.ok(sub.results.slice(30).every(x => x.you === null));
+const arow = ss.sheets['模擬テスト受験'].data.slice(-1)[0];
+console.log('N3 attempt row:', arow.slice(4, 9), arow[13]);
+assert.strictEqual(call({ api: 'mock_start', token: 'good', mock: 'nope' }).error, 'unknown');
+
 // webhook path still works (no events)
 assert.deepStrictEqual(JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify({ destination: 'x', events: [] }) } }).s), { ok: true });
 

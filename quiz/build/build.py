@@ -18,7 +18,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from questions import Q, CATS, KINDS  # noqa: E402
+from questions_n3 import N3, N3_KINDS, N3_SECTION, N3_SECTIONS  # noqa: E402
 from furi import furigana as F       # noqa: E402
+import html as H                      # noqa: E402
 
 # 問題ID：学科は E/C/S/U＋番号、実技・判断は H＋分野、実技・計画立案は K＋分野
 LETTER = {"eisei": "E", "chori": "C", "sekkyaku": "S", "unei": "U"}
@@ -32,17 +34,48 @@ for tag, q, ok, w1, w2, e in Q:
     # ch[0] が正解。表示順はGASが毎回シャッフルする
     bank.append({"id": f"{key}{seq[key]:02d}", "c": c, "k": k, "q": F(q), "ch": [F(ok), F(w1), F(w2)], "e": F(e)})
 
+# ===== N3（問題文・選択肢はふりがななし。〔〕は下線。解説だけふりがな） =====
+def n3text(t):
+    return H.escape(t).replace("〔", "<u>").replace("〕", "</u>")
+
+N3P = {"yomi": "NY", "hyoki": "NH", "bunmyaku": "NB", "iikae": "NI", "yoho": "NU", "keishiki": "NG", "kumitate": "NK"}
+n3n = 0
+for row in N3:
+    k = row[0]
+    seq[N3P[k]] = seq.get(N3P[k], 0) + 1
+    if k == "kumitate":
+        _, before, after, parts, star, note = row
+        blanks = ["＿＿＿＿"] * 4
+        blanks[star] = "＿★＿"
+        q = n3text(before) + "　" + "　".join(blanks) + "　" + n3text(after)
+        ch = [parts[star]] + [p for i, p in enumerate(parts) if i != star]
+        e = F("正しい順番：" + before + "".join(parts) + after + "\n★には「" + parts[star] + "」が入ります。" + note)
+        bank.append({"id": f"{N3P[k]}{seq[N3P[k]]:02d}", "x": "n3", "c": N3_SECTION[k], "k": k, "q": q,
+                     "ch": [H.escape(c) for c in ch], "e": e})
+    else:
+        _, q, ok, w1, w2, w3, e = row
+        if k == "yoho":   # 用法：問題はことばだけ。選択肢が文
+            q = "<b class=\"word\">" + H.escape(q) + "</b>"
+        else:
+            q = n3text(q)
+        bank.append({"id": f"{N3P[k]}{seq[N3P[k]]:02d}", "x": "n3", "c": N3_SECTION[k], "k": k, "q": q,
+                     "ch": [H.escape(c) for c in (ok, w1, w2, w3)], "e": F(e)})
+    n3n += 1
+
+N3_META = {"sections": N3_SECTIONS, "kinds": {k: v[0] for k, v in N3_KINDS.items()}}
+
 gs = (
     "/**\n * 練習問題データ（自動生成：quiz/build/build.py）。手で編集しないでください。\n"
     f" * 全{len(bank)}問。各問題の ch[0] が正解です。c=分野、k=gakka（学科）/handan（実技・判断）/keikaku（実技・計画立案）\n */\n"
     f"var QUIZ_CATS = {json.dumps(CATS, ensure_ascii=False)};\n"
     f"var QUIZ_KINDS = {json.dumps(KINDS, ensure_ascii=False)};\n"
+    f"var QUIZ_N3 = {json.dumps(N3_META, ensure_ascii=False)};\n"
     "var QUIZ_BANK = [\n" + ",\n".join(json.dumps(b, ensure_ascii=False) for b in bank) + "\n];\n"
 )
 open(os.path.join(ROOT, "gas", "line-bot", "QuizBank.gs"), "w").write(gs)
 
 L = {k: F(v) for k, v in {
-    "title": "特定技能2号 外食業 練習問題",
+    "title": "練習問題",
     "foot": "このページの問題は、農林水産省「外食業特定技能評価試験実施要領」の出題範囲をもとにJob Change Japan（株式会社Fairly connecting）が作成したオリジナル問題です。実際の試験問題ではありません。法令や制度は変わることがあるため、最新の情報はOTAFF（外国人食品産業技能評価機構）の公式サイトと学習用テキストで確認してください。2026年10月時点の情報です。",
     "loading": "読み込み中…",
     "relogin": "もう一度LINEでログインします…",
@@ -93,9 +126,18 @@ L = {k: F(v) for k, v in {
     "allHead": "まとめて",
     "byCat": "分野別の正解数", "retryWrong": "間違えた問題だけもう一度", "home": "最初の画面にもどる",
     "review": "間違えた問題の復習",
+    "tabSkill": "技能測定試験", "tabN3": "日本語能力試験 N3",
+    "skillLead": "外食業特定技能2号技能測定試験（学科・実技）の練習です。",
+    "n3Lead": "日本語能力試験（JLPT）N3の練習です。本番と同じく、問題にはふりがながありません（解説にはあります）。",
+    "n3Mock": "N3 模擬テスト",
+    "n3MockSub": "{name}：本番と同じ{n}問・{m}分。回数券は技能測定試験の模擬テストと共通です。",
+    "n3Soon": "「文法・読解」と「聴解」は準備中です。",
+    "n3Line": "N3の合否は、総合得点（180点満点）が95点以上で、さらに「言語知識」「読解」「聴解」がそれぞれ19点以上必要です。本番の得点は、正答数から計算された尺度得点なので、この正答率とは一致しません。目安として使ってください。",
+    "n3All": "N3 全問チャレンジ", "n3AllSub": "文字・語彙と文法の問題を、ランダムな順番で出します",
+    "byType": "問題の種類別の正解数",
 }.items()}
 L["price"] = F("模擬テストは有料です。") + "<b>" + F("{yen}円で{n}回") + "</b>" + F("受けられます（使い切ったら、また{yen}円で{n}回）。")
-L["title"] = '<span class="ln">' + F("特定技能2号 外食業") + '</span> <span class="ln">' + F("練習問題") + '</span>'
+L["title"] = '<span class="ln">' + F("外食業2号・N3") + '</span> <span class="ln">' + F("練習問題") + '</span>'
 L["sub"] = {k: F(v) for k, v in {
     "eisei": "食中毒・HACCP・食品衛生法",
     "chori": "食材・調理方法・調理機器・労働安全",
@@ -109,5 +151,7 @@ html = open(os.path.join(HERE, "template.html")).read()
 html = html.replace("__CATS__", json.dumps({k: F(v) for k, v in CATS.items()}, ensure_ascii=False))
 html = html.replace("__KINDS__", json.dumps({k: F(v) for k, v in KINDS.items()}, ensure_ascii=False))
 html = html.replace("__LBL__", json.dumps(L, ensure_ascii=False))
+html = html.replace("__N3__", json.dumps({"sections": {k: F(v) for k, v in N3_SECTIONS.items()},
+                                          "kinds": {k: {"name": F(v[0]), "inst": H.escape(v[1])} for k, v in N3_KINDS.items()}}, ensure_ascii=False))
 open(os.path.join(ROOT, "quiz", "index.html"), "w").write(html)
-print(f"QuizBank.gs: {len(bank)}問 / quiz/index.html を作成しました")
+print(f"QuizBank.gs: {len(bank)}問（うちN3 {n3n}問） / quiz/index.html を作成しました")

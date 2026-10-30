@@ -115,6 +115,14 @@ h1 .ln{display:inline-block}
 .points{font-family:var(--f-display);font-size:1.1rem}
 .free-group{display:flex;flex-direction:column;gap:10px}
 .free-group h3{margin:6px 0 0;font-size:1rem;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--line);padding:4px;border-radius:10px}
+.tabs button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:8px 6px;background:transparent;color:var(--muted);cursor:pointer;line-height:1.5}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ai)}
+.tabs button:focus-visible{outline:3px solid var(--ai);outline-offset:2px}
+.inst{font-size:.85rem;color:var(--muted);line-height:1.7;margin:0 0 8px}
+.qtext u{text-decoration-thickness:2px;text-underline-offset:5px}
+.qtext .word{font-size:1.3rem}
+.mockrow{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
 footer{font-size:.82rem;color:var(--muted);line-height:1.8}
 @media (prefers-reduced-motion: reduce){.progress > i{transition:none}}
 </style>
@@ -138,10 +146,12 @@ footer{font-size:.82rem;color:var(--muted);line-height:1.8}
 const C = window.QUIZ_CONFIG || {};
 const CATS = __CATS__;
 const KINDS = __KINDS__;
-const chipOf = q => q.k && q.k !== 'gakka' ? `${KINDS[q.k]}｜${CATS[q.c]}` : CATS[q.c];
+const chipOf = q => q.x === 'n3' ? `N3｜${N3.kinds[q.k] ? N3.kinds[q.k].name : ''}` : (q.k && q.k !== 'gakka' ? `${KINDS[q.k]}｜${CATS[q.c]}` : CATS[q.c]);
 const L = __LBL__;
 const FRIEND_URL = 'https://line.me/R/ti/p/@022akbvw';
-const MARK = ['A','B','C'];
+const N3 = __N3__;
+const markOf = q => q.x === 'n3' ? ['1','2','3','4'] : ['A','B','C'];
+const instOf = q => q.x === 'n3' && N3.kinds[q.k] ? `<p class="inst">${N3.kinds[q.k].inst}</p>` : '';
 const app = document.getElementById('app');
 const furiBox = document.getElementById('furi');
 document.getElementById('title').innerHTML = L.title;
@@ -233,27 +243,34 @@ function friendGate(name){
 }
 
 // ---------- ホーム ----------
+let TAB = store.get('tab') === 'n3' ? 'n3' : 'skill';
+
 function home(){
   toTop();
   stopClock();
   S = null;
   const credits = ME.credits;
   const open = ME.open;
+  const mocks = ME.mocks || { skill: { name:'', size: ME.mockSize, minutes: ME.mockMinutes, maxPoints: ME.maxPoints, passPoints: ME.passPoints } };
+  const n3c = ME.n3 || { all: 0 };
   const cats = Object.keys(CATS).filter(c => ME.counts[c]);
-  const modeBtn = (key, name, sub, n) => `<button class="mode" data-c="${key}"><span class="name">${name}<span class="sub">${sub}</span></span><span class="count">${n}${L.mon}</span></button>`;
-  app.innerHTML = `
-  <div class="stack">
-    <p>${fill(L.hello, { name: esc(ME.name) })}</p>
+  const modeBtn = (key, name, sub, n, exam) => `<button class="mode" data-c="${key}" data-x="${exam || ''}"><span class="name">${name}${sub ? `<span class="sub">${sub}</span>` : ''}</span><span class="count">${n}${L.mon}</span></button>`;
+  const mockBlock = (id, sub) => `
+      <div class="mockrow">
+        <p class="muted">${sub}</p>
+        ${open && (open.mock || 'skill') === id ? `<button class="btn wide" data-resume="1">${L.resume}</button>` : ''}
+        ${credits > 0 ? `<button class="btn ${open && (open.mock || 'skill') === id ? 'ghost' : ''} wide" data-mock="${id}">${L.mockStart}</button><div class="mconfirm" data-for="${id}"></div>` : ''}
+      </div>`;
+  const priceBox = credits > 0 ? '' : `<div class="price">${fill(L.price, { yen: ME.pack.price, n: ME.pack.count })}<br><span class="muted">${L.soon}</span></div>`;
+  const creditsHead = (title) => `<div class="row"><h2 id="mock-h">${title}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>`;
 
+  const skillHtml = `
+    <p class="muted">${L.skillLead}</p>
     <section class="panel mock" aria-labelledby="mock-h">
-      <div class="row"><h2 id="mock-h">${L.mock}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>
-      <p class="muted">${fill(L.mockSub, { n: ME.mockSize, m: ME.mockMinutes, max: ME.maxPoints, pass: ME.passPoints })}</p>
-      ${open ? `<button class="btn wide" id="resume">${L.resume}</button>` : ''}
-      ${credits > 0
-        ? `<button class="btn ${open ? 'ghost' : ''} wide" id="mstart">${L.mockStart}</button><div id="mconfirm"></div>`
-        : `<div class="price">${fill(L.price, { yen: ME.pack.price, n: ME.pack.count })}<br><span class="muted">${L.soon}</span></div>`}
+      ${creditsHead(L.mock)}
+      ${mockBlock('skill', fill(L.mockSub, { n: mocks.skill.size, m: mocks.skill.minutes, max: mocks.skill.maxPoints, pass: mocks.skill.passPoints }))}
+      ${priceBox}
     </section>
-
     <section class="modes" aria-labelledby="free-h">
       <h2 id="free-h">${L.free}</h2>
       <p class="muted">${L.freeSub}</p>
@@ -264,19 +281,49 @@ function home(){
         ${modeBtn('keikaku', KINDS.keikaku, L.sub.keikaku, ME.counts.keikaku)}</div>
       <div class="free-group"><h3>${L.allHead}</h3>
         ${modeBtn('all', L.all, L.allSub, ME.total)}</div>
-    </section>
+    </section>`;
+
+  const n3Groups = Object.keys(N3.sections).map(sec => {
+    const kinds = Object.keys(N3.kinds).filter(k => n3c[k] && (sec === 'moji' ? ['yomi','hyoki','bunmyaku','iikae','yoho'] : ['keishiki','kumitate']).includes(k));
+    if (!kinds.length) return '';
+    return `<div class="free-group"><h3>${N3.sections[sec]}</h3>${kinds.map(k => modeBtn(k, N3.kinds[k].name, '', n3c[k], 'n3')).join('')}</div>`;
+  }).join('');
+  const n3Html = `
+    <p class="muted">${L.n3Lead}</p>
+    ${mocks.n3moji ? `<section class="panel mock" aria-labelledby="mock-h">
+      ${creditsHead(L.n3Mock)}
+      ${mockBlock('n3moji', fill(L.n3MockSub, { name: esc(mocks.n3moji.name), n: mocks.n3moji.size, m: mocks.n3moji.minutes }))}
+      ${priceBox}
+      <p class="muted">${L.n3Soon}</p>
+    </section>` : ''}
+    <section class="modes" aria-labelledby="free-h">
+      <h2 id="free-h">${L.free}</h2>
+      <p class="muted">${L.freeSub}</p>
+      ${n3Groups}
+      <div class="free-group"><h3>${L.allHead}</h3>${modeBtn('all', L.n3All, L.n3AllSub, n3c.all, 'n3')}</div>
+    </section>`;
+
+  app.innerHTML = `
+  <div class="stack">
+    <p>${fill(L.hello, { name: esc(ME.name) })}</p>
+    ${n3c.all ? `<div class="tabs" role="tablist">
+      <button role="tab" id="tab-skill" aria-selected="${TAB === 'skill'}">${L.tabSkill}</button>
+      <button role="tab" id="tab-n3" aria-selected="${TAB === 'n3'}">${L.tabN3}</button>
+    </div>` : ''}
+    ${TAB === 'n3' && n3c.all ? n3Html : skillHtml}
   </div>`;
-  app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => startPractice(b.dataset.c));
-  const ms = document.getElementById('mstart');
-  if (ms) ms.onclick = () => {
-    const box = document.getElementById('mconfirm');
-    box.innerHTML = `<div class="confirm"><p>${fill(L.mockConfirm, { n: credits - 1, m: ME.mockMinutes })}</p>
-      <div class="actions"><button class="btn" id="mgo">${L.mockGo}</button><button class="btn ghost" id="mcancel">${L.cancel}</button></div></div>`;
-    document.getElementById('mgo').onclick = startMock;
-    document.getElementById('mcancel').onclick = () => { box.innerHTML = ''; };
-  };
-  const rs = document.getElementById('resume');
-  if (rs) rs.onclick = () => resumeMock(open.attemptId);
+  const tabTo = t => { TAB = t; store.set('tab', t); home(); };
+  const ts = document.getElementById('tab-skill'), tn = document.getElementById('tab-n3');
+  if (ts) { ts.onclick = () => tabTo('skill'); tn.onclick = () => tabTo('n3'); }
+  app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => startPractice(b.dataset.c, b.dataset.x || 'skill'));
+  app.querySelectorAll('[data-mock]').forEach(b => b.onclick = () => {
+    const id = b.dataset.mock, box = app.querySelector(`.mconfirm[data-for="${id}"]`);
+    box.innerHTML = `<div class="confirm"><p>${fill(L.mockConfirm, { n: credits - 1, m: mocks[id].minutes })}</p>
+      <div class="actions"><button class="btn" data-go="1">${L.mockGo}</button><button class="btn ghost" data-cancel="1">${L.cancel}</button></div></div>`;
+    box.querySelector('[data-go]').onclick = () => startMock(id);
+    box.querySelector('[data-cancel]').onclick = () => { box.innerHTML = ''; };
+  });
+  app.querySelectorAll('[data-resume]').forEach(b => b.onclick = () => resumeMock(open.attemptId));
 }
 
 async function backHome(){
@@ -285,13 +332,13 @@ async function backHome(){
 }
 
 // ---------- 練習（無料・すぐに答え合わせ） ----------
-async function startPractice(cat){
+async function startPractice(cat, exam){
   app.innerHTML = `<p class="center muted">${L.loading}</p>`;
   try {
-    const j = await api({ api:'practice', cat });
+    const j = await api({ api:'practice', cat, exam: exam || 'skill' });
     S = { mode:'practice', list:j.questions, i:0, ans:[] };
     practiceView();
-  } catch (e) { showError(e, () => startPractice(cat)); }
+  } catch (e) { showError(e, () => startPractice(cat, exam)); }
 }
 
 function practiceView(){
@@ -301,8 +348,8 @@ function practiceView(){
     <div class="progress" aria-hidden="true"><i style="width:${(S.i/n)*100}%"></i></div>
     <article class="ticket">
       <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
-      <p class="qtext">${q.q}</p>
-      <div class="choices">${q.ch.map((t,k)=>`<button class="choice" data-k="${k}"><span class="mk">${MARK[k]}</span><span>${t}</span></button>`).join('')}</div>
+      ${instOf(q)}<p class="qtext">${q.q}</p>
+      <div class="choices">${q.ch.map((t,k)=>`<button class="choice" data-k="${k}"><span class="mk">${markOf(q)[k]}</span><span>${t}</span></button>`).join('')}</div>
       <div id="fb"></div>
     </article>
     <div class="actions">
@@ -326,7 +373,7 @@ function practiceAnswer(k, replay){
   });
   const fb = document.getElementById('fb');
   fb.className = 'feedback ' + (right ? 'ok' : 'ng');
-  fb.innerHTML = `<span class="verdict">${right ? L.right : L.wrong + '　' + L.ans + '：' + MARK[q.a]}</span>${q.e}`;
+  fb.innerHTML = `<span class="verdict">${right ? L.right : L.wrong + '　' + L.ans + '：' + markOf(q)[q.a]}</span>${q.e.replace(/\n/g, '<br>')}`;
   const nx = document.getElementById('next'); nx.hidden = false; nx.focus({ preventScroll:true });
 }
 
@@ -337,10 +384,10 @@ function practiceResult(){
 }
 
 // ---------- 模擬テスト（有料・最後にまとめて採点） ----------
-async function startMock(){
+async function startMock(mockId){
   app.innerHTML = `<p class="center muted">${L.loading}</p>`;
   try {
-    const j = await api({ api:'mock_start' });
+    const j = await api({ api:'mock_start', mock: mockId || 'skill' });
     ME.credits = j.credits;
     S = { mode:'mock', id:j.attemptId, list:j.questions, i:0, ans:new Array(j.questions.length).fill(null), end: j.started + j.minutes * 60000 };
     mockSave(); startClock(); mockView();
@@ -394,8 +441,8 @@ function mockView(){
     </div>
     <article class="ticket">
       <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
-      <p class="qtext">${q.q}</p>
-      <div class="choices">${q.ch.map((t,k)=>`<button class="choice ${cur===k?'sel':''}" data-k="${k}" aria-pressed="${cur===k}"><span class="mk">${MARK[k]}</span><span>${t}</span></button>`).join('')}</div>
+      ${instOf(q)}<p class="qtext">${q.q}</p>
+      <div class="choices">${q.ch.map((t,k)=>`<button class="choice ${cur===k?'sel':''}" data-k="${k}" aria-pressed="${cur===k}"><span class="mk">${markOf(q)[k]}</span><span>${t}</span></button>`).join('')}</div>
     </article>
     <div class="actions">
       <button class="btn ghost" id="prev" ${S.i===0?'disabled':''}>${L.prev}</button>
@@ -444,12 +491,13 @@ async function submitMock(timeUp){
 // ---------- 結果 ----------
 function resultView(items, mode, sum){
   toTop();
+  const isN3 = items.length > 0 && items.every(x => x.x === 'n3');
   const tot = items.length, ok = items.filter(x => x.you === x.a).length;
   const pct = tot ? Math.round(ok / tot * 100) : 0;
-  const isMock = mode === 'mock' && sum;
-  const pass = isMock ? sum.pass : pct >= 65;
-  const meterPct = isMock ? Math.min(100, sum.points / sum.maxPoints * 100) : pct;
-  const linePct = isMock ? sum.passPoints / sum.maxPoints * 100 : 65;
+  const hasPoints = mode === 'mock' && sum && sum.maxPoints;
+  const pass = hasPoints ? sum.pass : pct >= 65;
+  const meterPct = hasPoints ? Math.min(100, sum.points / sum.maxPoints * 100) : pct;
+  const linePct = hasPoints ? sum.passPoints / sum.maxPoints * 100 : 65;
   const by = {}, byK = {};
   items.forEach(x => {
     const r = x.you === x.a ? 1 : 0;
@@ -458,28 +506,29 @@ function resultView(items, mode, sum){
   });
   const wrong = items.filter(x => x.you !== x.a);
   const row = (name, v) => `<tr><td>${name}</td><td>${v[0]} / ${v[1]}</td></tr>`;
+  const kindNames = isN3 ? Object.fromEntries(Object.keys(N3.kinds).map(k => [k, N3.kinds[k].name])) : KINDS;
+  const catNames = isN3 ? N3.sections : CATS;
+  const pill = isN3 ? '' : `<span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span>`;
   app.innerHTML = `
   <div class="stack">
     <section class="panel">
-      <div class="eyebrow">${isMock ? L.mockResult : L.resultOf}</div>
-      ${isMock
-        ? `<div class="score"><span class="big">${sum.points}</span><span class="points">/ ${sum.maxPoints}${L.ten}</span>
-             <span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span></div>
+      <div class="eyebrow">${mode === 'mock' ? L.mockResult : L.resultOf}</div>
+      ${hasPoints
+        ? `<div class="score"><span class="big">${sum.points}</span><span class="points">/ ${sum.maxPoints}${L.ten}</span>${pill}</div>
            <p class="num">${ok} / ${tot} ${L.correct}（${pct}%）</p>`
-        : `<div class="score"><span class="big">${pct}%</span><span class="num">${ok} / ${tot} ${L.correct}</span>
-             <span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span></div>`}
-      <div class="meter" role="img" aria-label="${Math.round(meterPct)}%"><i style="width:${meterPct}%"></i><b style="left:${linePct}%"></b></div>
-      <p class="muted">${isMock ? fill(L.linePoints, { pass: sum.passPoints, max: sum.maxPoints }) : L.line}</p>
+        : `<div class="score"><span class="big">${pct}%</span><span class="num">${ok} / ${tot} ${L.correct}</span>${pill}</div>`}
+      <div class="meter" role="img" aria-label="${Math.round(meterPct)}%"><i style="width:${meterPct}%"></i>${isN3 ? '' : `<b style="left:${linePct}%"></b>`}</div>
+      <p class="muted">${isN3 ? L.n3Line : hasPoints ? fill(L.linePoints, { pass: sum.passPoints, max: sum.maxPoints }) : L.line}</p>
     </section>
     <section class="panel">
-      <h2>${L.byKind}</h2>
+      <h2>${isN3 ? L.byType : L.byKind}</h2>
       <table class="breakdown"><tbody>
-        ${Object.keys(KINDS).filter(k => byK[k]).map(k => row(KINDS[k], byK[k])).join('')}
+        ${Object.keys(kindNames).filter(k => byK[k]).map(k => row(kindNames[k], byK[k])).join('')}
       </tbody></table>
-      <h2>${L.byCat}</h2>
+      ${Object.keys(catNames).filter(c => by[c]).length > 1 || !isN3 ? `<h2>${L.byCat}</h2>
       <table class="breakdown"><tbody>
-        ${Object.keys(CATS).filter(c => by[c]).map(c => row(CATS[c], by[c])).join('')}
-      </tbody></table>
+        ${Object.keys(catNames).filter(c => by[c]).map(c => row(catNames[c], by[c])).join('')}
+      </tbody></table>` : ''}
     </section>
     <div class="actions">
       ${mode === 'practice' && wrong.length ? `<button class="btn" id="retry">${L.retryWrong}（${wrong.length}${L.mon}）</button>` : ''}
@@ -491,11 +540,11 @@ function resultView(items, mode, sum){
         <div>${x.q}</div>
         <div class="k">${L.yours}：${x.you === null || x.you === undefined ? L.blank : x.ch[x.you]}</div>
         <div class="a">${L.ans}：${x.ch[x.a]}</div>
-        <div class="muted">${x.e}</div></article>`).join('')}
+        <div class="muted">${x.e.replace(/\n/g, '<br>')}</div></article>`).join('')}
     </section>` : ''}
   </div>`;
   const r = document.getElementById('retry');
-  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, c:x.c, k:x.k, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
+  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, x:x.x, c:x.c, k:x.k, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
   document.getElementById('home').onclick = backHome;
 }
 
