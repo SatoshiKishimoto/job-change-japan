@@ -177,7 +177,8 @@ function relogin(){
 function showError(e, retry){
   if (e && e.silent) return;
   const msg = e && e.error === 'network' ? L.errNet : L.errServer;
-  app.innerHTML = `<section class="panel"><p>${msg}</p><div class="actions"><button class="btn" id="retry">${L.retry}</button></div></section>`;
+  const code = e && e.error ? `<span class="en">error: ${esc(e.error)}${e.detail ? ' / ' + esc(e.detail) : ''}</span>` : '';
+  app.innerHTML = `<section class="panel"><p>${msg}${code}</p><div class="actions"><button class="btn" id="retry">${L.retry}</button></div></section>`;
   document.getElementById('retry').onclick = retry || boot;
 }
 

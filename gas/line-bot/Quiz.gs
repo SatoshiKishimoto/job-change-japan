@@ -35,7 +35,7 @@ function quizApi_(body) {
     out = quizRoute_(body);
   } catch (e) {
     console.error(e && e.stack || e);
-    out = { ok: false, error: 'server' };
+    out = { ok: false, error: 'server', detail: String(e && e.message || e).slice(0, 200) };
   }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
