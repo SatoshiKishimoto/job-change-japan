@@ -3,5 +3,5 @@ window.QUIZ_CONFIG = {
   // LINE Developers の LIFF アプリの「LIFF ID」（例: 2001234567-AbCdEfGh）
   LIFF_ID: '2012300446-Oe7H41c2',
   // 公式LINEボットのGASのウェブアプリURL（LINEのWebhook URLと同じ。https://script.google.com/macros/s/…/exec）
-  API_URL: ''
+  API_URL: 'https://script.google.com/macros/s/AKfycbwBQ6Ssb1ajbN2yoLRXjxEHcYasxuMdF8O4wGTmuZnisIaiAbLl3LejUd9X5n7uJsQB/exec'
 };
