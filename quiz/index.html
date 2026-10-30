@@ -84,7 +84,8 @@ header{display:flex;flex-direction:column;gap:6px}
 .btn{font:inherit;font-weight:700;border-radius:8px;padding:10px 18px;cursor:pointer;border:1.5px solid var(--ai);background:var(--ai);color:var(--surface);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.6}
 .btn.ghost{background:transparent;color:var(--ai)}
 .btn.line{background:var(--line-green);border-color:var(--line-green);color:#fff}
-.btn.wide{width:100%;flex-direction:column}
+.btn.wide{width:100%}
+.btn.stacked{flex-direction:column}
 .btn small{font-weight:400;font-size:.8rem;opacity:.9}
 h1 .ln{display:inline-block}
 .btn:disabled{opacity:.5;cursor:default}
@@ -108,6 +109,12 @@ h1 .ln{display:inline-block}
 .review .a{color:var(--ok);font-weight:700}
 .review .k{color:var(--ng)}
 .center{text-align:center;padding:40px 0}
+.clock{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ai)}
+.clock.low{color:var(--ng)}
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;display:flex;flex-direction:column;gap:8px}
+.points{font-family:var(--f-display);font-size:1.1rem}
+.free-group{display:flex;flex-direction:column;gap:10px}
+.free-group h3{margin:6px 0 0;font-size:1rem;color:var(--muted)}
 footer{font-size:.82rem;color:var(--muted);line-height:1.8}
 @media (prefers-reduced-motion: reduce){.progress > i{transition:none}}
 </style>
@@ -129,8 +136,10 @@ footer{font-size:.82rem;color:var(--muted);line-height:1.8}
 <script src="config.js"></script>
 <script>
 const C = window.QUIZ_CONFIG || {};
-const CATS = {"eisei": "<ruby>衛生<rt>えいせい</rt></ruby><ruby>管理<rt>かんり</rt></ruby>", "chori": "<ruby>飲食<rt>いんしょく</rt></ruby><ruby>物<rt>ぶつ</rt></ruby><ruby>調理<rt>ちょうり</rt></ruby>", "sekkyaku": "<ruby>接客<rt>せっきゃく</rt></ruby><ruby>全般<rt>ぜんぱん</rt></ruby>", "unei": "<ruby>店舗<rt>てんぽ</rt></ruby><ruby>運営<rt>うんえい</rt></ruby>", "keisan": "<ruby>計算<rt>けいさん</rt></ruby><ruby>問題<rt>もんだい</rt></ruby>"};
-const L = {"title": "<span class=\"ln\"><ruby>特定<rt>とくてい</rt></ruby><ruby>技能<rt>ぎのう</rt></ruby>2<ruby>号<rt>ごう</rt></ruby> <ruby>外食<rt>がいしょく</rt></ruby><ruby>業<rt>ぎょう</rt></ruby></span> <span class=\"ln\"><ruby>練習<rt>れんしゅう</rt></ruby><ruby>問題<rt>もんだい</rt></ruby></span>", "foot": "このページの<ruby>問題<rt>もんだい</rt></ruby>は、<ruby>農林<rt>のうりん</rt></ruby><ruby>水産<rt>すいさん</rt></ruby><ruby>省<rt>しょう</rt></ruby>「<ruby>外食<rt>がいしょく</rt></ruby><ruby>業<rt>ぎょう</rt></ruby><ruby>特定<rt>とくてい</rt></ruby><ruby>技能<rt>ぎのう</rt></ruby><ruby>評価<rt>ひょうか</rt></ruby><ruby>試験<rt>しけん</rt></ruby><ruby>実施<rt>じっし</rt></ruby><ruby>要領<rt>ようりょう</rt></ruby>」の<ruby>出題<rt>しゅつだい</rt></ruby><ruby>範囲<rt>はんい</rt></ruby>をもとにJob Change Japan（<ruby>株式<rt>かぶしき</rt></ruby><ruby>会社<rt>かいしゃ</rt></ruby>Fairly connecting）が<ruby>作成<rt>さくせい</rt></ruby>したオリジナル<ruby>問題<rt>もんだい</rt></ruby>です。<ruby>実際<rt>じっさい</rt></ruby>の<ruby>試験<rt>しけん</rt></ruby><ruby>問題<rt>もんだい</rt></ruby>ではありません。<ruby>法令<rt>ほうれい</rt></ruby>や<ruby>制度<rt>せいど</rt></ruby>は<ruby>変<rt>か</rt></ruby>わることがあるため、<ruby>最新<rt>さいしん</rt></ruby>の<ruby>情報<rt>じょうほう</rt></ruby>はOTAFF（<ruby>外国<rt>がいこく</rt></ruby><ruby>人<rt>にん</rt></ruby><ruby>食品<rt>しょくひん</rt></ruby><ruby>産業<rt>さんぎょう</rt></ruby><ruby>技能<rt>ぎのう</rt></ruby><ruby>評価<rt>ひょうか</rt></ruby><ruby>機構<rt>きこう</rt></ruby>）の<ruby>公式<rt>こうしき</rt></ruby>サイトと<ruby>学習<rt>がくしゅう</rt></ruby><ruby>用<rt>よう</rt></ruby>テキストで<ruby>確認<rt>かくにん</rt></ruby>してください。2026<ruby>年<rt>ねん</rt></ruby>10<ruby>月<rt>つき</rt></ruby><ruby>時点<rt>じてん</rt></ruby>の<ruby>情報<rt>じょうほう</rt></ruby>です。", "loading": "<ruby>読み込<rt>よみこ</rt></ruby>み<ruby>中<rt>ちゅう</rt></ruby>…", "relogin": "もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>LINEでログインします…", "notReady": "このページは<ruby>準備<rt>じゅんび</rt></ruby><ruby>中<rt>ちゅう</rt></ruby>です。もうしばらくお<ruby>待<rt>ま</rt></ruby>ちください。", "errNet": "<ruby>通信<rt>つうしん</rt></ruby>できませんでした。<ruby>電波<rt>でんぱ</rt></ruby>のよい<ruby>場所<rt>ばしょ</rt></ruby>で、もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>ためしてください。", "errServer": "うまく<ruby>読み込<rt>よみこ</rt></ruby>めませんでした。<ruby>少<rt>すこ</rt></ruby>し<ruby>時間<rt>じかん</rt></ruby>をおいて、もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>ためしてください。", "retry": "もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>ためす", "gateHead": "LINEの<ruby>友<rt>とも</rt></ruby>だち<ruby>限定<rt>げんてい</rt></ruby>・<ruby>無料<rt>むりょう</rt></ruby>", "gateBody": "Job Change Japan <ruby>公式<rt>こうしき</rt></ruby>LINEの<ruby>友<rt>とも</rt></ruby>だちは、<ruby>無料<rt>むりょう</rt></ruby>で<ruby>練習<rt>れんしゅう</rt></ruby><ruby>問題<rt>もんだい</rt></ruby>が<ruby>使<rt>つか</rt></ruby>えます。LINEでログインしてください。", "loginBtn": "LINEでログイン", "friendHead": "{name} さん、あと<ruby>少<rt>すこ</rt></ruby>しです", "friendBody": "この<ruby>練習<rt>れんしゅう</rt></ruby><ruby>問題<rt>もんだい</rt></ruby>は、Job Change Japan <ruby>公式<rt>こうしき</rt></ruby>LINEの<ruby>友<rt>とも</rt></ruby>だち<ruby>限定<rt>げんてい</rt></ruby>です。<ruby>友<rt>とも</rt></ruby>だち<ruby>追加<rt>ついか</rt></ruby>してから「<ruby>追加<rt>ついか</rt></ruby>しました」を<ruby>押<rt>お</rt></ruby>してください。", "friendBtn": "LINEで<ruby>友<rt>とも</rt></ruby>だち<ruby>追加<rt>ついか</rt></ruby>する", "recheck": "<ruby>追加<rt>ついか</rt></ruby>しました", "hello": "{name} さん、こんにちは。", "mock": "<ruby>模擬<rt>もぎ</rt></ruby>テスト", "mockSub": "<ruby>本番<rt>ほんばん</rt></ruby>の<ruby>学科<rt>がっか</rt></ruby><ruby>試験<rt>しけん</rt></ruby>と<ruby>同<rt>おな</rt></ruby>じ<ruby>分野<rt>ぶんや</rt></ruby>の<ruby>配分<rt>はいぶん</rt></ruby>で{n}<ruby>問<rt>とい</rt></ruby>。<ruby>最後<rt>さいご</rt></ruby>にまとめて<ruby>採点<rt>さいてん</rt></ruby>します。<ruby>問題<rt>もんだい</rt></ruby>と<ruby>選択<rt>せんたく</rt></ruby><ruby>肢<rt>し</rt></ruby>は<ruby>毎回<rt>まいかい</rt></ruby><ruby>入<rt>い</rt></ruby>れかわり、<ruby>前<rt>まえ</rt></ruby>に<ruby>出<rt>で</rt></ruby>た<ruby>問題<rt>もんだい</rt></ruby>はなるべく<ruby>出<rt>だ</rt></ruby>しません。", "left": "<ruby>残<rt>のこ</rt></ruby>り", "times": "<ruby>回<rt>かい</rt></ruby>", "mockStart": "<ruby>模擬<rt>もぎ</rt></ruby>テストを<ruby>始<rt>はじ</rt></ruby>める", "mockConfirm": "1<ruby>回<rt>かい</rt></ruby><ruby>分<rt>ぶん</rt></ruby>を<ruby>使<rt>つか</rt></ruby>って<ruby>始<rt>はじ</rt></ruby>めます。<ruby>始<rt>はじ</rt></ruby>めると、<ruby>残<rt>のこ</rt></ruby>りは{n}<ruby>回<rt>かい</rt></ruby>になります。<ruby>途中<rt>とちゅう</rt></ruby>でやめても、24<ruby>時間<rt>じかん</rt></ruby><ruby>以内<rt>いない</rt></ruby>なら<ruby>続<rt>つづ</rt></ruby>きから<ruby>受<rt>う</rt></ruby>けられます。", "mockGo": "<ruby>始<rt>はじ</rt></ruby>める", "cancel": "やめる", "resume": "<ruby>途中<rt>とちゅう</rt></ruby>の<ruby>模擬<rt>もぎ</rt></ruby>テストを<ruby>続<rt>つづ</rt></ruby>ける", "price": "<ruby>模擬<rt>もぎ</rt></ruby>テストは<ruby>有料<rt>ゆうりょう</rt></ruby>です。<b>{yen}<ruby>円<rt>えん</rt></ruby>で{n}<ruby>回<rt>かい</rt></ruby></b><ruby>受<rt>う</rt></ruby>けられます（<ruby>使<rt>つか</rt></ruby>い<ruby>切<rt>き</rt></ruby>ったら、また{yen}<ruby>円<rt>えん</rt></ruby>で{n}<ruby>回<rt>かい</rt></ruby>）。", "soon": "<ruby>購入<rt>こうにゅう</rt></ruby>の<ruby>受付<rt>うけつけ</rt></ruby>は<ruby>準備<rt>じゅんび</rt></ruby><ruby>中<rt>ちゅう</rt></ruby>です。もうしばらくお<ruby>待<rt>ま</rt></ruby>ちください。", "free": "<ruby>無料<rt>むりょう</rt></ruby>の<ruby>練習<rt>れんしゅう</rt></ruby>", "freeSub": "<ruby>答<rt>こた</rt></ruby>えを<ruby>選<rt>えら</rt></ruby>ぶと、すぐに<ruby>正解<rt>せいかい</rt></ruby>と<ruby>解説<rt>かいせつ</rt></ruby>が<ruby>出<rt>で</rt></ruby>ます。<ruby>問題<rt>もんだい</rt></ruby>と<ruby>選択<rt>せんたく</rt></ruby><ruby>肢<rt>し</rt></ruby>の<ruby>順番<rt>じゅんばん</rt></ruby>は<ruby>毎回<rt>まいかい</rt></ruby><ruby>変<rt>か</rt></ruby>わります。", "all": "<ruby>全問<rt>ぜんもん</rt></ruby>チャレンジ", "allSub": "すべての<ruby>問題<rt>もんだい</rt></ruby>を、ランダムな<ruby>順番<rt>じゅんばん</rt></ruby>で<ruby>出<rt>だ</rt></ruby>します", "mon": "<ruby>問<rt>もん</rt></ruby>", "q": "<ruby>問題<rt>もんだい</rt></ruby>", "next": "<ruby>次<rt>つぎ</rt></ruby>へ", "prev": "<ruby>前<rt>まえ</rt></ruby>へ", "result": "<ruby>結果<rt>けっか</rt></ruby>を<ruby>見<rt>み</rt></ruby>る", "quit": "やめて<ruby>結果<rt>けっか</rt></ruby>を<ruby>見<rt>み</rt></ruby>る", "right": "<ruby>正解<rt>せいかい</rt></ruby>です！", "wrong": "<ruby>不<rt>ふ</rt></ruby><ruby>正解<rt>せいかい</rt></ruby>", "ans": "<ruby>正解<rt>せいかい</rt></ruby>", "yours": "あなたの<ruby>答<rt>こた</rt></ruby>え", "blank": "（<ruby>答<rt>こた</rt></ruby>えていません）", "answered": "{a} / {n} <ruby>問<rt>もん</rt></ruby> <ruby>答<rt>こた</rt></ruby>えました", "submit": "<ruby>採点<rt>さいてん</rt></ruby>する", "submitLeft": "まだ<ruby>答<rt>こた</rt></ruby>えていない<ruby>問題<rt>もんだい</rt></ruby>が{n}<ruby>問<rt>もん</rt></ruby>あります。このまま<ruby>採点<rt>さいてん</rt></ruby>しますか？（<ruby>採点<rt>さいてん</rt></ruby>したあとは、<ruby>答<rt>こた</rt></ruby>えを<ruby>変<rt>か</rt></ruby>えられません）", "submitAll": "すべて<ruby>答<rt>こた</rt></ruby>えました。<ruby>採点<rt>さいてん</rt></ruby>しますか？（<ruby>採点<rt>さいてん</rt></ruby>したあとは、<ruby>答<rt>こた</rt></ruby>えを<ruby>変<rt>か</rt></ruby>えられません）", "submitGo": "<ruby>採点<rt>さいてん</rt></ruby>する", "jump": "<ruby>問題<rt>もんだい</rt></ruby>の<ruby>番号<rt>ばんごう</rt></ruby>を<ruby>押<rt>お</rt></ruby>すと、その<ruby>問題<rt>もんだい</rt></ruby>へ<ruby>移動<rt>いどう</rt></ruby>します", "grading": "<ruby>採点<rt>さいてん</rt></ruby>しています…", "resultOf": "<ruby>練習<rt>れんしゅう</rt></ruby>の<ruby>結果<rt>けっか</rt></ruby>", "mockResult": "<ruby>模擬<rt>もぎ</rt></ruby>テストの<ruby>結果<rt>けっか</rt></ruby>", "correct": "<ruby>問<rt>もん</rt></ruby><ruby>正解<rt>せいかい</rt></ruby>", "passOk": "<ruby>合格<rt>ごうかく</rt></ruby>ライン<ruby>到達<rt>とうたつ</rt></ruby>", "passNg": "<ruby>合格<rt>ごうかく</rt></ruby>ラインまであと<ruby>少<rt>すこ</rt></ruby>し", "line": "<ruby>縦<rt>たて</rt></ruby>の<ruby>線<rt>せん</rt></ruby>が<ruby>合格<rt>ごうかく</rt></ruby><ruby>基準<rt>きじゅん</rt></ruby>の65％です（<ruby>本番<rt>ほんばん</rt></ruby>は<ruby>学科<rt>がっか</rt></ruby>と<ruby>実技<rt>じつぎ</rt></ruby>の<ruby>合計<rt>ごうけい</rt></ruby>で<ruby>判定<rt>はんてい</rt></ruby>）。", "byCat": "<ruby>分野<rt>ぶんや</rt></ruby><ruby>別<rt>べつ</rt></ruby>の<ruby>正解<rt>せいかい</rt></ruby><ruby>数<rt>すう</rt></ruby>", "retryWrong": "<ruby>間違<rt>まちが</rt></ruby>えた<ruby>問題<rt>もんだい</rt></ruby>だけもう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>", "home": "<ruby>最初<rt>さいしょ</rt></ruby>の<ruby>画面<rt>がめん</rt></ruby>にもどる", "review": "<ruby>間違<rt>まちが</rt></ruby>えた<ruby>問題<rt>もんだい</rt></ruby>の<ruby>復習<rt>ふくしゅう</rt></ruby>", "sub": {"eisei": "<ruby>食中毒<rt>しょくちゅうどく</rt></ruby>・HACCP・<ruby>食品<rt>しょくひん</rt></ruby><ruby>衛生<rt>えいせい</rt></ruby><ruby>法<rt>ほう</rt></ruby>", "chori": "<ruby>食材<rt>しょくざい</rt></ruby>・<ruby>調理<rt>ちょうり</rt></ruby><ruby>方法<rt>ほうほう</rt></ruby>・<ruby>調理<rt>ちょうり</rt></ruby><ruby>機器<rt>きき</rt></ruby>・<ruby>労働<rt>ろうどう</rt></ruby><ruby>安全<rt>あんぜん</rt></ruby>", "sekkyaku": "<ruby>接客<rt>せっきゃく</rt></ruby>・アレルギー・<ruby>食<rt>しょく</rt></ruby>の<ruby>多様<rt>たよう</rt></ruby><ruby>化<rt>か</rt></ruby>・クレーム<ruby>対応<rt>たいおう</rt></ruby>", "unei": "<ruby>労働基準法<rt>ろうどうきじゅんほう</rt></ruby>・<ruby>雇用<rt>こよう</rt></ruby><ruby>管理<rt>かんり</rt></ruby>・<ruby>届出<rt>とどけで</rt></ruby>・<ruby>在庫<rt>ざいこ</rt></ruby><ruby>管理<rt>かんり</rt></ruby>", "keisan": "<ruby>人時売上高<rt>にんじうりあげだか</rt></ruby>・<ruby>原価率<rt>げんかりつ</rt></ruby>・<ruby>発注<rt>はっちゅう</rt></ruby><ruby>量<rt>りょう</rt></ruby>などの<ruby>計算<rt>けいさん</rt></ruby>"}};
+const CATS = {"eisei": "<ruby>衛生<rt>えいせい</rt></ruby><ruby>管理<rt>かんり</rt></ruby>", "chori": "<ruby>飲食<rt>いんしょく</rt></ruby><ruby>物<rt>ぶつ</rt></ruby><ruby>調理<rt>ちょうり</rt></ruby>", "sekkyaku": "<ruby>接客<rt>せっきゃく</rt></ruby><ruby>全般<rt>ぜんぱん</rt></ruby>", "unei": "<ruby>店舗<rt>てんぽ</rt></ruby><ruby>運営<rt>うんえい</rt></ruby>"};
+const KINDS = {"gakka": "<ruby>学科<rt>がっか</rt></ruby>", "handan": "<ruby>実技<rt>じつぎ</rt></ruby>・<ruby>判断<rt>はんだん</rt></ruby>", "keikaku": "<ruby>実技<rt>じつぎ</rt></ruby>・<ruby>計画<rt>けいかく</rt></ruby><ruby>立案<rt>りつあん</rt></ruby>"};
+const chipOf = q => q.k && q.k !== 'gakka' ? `${KINDS[q.k]}｜${CATS[q.c]}` : CATS[q.c];
+const L = {"title": "<span class=\"ln\"><ruby>特定<rt>とくてい</rt></ruby><ruby>技能<rt>ぎのう</rt></ruby>2<ruby>号<rt>ごう</rt></ruby> <ruby>外食<rt>がいしょく</rt></ruby><ruby>業<rt>ぎょう</rt></ruby></span> <span class=\"ln\"><ruby>練習<rt>れんしゅう</rt></ruby><ruby>問題<rt>もんだい</rt></ruby></span>", "foot": "このページの<ruby>問題<rt>もんだい</rt></ruby>は、<ruby>農林<rt>のうりん</rt></ruby><ruby>水産<rt>すいさん</rt></ruby><ruby>省<rt>しょう</rt></ruby>「<ruby>外食<rt>がいしょく</rt></ruby><ruby>業<rt>ぎょう</rt></ruby><ruby>特定<rt>とくてい</rt></ruby><ruby>技能<rt>ぎのう</rt></ruby><ruby>評価<rt>ひょうか</rt></ruby><ruby>試験<rt>しけん</rt></ruby><ruby>実施<rt>じっし</rt></ruby><ruby>要領<rt>ようりょう</rt></ruby>」の<ruby>出題<rt>しゅつだい</rt></ruby><ruby>範囲<rt>はんい</rt></ruby>をもとにJob Change Japan（<ruby>株式<rt>かぶしき</rt></ruby><ruby>会社<rt>かいしゃ</rt></ruby>Fairly connecting）が<ruby>作成<rt>さくせい</rt></ruby>したオリジナル<ruby>問題<rt>もんだい</rt></ruby>です。<ruby>実際<rt>じっさい</rt></ruby>の<ruby>試験<rt>しけん</rt></ruby><ruby>問題<rt>もんだい</rt></ruby>ではありません。<ruby>法令<rt>ほうれい</rt></ruby>や<ruby>制度<rt>せいど</rt></ruby>は<ruby>変<rt>か</rt></ruby>わることがあるため、<ruby>最新<rt>さいしん</rt></ruby>の<ruby>情報<rt>じょうほう</rt></ruby>はOTAFF（<ruby>外国<rt>がいこく</rt></ruby><ruby>人<rt>にん</rt></ruby><ruby>食品<rt>しょくひん</rt></ruby><ruby>産業<rt>さんぎょう</rt></ruby><ruby>技能<rt>ぎのう</rt></ruby><ruby>評価<rt>ひょうか</rt></ruby><ruby>機構<rt>きこう</rt></ruby>）の<ruby>公式<rt>こうしき</rt></ruby>サイトと<ruby>学習<rt>がくしゅう</rt></ruby><ruby>用<rt>よう</rt></ruby>テキストで<ruby>確認<rt>かくにん</rt></ruby>してください。2026<ruby>年<rt>ねん</rt></ruby><ruby>10月<rt>じゅうがつ</rt></ruby><ruby>時点<rt>じてん</rt></ruby>の<ruby>情報<rt>じょうほう</rt></ruby>です。", "loading": "<ruby>読み込<rt>よみこ</rt></ruby>み<ruby>中<rt>ちゅう</rt></ruby>…", "relogin": "もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>LINEでログインします…", "notReady": "このページは<ruby>準備<rt>じゅんび</rt></ruby><ruby>中<rt>ちゅう</rt></ruby>です。もうしばらくお<ruby>待<rt>ま</rt></ruby>ちください。", "errNet": "<ruby>通信<rt>つうしん</rt></ruby>できませんでした。<ruby>電波<rt>でんぱ</rt></ruby>のよい<ruby>場所<rt>ばしょ</rt></ruby>で、もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>ためしてください。", "errServer": "うまく<ruby>読み込<rt>よみこ</rt></ruby>めませんでした。<ruby>少<rt>すこ</rt></ruby>し<ruby>時間<rt>じかん</rt></ruby>をおいて、もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>ためしてください。", "retry": "もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>ためす", "gateHead": "LINEの<ruby>友<rt>とも</rt></ruby>だち<ruby>限定<rt>げんてい</rt></ruby>・<ruby>無料<rt>むりょう</rt></ruby>", "gateBody": "Job Change Japan <ruby>公式<rt>こうしき</rt></ruby>LINEの<ruby>友<rt>とも</rt></ruby>だちは、<ruby>無料<rt>むりょう</rt></ruby>で<ruby>練習<rt>れんしゅう</rt></ruby><ruby>問題<rt>もんだい</rt></ruby>が<ruby>使<rt>つか</rt></ruby>えます。LINEでログインしてください。", "loginBtn": "LINEでログイン", "friendHead": "{name} さん、あと<ruby>少<rt>すこ</rt></ruby>しです", "friendBody": "この<ruby>練習<rt>れんしゅう</rt></ruby><ruby>問題<rt>もんだい</rt></ruby>は、Job Change Japan <ruby>公式<rt>こうしき</rt></ruby>LINEの<ruby>友<rt>とも</rt></ruby>だち<ruby>限定<rt>げんてい</rt></ruby>です。<ruby>友<rt>とも</rt></ruby>だち<ruby>追加<rt>ついか</rt></ruby>してから「<ruby>追加<rt>ついか</rt></ruby>しました」を<ruby>押<rt>お</rt></ruby>してください。", "friendBtn": "LINEで<ruby>友<rt>とも</rt></ruby>だち<ruby>追加<rt>ついか</rt></ruby>する", "recheck": "<ruby>追加<rt>ついか</rt></ruby>しました", "hello": "{name} さん、こんにちは。", "mock": "<ruby>模擬<rt>もぎ</rt></ruby>テスト", "mockSub": "<ruby>本番<rt>ほんばん</rt></ruby>と<ruby>同<rt>おな</rt></ruby>じ、<ruby>学科<rt>がっか</rt></ruby>35<ruby>問<rt>もん</rt></ruby>＋<ruby>実技<rt>じつぎ</rt></ruby>20<ruby>問<rt>もん</rt></ruby>（<ruby>判断<rt>はんだん</rt></ruby>・<ruby>計画<rt>けいかく</rt></ruby><ruby>立案<rt>りつあん</rt></ruby>）の{n}<ruby>問<rt>もん</rt></ruby>・{m}<ruby>分<rt>ぶん</rt></ruby>。<ruby>最後<rt>さいご</rt></ruby>にまとめて<ruby>採点<rt>さいてん</rt></ruby>し、{max}<ruby>点<rt>てん</rt></ruby><ruby>満点<rt>まんてん</rt></ruby>で<ruby>合格<rt>ごうかく</rt></ruby><ruby>基準<rt>きじゅん</rt></ruby>{pass}<ruby>点<rt>てん</rt></ruby>と<ruby>比<rt>くら</rt></ruby>べます。<ruby>問題<rt>もんだい</rt></ruby>と<ruby>選択<rt>せんたく</rt></ruby><ruby>肢<rt>し</rt></ruby>は<ruby>毎回<rt>まいかい</rt></ruby><ruby>入<rt>い</rt></ruby>れかわり、<ruby>前<rt>まえ</rt></ruby>に<ruby>出<rt>で</rt></ruby>た<ruby>問題<rt>もんだい</rt></ruby>はなるべく<ruby>出<rt>だ</rt></ruby>しません。", "left": "<ruby>残<rt>のこ</rt></ruby>り", "times": "<ruby>回<rt>かい</rt></ruby>", "mockStart": "<ruby>模擬<rt>もぎ</rt></ruby>テストを<ruby>始<rt>はじ</rt></ruby>める", "mockConfirm": "1<ruby>回<rt>かい</rt></ruby><ruby>分<rt>ぶん</rt></ruby>を<ruby>使<rt>つか</rt></ruby>って<ruby>始<rt>はじ</rt></ruby>めます（<ruby>残<rt>のこ</rt></ruby>りは{n}<ruby>回<rt>かい</rt></ruby>になります）。<ruby>制限<rt>せいげん</rt></ruby><ruby>時間<rt>じかん</rt></ruby>は{m}<ruby>分<rt>ぶん</rt></ruby>で、<ruby>時間<rt>じかん</rt></ruby>になると<ruby>自動<rt>じどう</rt></ruby>で<ruby>採点<rt>さいてん</rt></ruby>されます。<ruby>途中<rt>とちゅう</rt></ruby>で<ruby>画面<rt>がめん</rt></ruby>を<ruby>閉<rt>と</rt></ruby>じても、<ruby>時間<rt>じかん</rt></ruby><ruby>内<rt>ない</rt></ruby>なら<ruby>続<rt>つづ</rt></ruby>きから<ruby>受<rt>う</rt></ruby>けられます。", "mockGo": "<ruby>始<rt>はじ</rt></ruby>める", "cancel": "やめる", "resume": "<ruby>途中<rt>とちゅう</rt></ruby>の<ruby>模擬<rt>もぎ</rt></ruby>テストを<ruby>続<rt>つづ</rt></ruby>ける", "price": "<ruby>模擬<rt>もぎ</rt></ruby>テストは<ruby>有料<rt>ゆうりょう</rt></ruby>です。<b>{yen}<ruby>円<rt>えん</rt></ruby>で{n}<ruby>回<rt>かい</rt></ruby></b><ruby>受<rt>う</rt></ruby>けられます（<ruby>使<rt>つか</rt></ruby>い<ruby>切<rt>き</rt></ruby>ったら、また{yen}<ruby>円<rt>えん</rt></ruby>で{n}<ruby>回<rt>かい</rt></ruby>）。", "soon": "<ruby>購入<rt>こうにゅう</rt></ruby>の<ruby>受付<rt>うけつけ</rt></ruby>は<ruby>準備<rt>じゅんび</rt></ruby><ruby>中<rt>ちゅう</rt></ruby>です。もうしばらくお<ruby>待<rt>ま</rt></ruby>ちください。", "free": "<ruby>無料<rt>むりょう</rt></ruby>の<ruby>練習<rt>れんしゅう</rt></ruby>", "freeSub": "<ruby>答<rt>こた</rt></ruby>えを<ruby>選<rt>えら</rt></ruby>ぶと、すぐに<ruby>正解<rt>せいかい</rt></ruby>と<ruby>解説<rt>かいせつ</rt></ruby>が<ruby>出<rt>で</rt></ruby>ます。<ruby>問題<rt>もんだい</rt></ruby>と<ruby>選択<rt>せんたく</rt></ruby><ruby>肢<rt>し</rt></ruby>の<ruby>順番<rt>じゅんばん</rt></ruby>は<ruby>毎回<rt>まいかい</rt></ruby><ruby>変<rt>か</rt></ruby>わります。", "all": "<ruby>全問<rt>ぜんもん</rt></ruby>チャレンジ", "allSub": "すべての<ruby>問題<rt>もんだい</rt></ruby>を、ランダムな<ruby>順番<rt>じゅんばん</rt></ruby>で<ruby>出<rt>だ</rt></ruby>します", "mon": "<ruby>問<rt>もん</rt></ruby>", "q": "<ruby>問題<rt>もんだい</rt></ruby>", "next": "<ruby>次<rt>つぎ</rt></ruby>へ", "prev": "<ruby>前<rt>まえ</rt></ruby>へ", "result": "<ruby>結果<rt>けっか</rt></ruby>を<ruby>見<rt>み</rt></ruby>る", "quit": "やめて<ruby>結果<rt>けっか</rt></ruby>を<ruby>見<rt>み</rt></ruby>る", "right": "<ruby>正解<rt>せいかい</rt></ruby>です！", "wrong": "<ruby>不<rt>ふ</rt></ruby><ruby>正解<rt>せいかい</rt></ruby>", "ans": "<ruby>正解<rt>せいかい</rt></ruby>", "yours": "あなたの<ruby>答<rt>こた</rt></ruby>え", "blank": "（<ruby>答<rt>こた</rt></ruby>えていません）", "answered": "{a} / {n} <ruby>問<rt>もん</rt></ruby> <ruby>答<rt>こた</rt></ruby>えました", "submit": "<ruby>採点<rt>さいてん</rt></ruby>する", "submitLeft": "まだ<ruby>答<rt>こた</rt></ruby>えていない<ruby>問題<rt>もんだい</rt></ruby>が{n}<ruby>問<rt>もん</rt></ruby>あります。このまま<ruby>採点<rt>さいてん</rt></ruby>しますか？（<ruby>採点<rt>さいてん</rt></ruby>したあとは、<ruby>答<rt>こた</rt></ruby>えを<ruby>変<rt>か</rt></ruby>えられません）", "submitAll": "すべて<ruby>答<rt>こた</rt></ruby>えました。<ruby>採点<rt>さいてん</rt></ruby>しますか？（<ruby>採点<rt>さいてん</rt></ruby>したあとは、<ruby>答<rt>こた</rt></ruby>えを<ruby>変<rt>か</rt></ruby>えられません）", "submitGo": "<ruby>採点<rt>さいてん</rt></ruby>する", "jump": "<ruby>問題<rt>もんだい</rt></ruby>の<ruby>番号<rt>ばんごう</rt></ruby>を<ruby>押<rt>お</rt></ruby>すと、その<ruby>問題<rt>もんだい</rt></ruby>へ<ruby>移動<rt>いどう</rt></ruby>します", "grading": "<ruby>採点<rt>さいてん</rt></ruby>しています…", "resultOf": "<ruby>練習<rt>れんしゅう</rt></ruby>の<ruby>結果<rt>けっか</rt></ruby>", "mockResult": "<ruby>模擬<rt>もぎ</rt></ruby>テストの<ruby>結果<rt>けっか</rt></ruby>", "correct": "<ruby>問<rt>もん</rt></ruby><ruby>正解<rt>せいかい</rt></ruby>", "passOk": "<ruby>合格<rt>ごうかく</rt></ruby>ライン<ruby>到達<rt>とうたつ</rt></ruby>", "passNg": "<ruby>合格<rt>ごうかく</rt></ruby>ラインまであと<ruby>少<rt>すこ</rt></ruby>し", "line": "<ruby>縦<rt>たて</rt></ruby>の<ruby>線<rt>せん</rt></ruby>が<ruby>合格<rt>ごうかく</rt></ruby><ruby>基準<rt>きじゅん</rt></ruby>の65％です。", "linePoints": "<ruby>縦<rt>たて</rt></ruby>の<ruby>線<rt>せん</rt></ruby>が<ruby>合格<rt>ごうかく</rt></ruby><ruby>基準<rt>きじゅん</rt></ruby>の{pass}<ruby>点<rt>てん</rt></ruby>（{max}<ruby>点<rt>てん</rt></ruby><ruby>満点<rt>まんてん</rt></ruby>の65％）です。<ruby>学科<rt>がっか</rt></ruby>は<ruby>本番<rt>ほんばん</rt></ruby>の<ruby>配点<rt>はいてん</rt></ruby>、<ruby>実技<rt>じつぎ</rt></ruby>は1<ruby>問<rt>もん</rt></ruby>6.5<ruby>点<rt>てん</rt></ruby>の<ruby>目安<rt>めやす</rt></ruby>で<ruby>計算<rt>けいさん</rt></ruby>しています。", "ten": "<ruby>点<rt>てん</rt></ruby>", "byKind": "<ruby>学科<rt>がっか</rt></ruby>・<ruby>実技<rt>じつぎ</rt></ruby><ruby>別<rt>べつ</rt></ruby>の<ruby>正解<rt>せいかい</rt></ruby><ruby>数<rt>すう</rt></ruby>", "timeLeft": "<ruby>残<rt>のこ</rt></ruby>り<ruby>時間<rt>じかん</rt></ruby>", "timeUp": "<ruby>時間<rt>じかん</rt></ruby>になりました。", "gakkaHead": "<ruby>学科<rt>がっか</rt></ruby>（<ruby>分野<rt>ぶんや</rt></ruby><ruby>別<rt>べつ</rt></ruby>）", "jitsugiHead": "<ruby>実技<rt>じつぎ</rt></ruby>", "allHead": "まとめて", "byCat": "<ruby>分野<rt>ぶんや</rt></ruby><ruby>別<rt>べつ</rt></ruby>の<ruby>正解<rt>せいかい</rt></ruby><ruby>数<rt>すう</rt></ruby>", "retryWrong": "<ruby>間違<rt>まちが</rt></ruby>えた<ruby>問題<rt>もんだい</rt></ruby>だけもう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby>", "home": "<ruby>最初<rt>さいしょ</rt></ruby>の<ruby>画面<rt>がめん</rt></ruby>にもどる", "review": "<ruby>間違<rt>まちが</rt></ruby>えた<ruby>問題<rt>もんだい</rt></ruby>の<ruby>復習<rt>ふくしゅう</rt></ruby>", "sub": {"eisei": "<ruby>食中毒<rt>しょくちゅうどく</rt></ruby>・HACCP・<ruby>食品<rt>しょくひん</rt></ruby><ruby>衛生<rt>えいせい</rt></ruby><ruby>法<rt>ほう</rt></ruby>", "chori": "<ruby>食材<rt>しょくざい</rt></ruby>・<ruby>調理<rt>ちょうり</rt></ruby><ruby>方法<rt>ほうほう</rt></ruby>・<ruby>調理<rt>ちょうり</rt></ruby><ruby>機器<rt>きき</rt></ruby>・<ruby>労働<rt>ろうどう</rt></ruby><ruby>安全<rt>あんぜん</rt></ruby>", "sekkyaku": "<ruby>接客<rt>せっきゃく</rt></ruby>・アレルギー・<ruby>食<rt>しょく</rt></ruby>の<ruby>多様<rt>たよう</rt></ruby><ruby>化<rt>か</rt></ruby>・クレーム<ruby>対応<rt>たいおう</rt></ruby>", "unei": "<ruby>労働基準法<rt>ろうどうきじゅんほう</rt></ruby>・<ruby>雇用<rt>こよう</rt></ruby><ruby>管理<rt>かんり</rt></ruby>・<ruby>届出<rt>とどけで</rt></ruby>・<ruby>在庫<rt>ざいこ</rt></ruby><ruby>管理<rt>かんり</rt></ruby>", "handan": "<ruby>店<rt>みせ</rt></ruby>の<ruby>場面<rt>ばめん</rt></ruby>を<ruby>読<rt>よ</rt></ruby>んで、<ruby>正<rt>ただ</rt></ruby>しい<ruby>行動<rt>こうどう</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶ（4<ruby>分野<rt>ぶんや</rt></ruby>）", "keikaku": "<ruby>計算<rt>けいさん</rt></ruby>して、<ruby>作業<rt>さぎょう</rt></ruby>の<ruby>計画<rt>けいかく</rt></ruby>を<ruby>立<rt>た</rt></ruby>てる（4<ruby>分野<rt>ぶんや</rt></ruby>）"}};
 const FRIEND_URL = 'https://line.me/R/ti/p/@022akbvw';
 const MARK = ['A','B','C'];
 const app = document.getElementById('app');
@@ -152,7 +161,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp
 const fill = (s, o) => Object.keys(o).reduce((t,k)=>t.split('{'+k+'}').join(o[k]), s);
 const toTop = () => window.scrollTo(0,0);
 
-let TOKEN = null, ME = null, S = null;
+let TOKEN = null, ME = null, S = null, TIMER = null;
 
 // ---------- サーバーとのやりとり ----------
 async function api(body){
@@ -206,7 +215,7 @@ function loginGate(){
   <section class="panel">
     <h2>${L.gateHead}</h2>
     <p>${L.gateBody}<span class="en">Free for friends of the Job Change Japan LINE account. Please log in with LINE.</span></p>
-    <button class="btn line wide" id="login"><span>${L.loginBtn}</span><small>Log in with LINE</small></button>
+    <button class="btn line wide stacked" id="login"><span>${L.loginBtn}</span><small>Log in with LINE</small></button>
   </section>`;
   document.getElementById('login').onclick = () => liff.login({ redirectUri: location.href });
 }
@@ -217,8 +226,8 @@ function friendGate(name){
   <section class="panel">
     <h2>${fill(L.friendHead, { name: esc(name || '') })}</h2>
     <p>${L.friendBody}<span class="en">These practice questions are free for friends of our official LINE account. Please add us as a friend, then tap "I added".</span></p>
-    <a class="btn line wide" href="${FRIEND_URL}" target="_blank" rel="noopener"><span>${L.friendBtn}</span><small>Add friend on LINE</small></a>
-    <button class="btn ghost wide" id="recheck"><span>${L.recheck}</span><small>I added — check again</small></button>
+    <a class="btn line wide stacked" href="${FRIEND_URL}" target="_blank" rel="noopener"><span>${L.friendBtn}</span><small>Add friend on LINE</small></a>
+    <button class="btn ghost wide stacked" id="recheck"><span>${L.recheck}</span><small>I added — check again</small></button>
   </section>`;
   document.getElementById('recheck').onclick = boot;
 }
@@ -226,17 +235,19 @@ function friendGate(name){
 // ---------- ホーム ----------
 function home(){
   toTop();
+  stopClock();
   S = null;
   const credits = ME.credits;
   const open = ME.open;
   const cats = Object.keys(CATS).filter(c => ME.counts[c]);
+  const modeBtn = (key, name, sub, n) => `<button class="mode" data-c="${key}"><span class="name">${name}<span class="sub">${sub}</span></span><span class="count">${n}${L.mon}</span></button>`;
   app.innerHTML = `
   <div class="stack">
     <p>${fill(L.hello, { name: esc(ME.name) })}</p>
 
     <section class="panel mock" aria-labelledby="mock-h">
       <div class="row"><h2 id="mock-h">${L.mock}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>
-      <p class="muted">${fill(L.mockSub, { n: ME.mockSize })}</p>
+      <p class="muted">${fill(L.mockSub, { n: ME.mockSize, m: ME.mockMinutes, max: ME.maxPoints, pass: ME.passPoints })}</p>
       ${open ? `<button class="btn wide" id="resume">${L.resume}</button>` : ''}
       ${credits > 0
         ? `<button class="btn ${open ? 'ghost' : ''} wide" id="mstart">${L.mockStart}</button><div id="mconfirm"></div>`
@@ -246,15 +257,20 @@ function home(){
     <section class="modes" aria-labelledby="free-h">
       <h2 id="free-h">${L.free}</h2>
       <p class="muted">${L.freeSub}</p>
-      ${cats.map(c => `<button class="mode" data-c="${c}"><span class="name">${CATS[c]}<span class="sub">${L.sub[c]}</span></span><span class="count">${ME.counts[c]}${L.mon}</span></button>`).join('')}
-      <button class="mode" data-c="all"><span class="name">${L.all}<span class="sub">${L.allSub}</span></span><span class="count">${ME.total}${L.mon}</span></button>
+      <div class="free-group"><h3>${L.gakkaHead}</h3>
+        ${cats.map(c => modeBtn(c, CATS[c], L.sub[c], ME.counts[c])).join('')}</div>
+      <div class="free-group"><h3>${L.jitsugiHead}</h3>
+        ${modeBtn('handan', KINDS.handan, L.sub.handan, ME.counts.handan)}
+        ${modeBtn('keikaku', KINDS.keikaku, L.sub.keikaku, ME.counts.keikaku)}</div>
+      <div class="free-group"><h3>${L.allHead}</h3>
+        ${modeBtn('all', L.all, L.allSub, ME.total)}</div>
     </section>
   </div>`;
   app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => startPractice(b.dataset.c));
   const ms = document.getElementById('mstart');
   if (ms) ms.onclick = () => {
     const box = document.getElementById('mconfirm');
-    box.innerHTML = `<div class="confirm"><p>${fill(L.mockConfirm, { n: credits - 1 })}</p>
+    box.innerHTML = `<div class="confirm"><p>${fill(L.mockConfirm, { n: credits - 1, m: ME.mockMinutes })}</p>
       <div class="actions"><button class="btn" id="mgo">${L.mockGo}</button><button class="btn ghost" id="mcancel">${L.cancel}</button></div></div>`;
     document.getElementById('mgo').onclick = startMock;
     document.getElementById('mcancel').onclick = () => { box.innerHTML = ''; };
@@ -284,7 +300,7 @@ function practiceView(){
   <div class="stack" style="gap:14px">
     <div class="progress" aria-hidden="true"><i style="width:${(S.i/n)*100}%"></i></div>
     <article class="ticket">
-      <div class="qhead"><span class="chip">${CATS[q.c]}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
+      <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
       <p class="qtext">${q.q}</p>
       <div class="choices">${q.ch.map((t,k)=>`<button class="choice" data-k="${k}"><span class="mk">${MARK[k]}</span><span>${t}</span></button>`).join('')}</div>
       <div id="fb"></div>
@@ -315,8 +331,8 @@ function practiceAnswer(k, replay){
 }
 
 function practiceResult(){
-  const done = S.ans.map((k,i)=>({ q:S.list[i], k })).filter(x => x.k !== undefined);
-  const items = done.map(x => Object.assign({}, x.q, { k:x.k }));
+  const done = S.ans.map((you,i)=>({ q:S.list[i], you })).filter(x => x.you !== undefined);
+  const items = done.map(x => Object.assign({}, x.q, { you:x.you }));
   resultView(items, 'practice');
 }
 
@@ -326,8 +342,8 @@ async function startMock(){
   try {
     const j = await api({ api:'mock_start' });
     ME.credits = j.credits;
-    S = { mode:'mock', id:j.attemptId, list:j.questions, i:0, ans:new Array(j.questions.length).fill(null) };
-    mockView();
+    S = { mode:'mock', id:j.attemptId, list:j.questions, i:0, ans:new Array(j.questions.length).fill(null), end: j.started + j.minutes * 60000 };
+    mockSave(); startClock(); mockView();
   } catch (e) {
     if (e && e.error === 'no_credits') { ME.credits = 0; home(); return; }
     showError(e, backHome);
@@ -339,8 +355,9 @@ async function resumeMock(id){
   try {
     const j = await api({ api:'mock_resume', attemptId:id });
     const saved = store.get('mock_' + id) || {};
-    S = { mode:'mock', id, list:j.questions, i:saved.i || 0, ans:(saved.ans && saved.ans.length === j.questions.length) ? saved.ans : new Array(j.questions.length).fill(null) };
-    mockView();
+    S = { mode:'mock', id, list:j.questions, i:saved.i || 0, ans:(saved.ans && saved.ans.length === j.questions.length) ? saved.ans : new Array(j.questions.length).fill(null), end: j.started + j.minutes * 60000 };
+    if (Date.now() >= S.end) { submitMock(true); return; }   // 時間切れ：保存していた答えで採点
+    startClock(); mockView();
   } catch (e) {
     if (e && (e.error === 'done' || e.error === 'not_found')) { backHome(); return; }
     showError(e, () => resumeMock(id));
@@ -349,15 +366,34 @@ async function resumeMock(id){
 
 function mockSave(){ store.set('mock_' + S.id, { i:S.i, ans:S.ans }); }
 
+// 残り時間（サーバーの開始時刻から数える）。0になったら自動で採点
+function clockText(){
+  const ms = Math.max(0, S.end - Date.now()), m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function startClock(){
+  stopClock();
+  TIMER = setInterval(() => {
+    if (!S || S.mode !== 'mock') return stopClock();
+    const el = document.getElementById('clock');
+    const left = S.end - Date.now();
+    if (el) { el.textContent = clockText(); el.classList.toggle('low', left < 5 * 60000); }
+    if (left <= 0) { stopClock(); submitMock(true); }
+  }, 1000);
+}
+function stopClock(){ if (TIMER) { clearInterval(TIMER); TIMER = null; } }
+
 function mockView(){
   const q = S.list[S.i], n = S.list.length, cur = S.ans[S.i];
   const answered = S.ans.filter(a => a !== null).length;
   app.innerHTML = `
   <div class="stack" style="gap:14px">
-    <div class="bar"><span class="eyebrow">${L.mock}</span><span class="muted num">${fill(L.answered, { a: answered, n })}</span></div>
-    <div class="progress" aria-hidden="true"><i style="width:${(answered/n)*100}%"></i></div>
+    <div class="sticky">
+      <div class="bar"><span class="muted num">${fill(L.answered, { a: answered, n })}</span><span class="muted">${L.timeLeft} <span class="clock ${S.end - Date.now() < 300000 ? 'low' : ''}" id="clock">${clockText()}</span></span></div>
+      <div class="progress" aria-hidden="true"><i style="width:${(answered/n)*100}%"></i></div>
+    </div>
     <article class="ticket">
-      <div class="qhead"><span class="chip">${CATS[q.c]}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
+      <div class="qhead"><span class="chip">${chipOf(q)}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
       <p class="qtext">${q.q}</p>
       <div class="choices">${q.ch.map((t,k)=>`<button class="choice ${cur===k?'sel':''}" data-k="${k}" aria-pressed="${cur===k}"><span class="mk">${MARK[k]}</span><span>${t}</span></button>`).join('')}</div>
     </article>
@@ -392,12 +428,13 @@ function mockView(){
   };
 }
 
-async function submitMock(){
-  app.innerHTML = `<p class="center muted">${L.grading}</p>`;
+async function submitMock(timeUp){
+  stopClock();
+  app.innerHTML = `<p class="center muted">${timeUp ? L.timeUp + '<br>' : ''}${L.grading}</p>`;
   try {
     const j = await api({ api:'mock_submit', attemptId:S.id, answers:S.ans });
     store.del('mock_' + S.id);
-    resultView(j.results, 'mock');
+    resultView(j.results, 'mock', j);
   } catch (e) {
     if (e && e.error === 'done') { store.del('mock_' + S.id); backHome(); return; }
     showError(e, submitMock);
@@ -405,26 +442,43 @@ async function submitMock(){
 }
 
 // ---------- 結果 ----------
-function resultView(items, mode){
+function resultView(items, mode, sum){
   toTop();
-  const tot = items.length, ok = items.filter(x => x.k === x.a).length;
-  const pct = tot ? Math.round(ok / tot * 100) : 0, pass = pct >= 65;
-  const by = {};
-  items.forEach(x => { by[x.c] = by[x.c] || [0,0]; by[x.c][1]++; if (x.k === x.a) by[x.c][0]++; });
-  const wrong = items.filter(x => x.k !== x.a);
+  const tot = items.length, ok = items.filter(x => x.you === x.a).length;
+  const pct = tot ? Math.round(ok / tot * 100) : 0;
+  const isMock = mode === 'mock' && sum;
+  const pass = isMock ? sum.pass : pct >= 65;
+  const meterPct = isMock ? Math.min(100, sum.points / sum.maxPoints * 100) : pct;
+  const linePct = isMock ? sum.passPoints / sum.maxPoints * 100 : 65;
+  const by = {}, byK = {};
+  items.forEach(x => {
+    const r = x.you === x.a ? 1 : 0;
+    by[x.c] = by[x.c] || [0,0]; by[x.c][1]++; by[x.c][0] += r;
+    const k = x.k || 'gakka'; byK[k] = byK[k] || [0,0]; byK[k][1]++; byK[k][0] += r;
+  });
+  const wrong = items.filter(x => x.you !== x.a);
+  const row = (name, v) => `<tr><td>${name}</td><td>${v[0]} / ${v[1]}</td></tr>`;
   app.innerHTML = `
   <div class="stack">
     <section class="panel">
-      <div class="eyebrow">${mode === 'mock' ? L.mockResult : L.resultOf}</div>
-      <div class="score"><span class="big">${pct}%</span><span class="num">${ok} / ${tot} ${L.correct}</span>
-        <span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span></div>
-      <div class="meter" role="img" aria-label="${pct}%"><i style="width:${pct}%"></i><b></b></div>
-      <p class="muted">${L.line}</p>
+      <div class="eyebrow">${isMock ? L.mockResult : L.resultOf}</div>
+      ${isMock
+        ? `<div class="score"><span class="big">${sum.points}</span><span class="points">/ ${sum.maxPoints}${L.ten}</span>
+             <span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span></div>
+           <p class="num">${ok} / ${tot} ${L.correct}（${pct}%）</p>`
+        : `<div class="score"><span class="big">${pct}%</span><span class="num">${ok} / ${tot} ${L.correct}</span>
+             <span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span></div>`}
+      <div class="meter" role="img" aria-label="${Math.round(meterPct)}%"><i style="width:${meterPct}%"></i><b style="left:${linePct}%"></b></div>
+      <p class="muted">${isMock ? fill(L.linePoints, { pass: sum.passPoints, max: sum.maxPoints }) : L.line}</p>
     </section>
     <section class="panel">
+      <h2>${L.byKind}</h2>
+      <table class="breakdown"><tbody>
+        ${Object.keys(KINDS).filter(k => byK[k]).map(k => row(KINDS[k], byK[k])).join('')}
+      </tbody></table>
       <h2>${L.byCat}</h2>
       <table class="breakdown"><tbody>
-        ${Object.keys(CATS).filter(c => by[c]).map(c => `<tr><td>${CATS[c]}</td><td>${by[c][0]} / ${by[c][1]}</td></tr>`).join('')}
+        ${Object.keys(CATS).filter(c => by[c]).map(c => row(CATS[c], by[c])).join('')}
       </tbody></table>
     </section>
     <div class="actions">
@@ -433,15 +487,15 @@ function resultView(items, mode){
     </div>
     ${wrong.length ? `<section class="panel review"><h2>${L.review}</h2>
       ${wrong.map(x => `<article>
-        <div><span class="chip">${CATS[x.c]}</span></div>
+        <div><span class="chip">${chipOf(x)}</span></div>
         <div>${x.q}</div>
-        <div class="k">${L.yours}：${x.k === null || x.k === undefined ? L.blank : x.ch[x.k]}</div>
+        <div class="k">${L.yours}：${x.you === null || x.you === undefined ? L.blank : x.ch[x.you]}</div>
         <div class="a">${L.ans}：${x.ch[x.a]}</div>
         <div class="muted">${x.e}</div></article>`).join('')}
     </section>` : ''}
   </div>`;
   const r = document.getElementById('retry');
-  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, c:x.c, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
+  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, c:x.c, k:x.k, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
   document.getElementById('home').onclick = backHome;
 }
 

@@ -53,7 +53,9 @@ LINE_TOKEN（必須）／NOTIFY_EMAIL（空ならGAS所有者）／SHEET_ID／AN
 - 配信（push/multicast）は月200通の無料枠を使う。reply は無料
 
 ## 練習問題（特定技能2号 外食業）2026-10-30 追加
-- 公式LINEの友だち限定で無料。模擬テスト（35問）は有料：500円で10回、使い切ったらまた500円で10回
+- 公式LINEの友だち限定で無料。模擬テストは有料：500円で10回、使い切ったらまた500円で10回
+- 模擬テストは本番と同じ 学科35問＋実技20問（判断3＋計画立案2 ×4分野）＝55問・70分。採点は250点満点・合格163点（学科は実施要領の配点、実技は1問6.5点の目安）
+- 問題は175問：学科116問、実技・判断32問、実技・計画立案27問（questions.py の先頭の分類 "handan:eisei" など）
 - ページ：`quiz/index.html`（LIFF。設定は `quiz/config.js`）。GAS：`Quiz.gs`（API）＋ `QuizBank.gs`（問題データ・自動生成）を同じLINEボットのプロジェクトに追加。`doPost` は `body.api` があれば `quizApi_` へ
 - 問題・ふりがなの元データ：`quiz/build/`（`python3 quiz/build/build.py` で QuizBank.gs と index.html を生成）
 - 確認方法：アクセストークンを LINE の verify・profile・friendship API で確認（LIFF_CHANNEL_ID と一致・友だち）。正解は模擬テストの採点時まで返さない

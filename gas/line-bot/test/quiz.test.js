@@ -87,17 +87,20 @@ assert.strictEqual(call({ api: 'me', token: 'nofriend' }).ok, true);
 
 // --- me ---
 r = call({ api: 'me', token: 'good' });
-assert.strictEqual(r.ok, true); assert.strictEqual(r.credits, 0); assert.strictEqual(r.total, 130); assert.strictEqual(r.mockSize, 35);
-assert.deepStrictEqual(r.counts, { eisei: 32, chori: 21, sekkyaku: 31, unei: 32, keisan: 14 });
+assert.strictEqual(r.ok, true); assert.strictEqual(r.credits, 0); assert.strictEqual(r.total, 175); assert.strictEqual(r.mockSize, 55);
+assert.strictEqual(r.mockMinutes, 70); assert.strictEqual(r.maxPoints, 250); assert.strictEqual(r.passPoints, 163);
+assert.deepStrictEqual(r.counts, { handan: 32, keikaku: 27, eisei: 32, chori: 21, sekkyaku: 31, unei: 32 });
 const before = fetchCount; call({ api: 'me', token: 'good' }); assert.strictEqual(fetchCount, before, 'friend auth cached');
 
 // --- practice ---
 r = call({ api: 'practice', token: 'good', cat: 'chori' });
 assert.strictEqual(r.questions.length, 21);
-r.questions.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(q.ch[q.a], src.ch[0]); assert.strictEqual(q.c, 'chori'); });
+r.questions.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(q.ch[q.a], src.ch[0]); assert.strictEqual(q.c, 'chori'); assert.strictEqual(q.k, 'gakka'); });
+assert.strictEqual(call({ api: 'practice', token: 'good', cat: 'handan' }).questions.length, 32);
+assert.ok(call({ api: 'practice', token: 'good', cat: 'keikaku' }).questions.every(q => q.k === 'keikaku'));
 const all = call({ api: 'practice', token: 'good', cat: 'all' }).questions;
-assert.strictEqual(all.length, 130);
-assert.strictEqual(new Set(all.map(q => q.id)).size, 130);
+assert.strictEqual(all.length, 175);
+assert.strictEqual(new Set(all.map(q => q.id)).size, 175);
 const pos = [0, 0, 0]; all.forEach(q => pos[q.a]++); console.log('practice answer positions', pos);
 const o1 = all.map(q => q.id).join(), o2 = call({ api: 'practice', token: 'good', cat: 'all' }).questions.map(q => q.id).join();
 assert.notStrictEqual(o1, o2, 'order shuffles');
@@ -112,10 +115,12 @@ assert.strictEqual(call({ api: 'me', token: 'good' }).credits, 10);
 
 // --- mock start ---
 r = call({ api: 'mock_start', token: 'good' });
-assert.strictEqual(r.ok, true); assert.strictEqual(r.credits, 9); assert.strictEqual(r.questions.length, 35);
+assert.strictEqual(r.ok, true); assert.strictEqual(r.credits, 9); assert.strictEqual(r.questions.length, 55); assert.strictEqual(r.minutes, 70); assert.ok(r.started > 0);
 assert.ok(r.questions.every(q => q.a === undefined && q.e === undefined), 'no answers leaked');
-const cnt = {}; r.questions.forEach(q => cnt[q.c] = (cnt[q.c] || 0) + 1);
-assert.deepStrictEqual(cnt, { eisei: 10, chori: 5, sekkyaku: 10, unei: 6, keisan: 4 }, JSON.stringify(cnt));
+const cnt = {}; r.questions.forEach(q => cnt[q.k + ':' + q.c] = (cnt[q.k + ':' + q.c] || 0) + 1);
+assert.deepStrictEqual(cnt, { 'gakka:eisei': 10, 'gakka:chori': 5, 'gakka:sekkyaku': 10, 'gakka:unei': 10,
+  'handan:eisei': 3, 'handan:chori': 3, 'handan:sekkyaku': 3, 'handan:unei': 3, 'keikaku:eisei': 2, 'keikaku:chori': 2, 'keikaku:sekkyaku': 2, 'keikaku:unei': 2 }, JSON.stringify(cnt));
+assert.ok(r.questions.slice(0, 35).every(q => q.k === 'gakka') && r.questions.slice(35).every(q => q.k !== 'gakka'), 'gakka first');
 const att = r;
 // me shows open attempt
 assert.strictEqual(call({ api: 'me', token: 'good' }).open.attemptId, att.attemptId);
@@ -126,15 +131,22 @@ assert.strictEqual(call({ api: 'mock_submit', token: 'good2', attemptId: att.att
 const res = call({ api: 'mock_resume', token: 'good', attemptId: att.attemptId });
 assert.deepStrictEqual(res.questions, att.questions);
 
-// --- submit: answer correct for first 20, wrong for next 10, blank last 5 ---
+// --- submit: all correct except: q0 invalid, 30-39 wrong, 50-54 blank ---
+const PTS = { 'gakka:eisei': 4, 'gakka:chori': 2, 'gakka:sekkyaku': 3, 'gakka:unei': 4 };
+let expect = 0;
 const answers = att.questions.map((q, i) => {
   const src = ctx.QUIZ_BANK.find(b => b.id === q.id); const correct = q.ch.indexOf(src.ch[0]);
-  return i < 20 ? correct : i < 30 ? (correct + 1) % 3 : null;
+  if (i === 0) return 'hack';
+  if (i >= 30 && i < 40) return (correct + 1) % 3;
+  if (i >= 50) return null;
+  expect += PTS[q.k + ':' + q.c] || 6.5; return correct;
 });
-answers[0] = 'hack'; // invalid treated as blank
 r = call({ api: 'mock_submit', token: 'good', attemptId: att.attemptId, answers });
-assert.strictEqual(r.ok, true); assert.strictEqual(r.correct, 19); assert.strictEqual(r.total, 35); assert.strictEqual(r.pct, 54);
-assert.strictEqual(r.results[0].k, null);
+assert.strictEqual(r.ok, true); assert.strictEqual(r.correct, 39); assert.strictEqual(r.total, 55);
+assert.strictEqual(r.points, Math.round(expect * 10) / 10); assert.strictEqual(r.maxPoints, 250); assert.strictEqual(r.pass, r.points >= 163);
+console.log('points', r.points, 'pass', r.pass, r.byKind);
+assert.strictEqual(r.results[0].you, null);
+assert.ok(r.results.every(x => typeof x.k === 'string'));
 r.results.forEach((x, i) => assert.deepStrictEqual(x.ch, att.questions[i].ch));
 // cannot resubmit
 assert.strictEqual(call({ api: 'mock_submit', token: 'good', attemptId: att.attemptId, answers }).error, 'done');
