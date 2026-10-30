@@ -81,6 +81,7 @@ L = {k: F(v) for k, v in {
     "byCat": "分野別の正解数", "retryWrong": "間違えた問題だけもう一度", "home": "最初の画面にもどる",
     "review": "間違えた問題の復習",
 }.items()}
+L["price"] = F("模擬テストは有料です。") + "<b>" + F("{yen}円で{n}回") + "</b>" + F("受けられます（使い切ったら、また{yen}円で{n}回）。")
 L["title"] = '<span class="ln">' + F("特定技能2号 外食業") + '</span> <span class="ln">' + F("練習問題") + '</span>'
 L["sub"] = {k: F(v) for k, v in {
     "eisei": "食中毒・HACCP・食品衛生法",
