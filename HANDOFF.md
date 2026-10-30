@@ -61,7 +61,9 @@ LINE_TOKEN（必須）／NOTIFY_EMAIL（空ならGAS所有者）／SHEET_ID／AN
 - 確認方法：アクセストークンを LINE の verify・profile・friendship API で確認（LIFF_CHANNEL_ID と一致・友だち）。正解は模擬テストの採点時まで返さない
 - シート：「模擬テスト回数」（残り回数。手で書き換え可）／「模擬テスト受験」（記録・出題データ）
 - 決済方法は未定。それまでは「LINE配信」メニューの「模擬テスト：選んだ行の人に10回分を付与」で手動付与。決済連携は `addMockCredits_` を呼ぶ
-- 設定手順：`quiz/SETUP.md`。テスト：`node gas/line-bot/test/quiz.test.js`
+- 設定手順：`quiz/SETUP.md`。テスト：`node gas/line-bot/test/quiz.test.js`／`node gas/line-bot/test/linebot-quiz.test.js`
+- 入口：リッチメニュー（3×2、「練習問題」「サイト」はURIアクション。画像は `line/richmenu.html` → `node line/make_richmenu.js` で生成）／キーワード返信（KW_QUIZ）／5日後のステップ配信／AI応答に案内文／シートメニュー「練習問題の案内を登録者に送る（1回だけ）」（送信済みはスクリプトプロパティ QUIZ_ANNOUNCED）
+- LIFF URL：https://liff.line.me/2012300446-Oe7H41c2（LINEログインチャネルID 2012300446、GASは fairlyconnecting@gmail.com のプロジェクト「Job Change Japan — 公式LINE ボット」）
 
 ## 未解決・注意
 - 2026-10-14 にアルバイト登録で「資格外活動許可：あり」の後に返事が止まった報告あり。再現できず、堅牢化した版を配布済み。再発時は GAS「実行数」の doPost エラーを確認

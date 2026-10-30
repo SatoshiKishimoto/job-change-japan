@@ -3,8 +3,8 @@
  *
  * 機能
  *  1. 登録      : 友だち追加 → 言語選択 → 5問＋名前 → シート保存・メール通知
- *  2. リッチメニュー : 登録 / 求人を見る / 相談する / 言語（setupRichMenu で作成）
- *  3. ステップ配信 : 登録の翌日・3日後・7日後に自動配信（毎朝10時）
+ *  2. リッチメニュー : 登録 / 求人を見る / 練習問題 / 相談する / 言語 / サイト（setupRichMenu で作成）
+ *  3. ステップ配信 : 登録の翌日・3日後・5日後（練習問題の案内）・7日後に自動配信（毎朝10時）
  *  4. 求人のお知らせ: 「求人」シートの新しい求人を、条件が合う人へ自動配信（毎朝10時）
  *  5. AI自動応答  : 質問にAI（Claude）が回答。担当者が必要な内容はメールで通知
  *
@@ -22,7 +22,9 @@
 
 var RICHMENU_IMAGE_URL = 'https://raw.githubusercontent.com/SatoshiKishimoto/job-change-japan/main/line/richmenu.png';
 var DAILY_HOUR = 10;          // 毎日の自動実行（ステップ配信・求人配信）の時刻
-var STEP_DAYS = [1, 3, 7];    // ステップ配信：登録から何日後に送るか
+var STEP_DAYS = [1, 3, 5, 7]; // ステップ配信：登録から何日後に送るか（5日後＝練習問題の案内）
+var QUIZ_URL = 'https://liff.line.me/2012300446-Oe7H41c2';            // 練習問題（LIFF）
+var SITE_URL = 'https://satoshikishimoto.github.io/job-change-japan/';  // Job Change Japan のサイト
 
 // ============================================================
 // 言語・文言
@@ -52,7 +54,8 @@ var T = {
     askPrompt: '質問をこのトークに送ってください。\nAIがすぐにお答えし、必要なときは担当者からご連絡します。',
     fallback: 'メッセージありがとうございます。担当者が確認してご返信します。',
     handoff: '\n\n（担当者にも伝えました。このLINEでご連絡します）',
-    aiNote: '※AIによる自動回答です'
+    aiNote: '※AIによる自動回答です',
+    quizInfo: '【特定技能2号 外食業 練習問題】\n公式LINEの友だちは、技能測定試験の練習問題を無料で使えます（ふりがな付き）。\n・学科と実技（判断・計画立案）の練習：無料\n・本番と同じ55問・70分の模擬テスト：500円で10回\n\n下のリンクか、メニューの「練習問題」から開いてください。\n{url}'
   },
   en: {
     welcome: 'Thank you for adding us!\nThis is Job Change Japan (Fairly connecting Inc.).\n\nWe help foreign nationals find jobs in Japan — completely free.',
@@ -76,7 +79,8 @@ var T = {
     askPrompt: 'Please send your question in this chat.\nOur AI will answer right away, and our staff will follow up if needed.',
     fallback: 'Thank you for your message. Our staff will check and reply.',
     handoff: '\n\n(We have also passed this to our staff. They will contact you on this LINE.)',
-    aiNote: '* Automatic answer by AI'
+    aiNote: '* Automatic answer by AI',
+    quizInfo: '[Practice test: Specified Skilled Worker (ii), Food Service]\nFriends of our LINE account can use practice questions for the skills test for free (in Japanese with furigana).\n- Practice (written and practical): free\n- Mock exam in the same format as the real test (55 questions, 70 minutes): 500 yen for 10 tries\n\nOpen the link below, or tap "Practice test" in the menu.\n{url}'
   },
   vi: {
     welcome: 'Cảm ơn bạn đã kết bạn!\nĐây là Job Change Japan (Công ty Fairly connecting).\n\nChúng tôi hỗ trợ người nước ngoài tìm việc tại Nhật Bản — hoàn toàn miễn phí.',
@@ -100,7 +104,8 @@ var T = {
     askPrompt: 'Hãy gửi câu hỏi vào cuộc trò chuyện này.\nAI sẽ trả lời ngay, và nhân viên sẽ liên lạc nếu cần.',
     fallback: 'Cảm ơn tin nhắn của bạn. Nhân viên sẽ kiểm tra và trả lời.',
     handoff: '\n\n(Chúng tôi đã chuyển cho nhân viên. Nhân viên sẽ liên lạc qua LINE này.)',
-    aiNote: '* Câu trả lời tự động bởi AI'
+    aiNote: '* Câu trả lời tự động bởi AI',
+    quizInfo: '[Đề luyện thi Kỹ năng đặc định số 2 – Ngành dịch vụ ăn uống]\nBạn bè của tài khoản LINE này có thể luyện đề thi kỹ năng miễn phí (tiếng Nhật có furigana).\n- Luyện tập (lý thuyết và thực hành): miễn phí\n- Thi thử giống đề thật (55 câu, 70 phút): 500 yên cho 10 lần\n\nMở đường link bên dưới, hoặc bấm "Practice test" ở menu.\n{url}'
   },
   ne: {
     welcome: 'साथी थप्नुभएकोमा धन्यवाद!\nयो Job Change Japan (Fairly connecting Inc.) हो।\n\nहामी जापानमा काम खोज्ने विदेशीहरूलाई निःशुल्क सहयोग गर्छौं।',
@@ -124,7 +129,8 @@ var T = {
     askPrompt: 'आफ्नो प्रश्न यही च्याटमा पठाउनुहोस्।\nAI ले तुरुन्तै जवाफ दिनेछ, आवश्यक परे कर्मचारीले सम्पर्क गर्नेछ।',
     fallback: 'सन्देशको लागि धन्यवाद। हाम्रो कर्मचारीले हेरेर जवाफ दिनेछ।',
     handoff: '\n\n(हामीले कर्मचारीलाई पनि जानकारी दियौं। उहाँले यही LINE मा सम्पर्क गर्नुहुनेछ।)',
-    aiNote: '* AI द्वारा स्वचालित जवाफ'
+    aiNote: '* AI द्वारा स्वचालित जवाफ',
+    quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूले सीप परीक्षाको अभ्यास प्रश्न निःशुल्क प्रयोग गर्न सक्नुहुन्छ (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक): निःशुल्क\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट): ५०० येनमा १० पटक\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
   }
 };
 
@@ -141,6 +147,12 @@ var STEPS = {
     en: '[Important when changing jobs]\n\n- When you change companies, you may need visa procedures. (Specified Skilled Workers must apply for a change of status of residence BEFORE working at the new company.)\n- Working at a new company before permission is granted may be illegal work.\n- Check the expiry date of your residence card.\n- Be careful of agents who ask for high fees.\n\nIf you want to know what applies to you, tap "Ask us" anytime.',
     vi: '[Lưu ý quan trọng khi chuyển việc]\n\n- Khi đổi công ty, có thể cần làm thủ tục tư cách lưu trú (người Kỹ năng đặc định phải xin "thay đổi tư cách lưu trú" TRƯỚC khi làm ở công ty mới).\n- Làm việc ở công ty mới trước khi được cấp phép có thể bị coi là lao động bất hợp pháp.\n- Hãy kiểm tra thời hạn thẻ lưu trú.\n- Cẩn thận với các bên đòi phí cao.\n\nNếu muốn biết trường hợp của bạn, hãy bấm "Ask us" bất cứ lúc nào.',
     ne: '[काम बदल्दा ध्यान दिनुपर्ने कुरा]\n\n- कम्पनी बदल्दा भिसा (在留資格) सम्बन्धी प्रक्रिया आवश्यक पर्न सक्छ (विशिष्ट सीप (Tokutei Ginou) भएकाले नयाँ कम्पनीमा काम सुरु गर्नु अघि "स्थिति परिवर्तन अनुमति" लिनुपर्छ)।\n- अनुमति नपाई नयाँ कम्पनीमा काम गरे गैरकानुनी काम हुन सक्छ।\n- आफ्नो रेसिडेन्स कार्डको म्याद जाँच गर्नुहोस्।\n- धेरै शुल्क माग्ने एजेन्टहरूबाट सावधान रहनुहोस्।\n\nतपाईंको अवस्थामा के हुन्छ जान्न "Ask us" थिच्नुहोस्।'
+  },
+  5: {
+    ja: '【特定技能2号を目指す方へ】\n\n特定技能2号になると、在留期間の更新に上限がなくなり、条件を満たせば家族と一緒に暮らすこともできます。\n外食業で2号になるには、次の3つが必要です。\n・外食業特定技能2号技能測定試験の合格\n・日本語能力試験 N3以上の合格\n・アルバイトや後輩を指導しながら店舗管理を補助した経験（2年以上）\n\nJob Change Japan では、技能測定試験の練習問題を用意しました。友だちは無料で練習できます（ふりがな付き）。\n' + QUIZ_URL + '\n\nメニューの「練習問題」からも開けます。',
+    en: '[For those aiming for Specified Skilled Worker (ii)]\n\nWith SSW (ii), there is no limit on renewing your period of stay, and if you meet the conditions you can live in Japan with your family.\nTo get SSW (ii) in the food service field, you need all three:\n- Pass the Food Service SSW (ii) skills test\n- Pass JLPT N3 or higher\n- 2+ years of experience supervising staff and assisting with store management\n\nJob Change Japan has prepared practice questions for the skills test. Free for friends (Japanese with furigana).\n' + QUIZ_URL + '\n\nYou can also open it from "Practice test" in the menu.',
+    vi: '[Dành cho bạn muốn lên Kỹ năng đặc định số 2]\n\nVới Kỹ năng đặc định số 2, bạn có thể gia hạn thời gian lưu trú không giới hạn, và nếu đủ điều kiện có thể sống cùng gia đình tại Nhật.\nĐể lên số 2 ngành dịch vụ ăn uống, cần đủ 3 điều kiện:\n- Đỗ kỳ thi kỹ năng số 2 ngành ăn uống\n- Đỗ JLPT N3 trở lên\n- Có từ 2 năm kinh nghiệm hướng dẫn nhân viên và hỗ trợ quản lý cửa hàng\n\nJob Change Japan đã chuẩn bị đề luyện thi kỹ năng. Bạn bè được luyện miễn phí (tiếng Nhật có furigana).\n' + QUIZ_URL + '\n\nCũng có thể mở từ "Practice test" ở menu.',
+    ne: '[विशिष्ट सीप २ (Tokutei Ginou 2) लक्ष्य राख्नेहरूका लागि]\n\nविशिष्ट सीप २ भएपछि बसाइ अवधि नवीकरणको सीमा हुँदैन, र सर्त पूरा गरे परिवारसँग जापानमा बस्न सकिन्छ।\nखाद्य सेवा (外食業) मा २ नम्बर पाउन यी ३ कुरा चाहिन्छ:\n- खाद्य सेवा विशिष्ट सीप २ को सीप परीक्षा पास\n- JLPT N3 वा माथि पास\n- कर्मचारीलाई सिकाउँदै पसल व्यवस्थापनमा सहयोग गरेको २ वर्षभन्दा बढी अनुभव\n\nJob Change Japan ले सीप परीक्षाको अभ्यास प्रश्न तयार गरेको छ। साथीहरूका लागि निःशुल्क (फुरिगाना सहित जापानी भाषामा)।\n' + QUIZ_URL + '\n\nमेनुको "Practice test" बाट पनि खोल्न सकिन्छ।'
   },
   7: {
     ja: '【いつでも相談できます】\n\n・希望の仕事や勤務地が変わったら、メニューの「登録」からいつでも更新できます。\n・わからないことは、このトークに送ってください。AIがすぐ答え、必要なときは担当者からご連絡します。\n・日本で仕事を探している友だちがいたら、このLINEを教えてあげてください。\n\nあなたの「次の仕事」を、一緒に見つけましょう。',
@@ -164,6 +176,7 @@ var STEPS_BAITO = {
 var KW_REGISTER = ['登録', 'register', 'đăng ký', 'dang ky', 'दर्ता', 'start'];
 var KW_LANG = ['言語', 'language', 'ngôn ngữ', 'भाषा', 'lang'];
 var KW_JOBS = ['求人', 'jobs', 'job', 'việc làm', 'काम'];
+var KW_QUIZ = ['練習問題', '練習', '模擬テスト', '試験', 'テスト', '2号', '特定技能2号', 'test', 'exam', 'quiz', 'practice', 'practice test', 'mock test', 'luyện thi', 'thi thử', 'đề thi', 'परीक्षा', 'अभ्यास'];
 var RE_APPLY = /^(応募|apply|ứng tuyển|आवेदन)\s*[:：]?\s*(\S+)/i;
 
 // アルバイト（留学生）コース用の文言
@@ -375,6 +388,7 @@ function handleEventLocked_(ev, uid) {
     if (KW_LANG.indexOf(low) >= 0) { reply_(ev.replyToken, [langMenu_()]); return; }
     if (KW_REGISTER.indexOf(low) >= 0) { startFlow_(ev.replyToken, uid, st); return; }
     if (KW_JOBS.indexOf(low) >= 0) { replyJobs_(ev.replyToken, uid, st); return; }
+    if (KW_QUIZ.indexOf(low) >= 0) { reply_(ev.replyToken, [text_(fmt_(L.quizInfo, { url: QUIZ_URL }))]); return; }
 
     if (st.step === 'name') {
       if (!/[A-Za-z]/.test(msg) || msg.length > 60) { reply_(ev.replyToken, [text_(L.nameRetry)]); return; }
@@ -543,7 +557,13 @@ var AI_SYSTEM = [
   '',
   '# 留学生のアルバイトについて（一般的なルール）',
   '- アルバイトには資格外活動許可が必要。原則として週28時間以内、学校の長期休業中は1日8時間以内。掛け持ちは合計で数える。',
-  '- 風俗営業に関係する仕事はできない。許可が出る前に働くことはできない。個別の判断は担当者が確認すると伝える。'
+  '- 風俗営業に関係する仕事はできない。許可が出る前に働くことはできない。個別の判断は担当者が確認すると伝える。',
+  '',
+  '# 特定技能2号 外食業の練習問題（当社が提供）',
+  '- 公式LINEの友だちは、外食業特定技能2号技能測定試験の練習問題を無料で使える（学科・実技、ふりがな付き）。模擬テスト（本番と同じ55問・70分）は500円で10回。',
+  '- 試験・2号・練習問題について聞かれたら、このリンクを案内する（メニューの「練習問題」からも開ける）: ' + QUIZ_URL,
+  '- 外食業で2号になるには、技能測定試験の合格に加えて、日本語能力試験N3以上の合格と、2年以上の指導等の実務経験（店舗管理の補助）が必要。',
+  '- 練習問題は当社のオリジナル問題で、実際の試験問題ではない。模擬テストの購入方法は準備中なので、聞かれたら担当者が案内すると伝える。'
 ].join('\n');
 
 function handleQuestion_(token, uid, st, msg) {
@@ -678,6 +698,7 @@ function onSheetOpen() {
     .addItem('配信予定を確認する（送りません）', 'menuPreviewJobs')
     .addSeparator()
     .addItem('模擬テスト：選んだ行の人に10回分を付与', 'menuGiveMockCredits')
+    .addItem('練習問題の案内を登録者に送る（1回だけ）', 'menuAnnounceQuiz')
     .addToUi();
 }
 
@@ -708,6 +729,53 @@ function menuSendJobsNow() {
   }
 }
 
+// 練習問題ができたことを、今の登録者に1回だけ知らせる（同じ人には二度送らない）
+function menuAnnounceQuiz() {
+  var ui = SpreadsheetApp.getUi();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var done = JSON.parse(props.getProperty('QUIZ_ANNOUNCED') || '{}');
+    var plan = quizAnnouncePlan_(done);
+    if (!plan.n) { ui.alert('練習問題の案内', 'まだ案内していない登録者はいません。', ui.ButtonSet.OK); return; }
+    var ans = ui.alert('練習問題の案内を送りますか？', plan.n + '人に送ります（LINEの月200通の無料枠を' + plan.n + '通使います）。', ui.ButtonSet.YES_NO);
+    if (ans !== ui.Button.YES) return;
+    var total = sendQuizAnnounce_(plan.byLang, done);
+    props.setProperty('QUIZ_ANNOUNCED', JSON.stringify(done));
+    ui.alert('送信しました', total + '人に練習問題の案内を送りました。', ui.ButtonSet.OK);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// まだ案内していない登録者を言語ごとに分ける（同じ人の2行目以降は数えない）
+function quizAnnouncePlan_(done) {
+  var byLang = {}, seen = {}, n = 0;
+  sheetObjects_(regSheet_()).forEach(function (u) {
+    var id = u['LINE userId'];
+    if (!id || u['ブロック'] === '○' || done[id] || seen[id]) return;
+    seen[id] = 1;
+    var lg = langCode_(u['言語']); (byLang[lg] = byLang[lg] || []).push(id); n++;
+  });
+  return { byLang: byLang, n: n };
+}
+
+function sendQuizAnnounce_(byLang, done) {
+  var total = 0;
+  Object.keys(byLang).forEach(function (lg) {
+    var ids = byLang[lg];
+    for (var i = 0; i < ids.length; i += 500) {
+      var part = ids.slice(i, i + 500);
+      if (multicast_(part, [text_(fmt_(TL_(lg).quizInfo, { url: QUIZ_URL }))])) {
+        part.forEach(function (id) { done[id] = 1; });
+        total += part.length;
+      }
+    }
+  });
+  return total;
+}
+
 function dayNum_(d) {
   return Math.floor((d.getTime() + 9 * 3600 * 1000) / 86400000);  // 日本時間の日付
 }
@@ -722,11 +790,21 @@ function setupRichMenu() {
   (list.richmenus || []).forEach(function (m) {
     UrlFetchApp.fetch('https://api.line.me/v2/bot/richmenu/' + m.richMenuId, { method: 'delete', headers: h, muteHttpExceptions: true });
   });
-  var w = 625;
+  // 3列×2段（上：登録・求人・練習問題／下：相談・言語・サイト）
+  var W = [833, 834, 833], H = 843, x0 = [0, 833, 1667];
+  var buttons = [
+    { type: 'postback', data: 'menu=register', displayText: '登録 / Register' },
+    { type: 'postback', data: 'menu=jobs', displayText: '求人 / Jobs' },
+    { type: 'uri', uri: QUIZ_URL },
+    { type: 'postback', data: 'menu=ask', displayText: '相談 / Ask' },
+    { type: 'postback', data: 'menu=lang', displayText: '言語 / Language' },
+    { type: 'uri', uri: SITE_URL }
+  ];
   var menu = {
-    size: { width: 2500, height: 843 }, selected: true, name: 'Job Change Japan main', chatBarText: 'Menu / メニュー',
-    areas: [['register', '登録 / Register'], ['jobs', '求人 / Jobs'], ['ask', '相談 / Ask'], ['lang', '言語 / Language']].map(function (a, i) {
-      return { bounds: { x: i * w, y: 0, width: w, height: 843 }, action: { type: 'postback', data: 'menu=' + a[0], displayText: a[1] } };
+    size: { width: 2500, height: 1686 }, selected: true, name: 'Job Change Japan main v3', chatBarText: 'Menu / メニュー',
+    areas: buttons.map(function (a, i) {
+      var c = i % 3, r = Math.floor(i / 3);
+      return { bounds: { x: x0[c], y: r * H, width: W[c], height: H }, action: a };
     })
   };
   var res = UrlFetchApp.fetch('https://api.line.me/v2/bot/richmenu', {
