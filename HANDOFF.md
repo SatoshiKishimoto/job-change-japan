@@ -52,6 +52,15 @@ LINE_TOKEN（必須）／NOTIFY_EMAIL（空ならGAS所有者）／SHEET_ID／AN
 - LINEのクイックリプライのボタン文字は20文字以内（日英併記ラベルは Q の jaen で短縮版を指定）
 - 配信（push/multicast）は月200通の無料枠を使う。reply は無料
 
+## 練習問題（特定技能2号 外食業）2026-10-30 追加
+- 公式LINEの友だち限定で無料。模擬テスト（35問）は有料：500円で10回、使い切ったらまた500円で10回
+- ページ：`quiz/index.html`（LIFF。設定は `quiz/config.js`）。GAS：`Quiz.gs`（API）＋ `QuizBank.gs`（問題データ・自動生成）を同じLINEボットのプロジェクトに追加。`doPost` は `body.api` があれば `quizApi_` へ
+- 問題・ふりがなの元データ：`quiz/build/`（`python3 quiz/build/build.py` で QuizBank.gs と index.html を生成）
+- 確認方法：アクセストークンを LINE の verify・profile・friendship API で確認（LIFF_CHANNEL_ID と一致・友だち）。正解は模擬テストの採点時まで返さない
+- シート：「模擬テスト回数」（残り回数。手で書き換え可）／「模擬テスト受験」（記録・出題データ）
+- 決済方法は未定。それまでは「LINE配信」メニューの「模擬テスト：選んだ行の人に10回分を付与」で手動付与。決済連携は `addMockCredits_` を呼ぶ
+- 設定手順：`quiz/SETUP.md`。テスト：`node gas/line-bot/test/quiz.test.js`
+
 ## 未解決・注意
 - 2026-10-14 にアルバイト登録で「資格外活動許可：あり」の後に返事が止まった報告あり。再現できず、堅牢化した版を配布済み。再発時は GAS「実行数」の doPost エラーを確認
 - 既存サイトの form.html / detail_form.html / register.html は送信先GAS（LP用、doGetがLPを返すだけ）が登録を受け付けないため送信エラーになる。gas/Code.gs に受付処理を用意済みだが未反映（Satoshiさんは「既存ページは変更しなくてよい」との方針）

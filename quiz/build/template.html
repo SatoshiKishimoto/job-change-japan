@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>外食業2号 練習問題 | Job Change Japan</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Shippori+Mincho+B1:wght@700;800&display=swap">
+<style>
+/* Layout: one narrow study column; each question sits on a "伝票" (order-ticket) card with a perforated top edge. */
+:root{
+  --bg:#f3f2ee; --surface:#ffffff; --ink:#1d2330; --muted:#5d6472; --line:#d9d8d1;
+  --ai:#24407a; --ai-soft:#e4e9f4; --ok:#1f7a4d; --ok-soft:#e1f2e8; --ng:#b3342b; --ng-soft:#f8e3e1;
+  --line-green:#06c755; --rt:#6b7488;
+  --f-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#14171e; --surface:#1d212b; --ink:#e8e9ec; --muted:#a3a9b6; --line:#323846;
+  --ai:#8fa9e6; --ai-soft:#25304a; --ok:#5fc48f; --ok-soft:#1d3528; --ng:#ef8a80; --ng-soft:#3d2422; --rt:#9aa3b6; color-scheme:dark}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.9;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+[hidden]{display:none!important}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.stack{display:flex;flex-direction:column;gap:20px}
+rt{font-size:.52em;color:var(--rt);font-weight:400;letter-spacing:0}
+body.nofuri rt{display:none}
+h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.5}
+h1{font-size:1.65rem;font-weight:800}
+h2{font-size:1.2rem}
+p{margin:0}
+.en{display:block;font-size:.85rem;color:var(--muted);line-height:1.6}
+.eyebrow{font-size:.78rem;letter-spacing:.12em;color:var(--ai);font-weight:700}
+.muted{color:var(--muted);font-size:.92rem}
+header{display:flex;flex-direction:column;gap:6px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{width:20px;height:20px;accent-color:var(--ai)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.modes{display:flex;flex-direction:column;gap:10px}
+.mode{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;
+  font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;cursor:pointer}
+.mode:hover{border-color:var(--ai)}
+.mode:focus-visible,.choice:focus-visible,.btn:focus-visible,.pal button:focus-visible{outline:3px solid var(--ai);outline-offset:2px}
+.mode .name{font-weight:700;line-height:1.6}
+.mode .sub{display:block;font-weight:400;font-size:.85rem;color:var(--muted)}
+.mode .count{font-variant-numeric:tabular-nums;color:var(--ai);font-weight:700;white-space:nowrap}
+.mock{border:2px solid var(--ai)}
+.mock .row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.credits{font-variant-numeric:tabular-nums;font-weight:700}
+.credits b{font-family:var(--f-display);font-size:1.6rem;color:var(--ai)}
+.price{background:var(--ai-soft);border-radius:8px;padding:10px 14px}
+.price b{color:var(--ai)}
+.ticket{background:var(--surface);border:1px solid var(--line);border-radius:4px 4px 10px 10px;position:relative;padding:22px 18px 18px}
+.ticket::before{content:"";position:absolute;left:12px;right:12px;top:8px;border-top:2px dashed var(--line)}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.85rem;color:var(--muted);margin-bottom:8px}
+.chip{display:inline-block;background:var(--ai-soft);color:var(--ai);border-radius:999px;padding:0 10px;font-weight:700;font-size:.8rem;line-height:1.9}
+.num{font-variant-numeric:tabular-nums}
+.qtext{font-size:1.1rem;font-weight:700;line-height:2.1;margin:0 0 14px}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;font:inherit;line-height:2;color:var(--ink);
+  background:var(--bg);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
+.choice:hover:not(:disabled){border-color:var(--ai)}
+.choice .mk{flex:none;width:28px;height:28px;margin-top:4px;border-radius:50%;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:.85rem;font-weight:700;line-height:1}
+.choice > span:last-child{min-width:0}
+.choice:disabled{cursor:default}
+.choice.sel{border-color:var(--ai);background:var(--ai-soft)}
+.choice.sel .mk{background:var(--ai);border-color:var(--ai);color:var(--surface)}
+.choice.ok{border-color:var(--ok);background:var(--ok-soft)}
+.choice.ok .mk{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.choice.ng{border-color:var(--ng);background:var(--ng-soft)}
+.choice.ng .mk{background:var(--ng);border-color:var(--ng);color:var(--surface)}
+.feedback{margin-top:14px;border-radius:8px;padding:12px 14px;line-height:2}
+.feedback.ok{background:var(--ok-soft)} .feedback.ng{background:var(--ng-soft)}
+.feedback .verdict{font-weight:700;display:block}
+.feedback.ok .verdict{color:var(--ok)} .feedback.ng .verdict{color:var(--ng)}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress > i{display:block;height:100%;background:var(--ai);width:0;transition:width .25s}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:700;border-radius:8px;padding:10px 18px;cursor:pointer;border:1.5px solid var(--ai);background:var(--ai);color:var(--surface);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.6}
+.btn.ghost{background:transparent;color:var(--ai)}
+.btn.line{background:var(--line-green);border-color:var(--line-green);color:#fff}
+.btn.wide{width:100%;flex-direction:column}
+.btn small{font-weight:400;font-size:.8rem;opacity:.9}
+h1 .ln{display:inline-block}
+.btn:disabled{opacity:.5;cursor:default}
+.confirm{border:1.5px solid var(--ai);background:var(--ai-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px}
+.pal button{font:inherit;font-size:.85rem;font-variant-numeric:tabular-nums;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 0;cursor:pointer;line-height:1.6}
+.pal button.done{background:var(--ai-soft);border-color:var(--ai);color:var(--ai);font-weight:700}
+.pal button.cur{outline:2px solid var(--ink);outline-offset:1px}
+.score{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.score .big{font-family:var(--f-display);font-size:3rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+.pill{display:inline-block;border-radius:999px;padding:0 12px;font-weight:700;font-size:.85rem;line-height:2}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.ng{background:var(--ng-soft);color:var(--ng)}
+.meter{position:relative;height:10px;background:var(--line);border-radius:5px;margin:4px 0}
+.meter > i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--ai)}
+.meter > b{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);left:65%}
+.breakdown{width:100%;border-collapse:collapse;font-size:.95rem}
+.breakdown td{padding:8px 0;border-bottom:1px solid var(--line)}
+.breakdown td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.review{display:flex;flex-direction:column;gap:12px}
+.review article{border-top:1px solid var(--line);padding-top:12px;line-height:2}
+.review .a{color:var(--ok);font-weight:700}
+.review .k{color:var(--ng)}
+.center{text-align:center;padding:40px 0}
+footer{font-size:.82rem;color:var(--muted);line-height:1.8}
+@media (prefers-reduced-motion: reduce){.progress > i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="bar">
+      <span class="eyebrow">Job Change Japan</span>
+      <label class="toggle"><input type="checkbox" id="furi" checked> ふりがな</label>
+    </div>
+    <h1 id="title"></h1>
+  </header>
+  <main id="app"><p class="center muted">読み込み中… / Loading…</p></main>
+  <footer id="foot"></footer>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js" charset="utf-8"></script>
+<script src="config.js"></script>
+<script>
+const C = window.QUIZ_CONFIG || {};
+const CATS = __CATS__;
+const L = __LBL__;
+const FRIEND_URL = 'https://line.me/R/ti/p/@022akbvw';
+const MARK = ['A','B','C'];
+const app = document.getElementById('app');
+const furiBox = document.getElementById('furi');
+document.getElementById('title').innerHTML = L.title;
+document.getElementById('foot').innerHTML = L.foot;
+
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+function setFuri(on){ document.body.classList.toggle('nofuri', !on); store.set('furi', on); }
+if (store.get('furi') === false) furiBox.checked = false;
+setFuri(furiBox.checked);
+furiBox.addEventListener('change', ()=>setFuri(furiBox.checked));
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fill = (s, o) => Object.keys(o).reduce((t,k)=>t.split('{'+k+'}').join(o[k]), s);
+const toTop = () => window.scrollTo(0,0);
+
+let TOKEN = null, ME = null, S = null;
+
+// ---------- サーバーとのやりとり ----------
+async function api(body){
+  let r;
+  try {
+    r = await fetch(C.API_URL, { method:'POST', body: JSON.stringify(Object.assign({ token: TOKEN }, body)) });
+  } catch (e) { throw { error:'network' }; }
+  let j;
+  try { j = await r.json(); } catch (e) { throw { error:'network' }; }
+  if (!j.ok) {
+    if (j.error === 'auth') { relogin(); throw { error:'auth', silent:true }; }
+    if (j.error === 'not_friend') { friendGate(j.name); throw { error:'not_friend', silent:true }; }
+    throw j;
+  }
+  return j;
+}
+function relogin(){
+  app.innerHTML = `<p class="center muted">${L.relogin}</p>`;
+  try { if (liff.isLoggedIn()) liff.logout(); } catch(e){}
+  liff.login({ redirectUri: location.href });
+}
+function showError(e, retry){
+  if (e && e.silent) return;
+  const msg = e && e.error === 'network' ? L.errNet : L.errServer;
+  app.innerHTML = `<section class="panel"><p>${msg}</p><div class="actions"><button class="btn" id="retry">${L.retry}</button></div></section>`;
+  document.getElementById('retry').onclick = retry || boot;
+}
+
+// ---------- はじまり ----------
+async function boot(){
+  if (!C.LIFF_ID || !C.API_URL) { app.innerHTML = `<section class="panel"><p>${L.notReady}</p></section>`; return; }
+  app.innerHTML = `<p class="center muted">${L.loading}</p>`;
+  try {
+    await liff.init({ liffId: C.LIFF_ID });
+  } catch (e) { console.error(e); return showError({ error:'network' }); }
+  if (!liff.isLoggedIn()) {
+    loginGate();
+    return;
+  }
+  TOKEN = liff.getAccessToken();
+  try {
+    ME = await api({ api:'me' });
+    home();
+  } catch (e) { showError(e); }
+}
+
+function loginGate(){
+  app.innerHTML = `
+  <section class="panel">
+    <h2>${L.gateHead}</h2>
+    <p>${L.gateBody}<span class="en">Free for friends of the Job Change Japan LINE account. Please log in with LINE.</span></p>
+    <button class="btn line wide" id="login"><span>${L.loginBtn}</span><small>Log in with LINE</small></button>
+  </section>`;
+  document.getElementById('login').onclick = () => liff.login({ redirectUri: location.href });
+}
+
+function friendGate(name){
+  toTop();
+  app.innerHTML = `
+  <section class="panel">
+    <h2>${fill(L.friendHead, { name: esc(name || '') })}</h2>
+    <p>${L.friendBody}<span class="en">These practice questions are free for friends of our official LINE account. Please add us as a friend, then tap "I added".</span></p>
+    <a class="btn line wide" href="${FRIEND_URL}" target="_blank" rel="noopener"><span>${L.friendBtn}</span><small>Add friend on LINE</small></a>
+    <button class="btn ghost wide" id="recheck"><span>${L.recheck}</span><small>I added — check again</small></button>
+  </section>`;
+  document.getElementById('recheck').onclick = boot;
+}
+
+// ---------- ホーム ----------
+function home(){
+  toTop();
+  S = null;
+  const credits = ME.credits;
+  const open = ME.open;
+  const cats = Object.keys(CATS).filter(c => ME.counts[c]);
+  app.innerHTML = `
+  <div class="stack">
+    <p>${fill(L.hello, { name: esc(ME.name) })}</p>
+
+    <section class="panel mock" aria-labelledby="mock-h">
+      <div class="row"><h2 id="mock-h">${L.mock}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>
+      <p class="muted">${fill(L.mockSub, { n: ME.mockSize })}</p>
+      ${open ? `<button class="btn wide" id="resume">${L.resume}</button>` : ''}
+      ${credits > 0
+        ? `<button class="btn ${open ? 'ghost' : ''} wide" id="mstart">${L.mockStart}</button><div id="mconfirm"></div>`
+        : `<div class="price">${fill(L.price, { yen: ME.pack.price, n: ME.pack.count })}<br><span class="muted">${L.soon}</span></div>`}
+    </section>
+
+    <section class="modes" aria-labelledby="free-h">
+      <h2 id="free-h">${L.free}</h2>
+      <p class="muted">${L.freeSub}</p>
+      ${cats.map(c => `<button class="mode" data-c="${c}"><span class="name">${CATS[c]}<span class="sub">${L.sub[c]}</span></span><span class="count">${ME.counts[c]}${L.mon}</span></button>`).join('')}
+      <button class="mode" data-c="all"><span class="name">${L.all}<span class="sub">${L.allSub}</span></span><span class="count">${ME.total}${L.mon}</span></button>
+    </section>
+  </div>`;
+  app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => startPractice(b.dataset.c));
+  const ms = document.getElementById('mstart');
+  if (ms) ms.onclick = () => {
+    const box = document.getElementById('mconfirm');
+    box.innerHTML = `<div class="confirm"><p>${fill(L.mockConfirm, { n: credits - 1 })}</p>
+      <div class="actions"><button class="btn" id="mgo">${L.mockGo}</button><button class="btn ghost" id="mcancel">${L.cancel}</button></div></div>`;
+    document.getElementById('mgo').onclick = startMock;
+    document.getElementById('mcancel').onclick = () => { box.innerHTML = ''; };
+  };
+  const rs = document.getElementById('resume');
+  if (rs) rs.onclick = () => resumeMock(open.attemptId);
+}
+
+async function backHome(){
+  app.innerHTML = `<p class="center muted">${L.loading}</p>`;
+  try { ME = await api({ api:'me' }); home(); } catch (e) { showError(e, backHome); }
+}
+
+// ---------- 練習（無料・すぐに答え合わせ） ----------
+async function startPractice(cat){
+  app.innerHTML = `<p class="center muted">${L.loading}</p>`;
+  try {
+    const j = await api({ api:'practice', cat });
+    S = { mode:'practice', list:j.questions, i:0, ans:[] };
+    practiceView();
+  } catch (e) { showError(e, () => startPractice(cat)); }
+}
+
+function practiceView(){
+  const q = S.list[S.i], n = S.list.length;
+  app.innerHTML = `
+  <div class="stack" style="gap:14px">
+    <div class="progress" aria-hidden="true"><i style="width:${(S.i/n)*100}%"></i></div>
+    <article class="ticket">
+      <div class="qhead"><span class="chip">${CATS[q.c]}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
+      <p class="qtext">${q.q}</p>
+      <div class="choices">${q.ch.map((t,k)=>`<button class="choice" data-k="${k}"><span class="mk">${MARK[k]}</span><span>${t}</span></button>`).join('')}</div>
+      <div id="fb"></div>
+    </article>
+    <div class="actions">
+      <button class="btn" id="next" hidden>${S.i+1<n ? L.next : L.result}</button>
+      <button class="btn ghost" id="quit">${L.quit}</button>
+    </div>
+  </div>`;
+  app.querySelectorAll('.choice').forEach(b => b.onclick = () => practiceAnswer(+b.dataset.k));
+  document.getElementById('next').onclick = () => { if (S.i+1<n) { S.i++; practiceView(); toTop(); } else practiceResult(); };
+  document.getElementById('quit').onclick = () => { S.ans.length ? practiceResult() : home(); };
+  if (S.ans[S.i] !== undefined) practiceAnswer(S.ans[S.i], true);
+}
+
+function practiceAnswer(k, replay){
+  const q = S.list[S.i];
+  if (!replay) S.ans[S.i] = k;
+  const right = k === q.a;
+  app.querySelectorAll('.choice').forEach(b => {
+    const j = +b.dataset.k; b.disabled = true;
+    if (j === q.a) b.classList.add('ok'); else if (j === k) b.classList.add('ng');
+  });
+  const fb = document.getElementById('fb');
+  fb.className = 'feedback ' + (right ? 'ok' : 'ng');
+  fb.innerHTML = `<span class="verdict">${right ? L.right : L.wrong + '　' + L.ans + '：' + MARK[q.a]}</span>${q.e}`;
+  const nx = document.getElementById('next'); nx.hidden = false; nx.focus({ preventScroll:true });
+}
+
+function practiceResult(){
+  const done = S.ans.map((k,i)=>({ q:S.list[i], k })).filter(x => x.k !== undefined);
+  const items = done.map(x => Object.assign({}, x.q, { k:x.k }));
+  resultView(items, 'practice');
+}
+
+// ---------- 模擬テスト（有料・最後にまとめて採点） ----------
+async function startMock(){
+  app.innerHTML = `<p class="center muted">${L.loading}</p>`;
+  try {
+    const j = await api({ api:'mock_start' });
+    ME.credits = j.credits;
+    S = { mode:'mock', id:j.attemptId, list:j.questions, i:0, ans:new Array(j.questions.length).fill(null) };
+    mockView();
+  } catch (e) {
+    if (e && e.error === 'no_credits') { ME.credits = 0; home(); return; }
+    showError(e, backHome);
+  }
+}
+
+async function resumeMock(id){
+  app.innerHTML = `<p class="center muted">${L.loading}</p>`;
+  try {
+    const j = await api({ api:'mock_resume', attemptId:id });
+    const saved = store.get('mock_' + id) || {};
+    S = { mode:'mock', id, list:j.questions, i:saved.i || 0, ans:(saved.ans && saved.ans.length === j.questions.length) ? saved.ans : new Array(j.questions.length).fill(null) };
+    mockView();
+  } catch (e) {
+    if (e && (e.error === 'done' || e.error === 'not_found')) { backHome(); return; }
+    showError(e, () => resumeMock(id));
+  }
+}
+
+function mockSave(){ store.set('mock_' + S.id, { i:S.i, ans:S.ans }); }
+
+function mockView(){
+  const q = S.list[S.i], n = S.list.length, cur = S.ans[S.i];
+  const answered = S.ans.filter(a => a !== null).length;
+  app.innerHTML = `
+  <div class="stack" style="gap:14px">
+    <div class="bar"><span class="eyebrow">${L.mock}</span><span class="muted num">${fill(L.answered, { a: answered, n })}</span></div>
+    <div class="progress" aria-hidden="true"><i style="width:${(answered/n)*100}%"></i></div>
+    <article class="ticket">
+      <div class="qhead"><span class="chip">${CATS[q.c]}</span><span class="num">${L.q} ${S.i+1} / ${n}</span></div>
+      <p class="qtext">${q.q}</p>
+      <div class="choices">${q.ch.map((t,k)=>`<button class="choice ${cur===k?'sel':''}" data-k="${k}" aria-pressed="${cur===k}"><span class="mk">${MARK[k]}</span><span>${t}</span></button>`).join('')}</div>
+    </article>
+    <div class="actions">
+      <button class="btn ghost" id="prev" ${S.i===0?'disabled':''}>${L.prev}</button>
+      ${S.i+1<n ? `<button class="btn" id="next">${L.next}</button>` : ''}
+      <button class="btn ${S.i+1<n ? 'ghost' : ''}" id="submit">${L.submit}</button>
+    </div>
+    <div id="sconfirm"></div>
+    <section class="panel">
+      <span class="muted">${L.jump}</span>
+      <div class="pal">${S.list.map((_,i)=>`<button data-i="${i}" class="${S.ans[i]!==null?'done':''} ${i===S.i?'cur':''}" aria-label="${i+1}">${i+1}</button>`).join('')}</div>
+    </section>
+  </div>`;
+  app.querySelectorAll('.choice').forEach(b => b.onclick = () => {
+    S.ans[S.i] = +b.dataset.k; mockSave();
+    if (S.i+1 < n) { S.i++; mockSave(); }
+    mockView(); toTop();
+  });
+  app.querySelectorAll('.pal button').forEach(b => b.onclick = () => { S.i = +b.dataset.i; mockSave(); mockView(); toTop(); });
+  document.getElementById('prev').onclick = () => { if (S.i>0) { S.i--; mockSave(); mockView(); toTop(); } };
+  const nx = document.getElementById('next');
+  if (nx) nx.onclick = () => { S.i++; mockSave(); mockView(); toTop(); };
+  document.getElementById('submit').onclick = () => {
+    const left = S.ans.filter(a => a === null).length;
+    const box = document.getElementById('sconfirm');
+    box.innerHTML = `<div class="confirm"><p>${left ? fill(L.submitLeft, { n:left }) : L.submitAll}</p>
+      <div class="actions"><button class="btn" id="sgo">${L.submitGo}</button><button class="btn ghost" id="scancel">${L.cancel}</button></div></div>`;
+    document.getElementById('sgo').onclick = submitMock;
+    document.getElementById('scancel').onclick = () => { box.innerHTML = ''; };
+    box.scrollIntoView({ block:'nearest' });
+  };
+}
+
+async function submitMock(){
+  app.innerHTML = `<p class="center muted">${L.grading}</p>`;
+  try {
+    const j = await api({ api:'mock_submit', attemptId:S.id, answers:S.ans });
+    store.del('mock_' + S.id);
+    resultView(j.results, 'mock');
+  } catch (e) {
+    if (e && e.error === 'done') { store.del('mock_' + S.id); backHome(); return; }
+    showError(e, submitMock);
+  }
+}
+
+// ---------- 結果 ----------
+function resultView(items, mode){
+  toTop();
+  const tot = items.length, ok = items.filter(x => x.k === x.a).length;
+  const pct = tot ? Math.round(ok / tot * 100) : 0, pass = pct >= 65;
+  const by = {};
+  items.forEach(x => { by[x.c] = by[x.c] || [0,0]; by[x.c][1]++; if (x.k === x.a) by[x.c][0]++; });
+  const wrong = items.filter(x => x.k !== x.a);
+  app.innerHTML = `
+  <div class="stack">
+    <section class="panel">
+      <div class="eyebrow">${mode === 'mock' ? L.mockResult : L.resultOf}</div>
+      <div class="score"><span class="big">${pct}%</span><span class="num">${ok} / ${tot} ${L.correct}</span>
+        <span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span></div>
+      <div class="meter" role="img" aria-label="${pct}%"><i style="width:${pct}%"></i><b></b></div>
+      <p class="muted">${L.line}</p>
+    </section>
+    <section class="panel">
+      <h2>${L.byCat}</h2>
+      <table class="breakdown"><tbody>
+        ${Object.keys(CATS).filter(c => by[c]).map(c => `<tr><td>${CATS[c]}</td><td>${by[c][0]} / ${by[c][1]}</td></tr>`).join('')}
+      </tbody></table>
+    </section>
+    <div class="actions">
+      ${mode === 'practice' && wrong.length ? `<button class="btn" id="retry">${L.retryWrong}（${wrong.length}${L.mon}）</button>` : ''}
+      <button class="btn ghost" id="home">${L.home}</button>
+    </div>
+    ${wrong.length ? `<section class="panel review"><h2>${L.review}</h2>
+      ${wrong.map(x => `<article>
+        <div><span class="chip">${CATS[x.c]}</span></div>
+        <div>${x.q}</div>
+        <div class="k">${L.yours}：${x.k === null || x.k === undefined ? L.blank : x.ch[x.k]}</div>
+        <div class="a">${L.ans}：${x.ch[x.a]}</div>
+        <div class="muted">${x.e}</div></article>`).join('')}
+    </section>` : ''}
+  </div>`;
+  const r = document.getElementById('retry');
+  if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, c:x.c, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
+  document.getElementById('home').onclick = backHome;
+}
+
+boot();
+</script>
+</body>
+</html>

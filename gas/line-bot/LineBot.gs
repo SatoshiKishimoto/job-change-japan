@@ -295,6 +295,7 @@ var JOB_HEADERS = ['求人ID', '公開', '職種', '勤務地', 'タイトル', 
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
+    if (body.api) return quizApi_(body);   // 練習問題ページ（Quiz.gs）からの呼び出し
     (body.events || []).forEach(function (ev) {
       try { handleEvent_(ev); } catch (err) { console.error(err && err.stack || err); }
     });
@@ -675,6 +676,8 @@ function onSheetOpen() {
   SpreadsheetApp.getUi().createMenu('LINE配信')
     .addItem('新着求人を今すぐ送る', 'menuSendJobsNow')
     .addItem('配信予定を確認する（送りません）', 'menuPreviewJobs')
+    .addSeparator()
+    .addItem('模擬テスト：選んだ行の人に10回分を付与', 'menuGiveMockCredits')
     .addToUi();
 }
 
