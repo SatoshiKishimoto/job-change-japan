@@ -438,7 +438,14 @@ function needPass(){
 async function buy(i){
   app.innerHTML = `<p class="center muted">${L.buyGoing}</p>`;
   try { const j = await api({ api:'buy', pack: i }); location.href = j.url; }
-  catch (e) { showError(e, backHome); }
+  catch (e) {
+    if (e && (e.error === 'stripe' || e.error === 'no_sales')) {
+      console.error(e);
+      app.innerHTML = `<section class="panel"><p>${L.buyErr}</p><div class="actions"><button class="btn" id="retry">${L.home}</button></div></section>`;
+      document.getElementById('retry').onclick = backHome; return;
+    }
+    showError(e, backHome);
+  }
 }
 // 支払いのあと（?paid=セッションID）：GASがStripeに確認してから回数を足す
 let BUY_MSG = '';
