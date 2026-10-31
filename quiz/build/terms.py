@@ -11,7 +11,7 @@ SUMMARY = [
     "練習や模擬テストで合格点に達しても、本番の試験に合格することを保証するものではありません。",
     "一度支払った代金は、回数券を使い切らなかった場合を含めて、どんな理由でも返金できません。",
     "模擬テストは、始めた時点で1回分を使います。途中でやめても、時間切れでも、1回分は戻りません。",
-    "問題・解説・音声を、ほかの人に送ったり、SNSなどにのせたりしてはいけません。",
+    "問題・解説・音声を、コピー・スクリーンショット・撮影などで保存して、ほかの人に送ったり、SNSなどにのせたりしてはいけません。画面には、あなたのLINEの表示名がすかしで出ます。",
     "模擬テストを買うかどうかは自由です。買わなくても、当社の職業紹介（仕事の紹介）を受けるときに不利になることはありません。",
     "このサービスを使った時点で、この利用規約に同意したものとみなします。",
 ]
@@ -21,7 +21,7 @@ SUMMARY_EN = [
     "Reaching the passing line in practice or a mock exam does not guarantee that you will pass the real exam.",
     "Payments cannot be refunded for any reason, including unused mock exam tickets.",
     "One ticket is used when you start a mock exam, even if you stop or run out of time.",
-    "Do not share, copy or post the questions, explanations or audio (including on social media).",
+    "Do not copy, screenshot, photograph, share or post the questions, explanations or audio (including on social media). Your LINE name is shown on the screen as a watermark.",
     "Buying mock exams is optional. It has nothing to do with our job placement service, and not buying will never affect your job introductions.",
     "By using this service, you agree to these Terms of Use. The Japanese version is the official version.",
 ]
@@ -75,8 +75,10 @@ TERMS = [
         "（3）プログラムなどを使って、問題や答えを自動で集めること",
         "（4）本サービスのしくみに不正にアクセスすること、本サービスの運営を妨げること",
         "（5）法律や公序良俗に反すること",
-        "（6）その他、当社が適切でないと判断すること",
-        "当社は、利用者が前の項のことをしたと判断したときは、事前に知らせることなく、本サービスの利用を止めることができます。この場合も、支払った代金は返金しません。",
+        "（6）画面に表示されるすかし（LINEの表示名・日時など）を消したり、隠したり、加工したりすること",
+        "（7）その他、当社が適切でないと判断すること",
+        "不正な複製を防ぐため、本サービスの画面には、利用者のLINEの表示名と日時がすかしとして表示されます。また、コピーをしたときなどは、画面が一時的に見えなくなります。",
+        "当社は、利用者が第1項のことをしたと判断したときは、事前に知らせることなく、本サービスの利用を止めることができます。この場合も、支払った代金は返金しません。",
     ]),
     ("第9条（著作権）", [
         "本サービスの問題・解説・音声・画面などの著作権その他の権利は、当社または正当な権利者に帰属します。",

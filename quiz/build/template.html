@@ -135,6 +135,17 @@ footer{font-size:.82rem;color:var(--muted);line-height:1.8}
 footer p{margin:0 0 6px}
 a{color:var(--ai)}
 @media (prefers-reduced-motion: reduce){.progress > i{transition:none}}
+/* 複製の防止：すかし・コピー時の黒い画面・画面から離れたときのぼかし */
+.wm{position:fixed;inset:0;z-index:50;pointer-events:none;background-repeat:repeat;opacity:.13}
+@media (prefers-color-scheme: dark){.wm{opacity:.16;filter:invert(1)}}
+.shield{position:fixed;inset:0;z-index:60;background:#000;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:24px;text-align:center;line-height:2.1;cursor:pointer}
+.shield.on{display:flex}
+.shield b{font-size:1.15rem}
+.shield .en{color:#bbb;font-size:.9rem;line-height:1.6}
+body.away .wrap{filter:blur(14px)}
+img,audio{-webkit-user-drag:none}
+@media print{body{display:none!important}}
 </style>
 </head>
 <body>
@@ -149,6 +160,11 @@ a{color:var(--ai)}
   <main id="app"><p class="center muted">読み込み中… / Loading…</p></main>
   <footer id="foot"></footer>
 </div>
+
+<div class="wm" id="wm" aria-hidden="true"></div>
+<div class="shield" id="shield" role="alert"><b>__NOCOPY__</b><span>__NOCOPYSUB__</span>
+  <span class="en">Copying, screenshots and photos of the questions are not allowed.<br>To translate, select text and use “Translate”.</span>
+  <span class="en">__TAPBACK__ / Tap to go back</span></div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" charset="utf-8"></script>
 <script src="config.js"></script>
@@ -256,6 +272,7 @@ async function boot(){
   try {
     ME = await api({ api:'me' });
     if (!ME.counts) throw { error:'gas_not_updated' };   // GASに練習問題の機能がまだ入っていない
+    setWatermark();
     home();
   } catch (e) { console.error(e); showError(e && e.error ? e : { error:'page', detail: String(e && e.message || e) }); }
 }
@@ -611,6 +628,46 @@ function resultView(items, mode, sum){
   if (r) r.onclick = () => { S = { mode:'practice', list:wrong.map(x => ({ id:x.id, x:x.x, c:x.c, k:x.k, p:x.p, au:x.au, hid:x.hid, sc:x.sc, q:x.q, ch:x.ch, a:x.a, e:x.e })), i:0, ans:[] }; practiceView(); toTop(); };
   document.getElementById('home').onclick = backHome;
 }
+
+// ===== 複製の防止 =====
+// Webページではスマホのスクリーンショットは止められないので、
+// すかし（LINE表示名と日時）で流出元が分かるようにし、コピー・印刷・PrintScreen・画面から離れたときを防ぐ。
+// 文字の選択は翻訳のために残す。
+const shield = document.getElementById('shield');
+function blackout(){ shield.classList.add('on'); }
+shield.onclick = () => shield.classList.remove('on');
+function wipeClipboard(){ try { navigator.clipboard && navigator.clipboard.writeText(' ').catch(() => {}); } catch (e) {} }
+['copy', 'cut'].forEach(ev => document.addEventListener(ev, e => {
+  try { e.clipboardData.setData('text/plain', ' '); e.preventDefault(); } catch (x) {}
+  blackout();
+}));
+document.addEventListener('dragstart', e => e.preventDefault());
+document.addEventListener('keyup', e => { if (e.key === 'PrintScreen') { wipeClipboard(); blackout(); } });
+document.addEventListener('keydown', e => {
+  const k = (e.key || '').toLowerCase();
+  if (e.key === 'PrintScreen' || (e.metaKey && e.shiftKey && ['3', '4', '5', 's'].includes(k))) { wipeClipboard(); blackout(); }
+  if ((e.ctrlKey || e.metaKey) && (k === 'p' || k === 's')) { e.preventDefault(); blackout(); }
+});
+window.addEventListener('beforeprint', blackout);
+const away = on => document.body.classList.toggle('away', on);
+window.addEventListener('blur', () => away(true));
+window.addEventListener('focus', () => away(false));
+document.addEventListener('visibilitychange', () => away(document.hidden));
+// すかし：ログイン後に、LINE表示名と日時を斜めにくり返し表示する
+function setWatermark(){
+  if (!ME) return;
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  const text = `${ME.name || 'LINE user'}  ${d.getFullYear()}/${z(d.getMonth() + 1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
+  const c = document.createElement('canvas'), w = 340, h = 190, r = window.devicePixelRatio || 1;
+  c.width = w * r; c.height = h * r;
+  const g = c.getContext('2d'); g.scale(r, r);
+  g.translate(w / 2, h / 2); g.rotate(-Math.PI / 7);
+  g.font = '600 15px sans-serif'; g.fillStyle = '#000'; g.textAlign = 'center';
+  g.fillText(text, 0, 0); g.fillText('Job Change Japan', 0, 22);
+  const wm = document.getElementById('wm');
+  wm.style.backgroundImage = `url(${c.toDataURL()})`; wm.style.backgroundSize = `${w}px ${h}px`;
+}
+setInterval(setWatermark, 60000);
 
 boot();
 </script>

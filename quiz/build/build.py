@@ -225,6 +225,9 @@ L = {k: F(v) for k, v in {
     "noRefund": "一度お支払いいただいた代金は、回数券を使い切らなかった場合も含めて、返金できません。",
     "mockNote": "始めた時点で1回分を使います。途中でやめても、時間切れでも、1回分は戻りません。",
     "noPlacement": "模擬テストを買うかどうかは自由です。買わなくても、当社の職業紹介を受けるときに不利になることはありません。",
+    "noCopy": "問題のコピー・スクリーンショット・撮影は禁止です。",
+    "noCopySub": "翻訳したいときは、文字を選んで「翻訳」を使ってください。",
+    "tapBack": "画面をタップすると戻ります",
 }.items()}
 L["price"] = F("模擬テストは有料です。") + "<b>" + F("{yen}円で{n}回") + "</b>" + F("受けられます（使い切ったら、また{yen}円で{n}回）。")
 L["title"] = '<span class="ln">' + F("外食業2号・N3") + '</span> <span class="ln">' + F("練習問題") + '</span>'
@@ -243,6 +246,7 @@ html = html.replace("__CATS__", json.dumps({k: F(v) for k, v in CATS.items()}, e
 html = html.replace("__KINDS__", json.dumps({k: F(v) for k, v in KINDS.items()}, ensure_ascii=False))
 L["legal"] = ('<p>' + L["noGuarantee"] + '</p><p>' + L["agree"] + '</p><p><a href="terms.html">' + L["terms"] + '</a>'
               + (' ／ <a href="' + H.escape(PRIVACY_URL) + '">' + L["privacy"] + '</a>' if PRIVACY_URL else '') + '</p>')
+html = html.replace("__NOCOPY__", L["noCopy"]).replace("__NOCOPYSUB__", L["noCopySub"]).replace("__TAPBACK__", L["tapBack"])
 html = html.replace("__LBL__", json.dumps(L, ensure_ascii=False))
 open(os.path.join(ROOT, "quiz", "terms.html"), "w").write(terms.render(F, PRIVACY_URL))
 html = html.replace("__N3__", json.dumps({"sections": {k: F(v) for k, v in N3_SECTIONS.items()},
