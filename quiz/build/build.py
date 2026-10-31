@@ -35,6 +35,7 @@ import html as H                      # noqa: E402
 import terms                          # noqa: E402
 
 # プライバシーポリシーのURL（わかったら入れる。空なら、リンクを出さない）
+SALES_READY = False   # 特定商取引法の表記ページができたら True（購入ボタンを出す）
 PRIVACY_URL = "https://fairlyconnecting.blog.jp/archives/11232068.html"
 
 # 問題ID：学科は E/C/S/U＋番号、実技・判断は H＋分野、実技・計画立案は K＋分野
@@ -224,6 +225,14 @@ L = {k: F(v) for k, v in {
     "noRefund": "一度お支払いいただいた代金は、回数券を使い切らなかった場合も含めて、返金できません。",
     "mockNote": "1回分は、使い始めた時点から{h}時間で終わります。使わなかった時間があっても、1回分は戻りません。",
     "passHead": "利用状況",
+    "buyHead": "回数券を買う",
+    "buyBtn": "{n}回分　{yen}円（税込）",
+    "buyNote": "カードなどで支払えます（Stripeの安全な支払い画面に移動します）。支払いが終わると、このページにもどり、回数券が自動で増えます。",
+    "buyGoing": "支払い画面に移動しています…",
+    "buyChecking": "支払いを確認しています…",
+    "buyDone": "{n}回分の回数券を追加しました。",
+    "buyLater": "支払いの確認ができませんでした。支払いが済んでいれば、翌朝までに自動で追加されます。追加されないときは、公式LINEでお知らせください。",
+    "tokusho": "特定商取引法に基づく表記",
     "passOn": "利用中です。{until}まで、練習問題も模擬テストもすべて使えます（あと{left}）。",
     "passOff": "練習問題と模擬テストを使うには、「始める」を押してください。押した時から{h}時間、すべての機能を使えます。",
     "trialNote": "はじめての方は、1回だけ無料で{h}時間お試しできます。",
@@ -241,6 +250,7 @@ L = {k: F(v) for k, v in {
     "tapBack": "画面をタップすると戻ります",
 }.items()}
 L["price"] = F("回数券（1回分を使うと、そこから{h}時間、練習問題も模擬テストもすべて使えます）")
+L["salesReady"] = SALES_READY
 L["packRow"] = "<b>" + F("{n}回分") + "</b>　" + F("{yen}円（税込）")
 L["title"] = '<span class="ln">' + F("外食業2号・N3") + '</span> <span class="ln">' + F("練習問題") + '</span>'
 L["sub"] = {k: F(v) for k, v in {

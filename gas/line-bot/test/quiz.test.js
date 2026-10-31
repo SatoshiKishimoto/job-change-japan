@@ -29,7 +29,7 @@ function makeSheet(name, ss) {
 const ss = { sheets: {}, getId: () => 'SSID', getUrl: () => 'https://sheet', getSheetByName(n) { return this.sheets[n] || null; },
   insertSheet(n) { return (this.sheets[n] = makeSheet(n, ss)); }, getSheets() { return Object.values(this.sheets); }, deleteSheet(s) { delete this.sheets[s.name]; } };
 
-const props = { SHEET_ID: 'SSID', LINE_TOKEN: 'x', LIFF_CHANNEL_ID: '1650000000' };
+const props = { SHEET_ID: 'SSID', LINE_TOKEN: 'x', LIFF_CHANNEL_ID: '1650000000', STRIPE_SECRET_KEY: 'rk_test_x' };
 const cache = {};
 // token -> {uid,name,friend,client}
 const TOKENS = {
@@ -40,6 +40,23 @@ const TOKENS = {
 };
 let fetchCount = 0;
 function resp(code, obj) { return { getResponseCode: () => code, getContentText: () => JSON.stringify(obj) }; }
+// Stripe のまね
+const SESSIONS = {}; let lastCreate = null;
+function stripe(url, opt) {
+  assert.strictEqual(opt.headers.Authorization, 'Bearer rk_test_x');
+  const path = url.replace('https://api.stripe.com/v1/', '').split('?')[0];
+  if (opt.method === 'post' && path === 'checkout/sessions') {
+    const p = Object.fromEntries(new URLSearchParams(opt.payload)); lastCreate = p;
+    const id = 'cs_test_' + (Object.keys(SESSIONS).length + 1);
+    SESSIONS[id] = { id, url: 'https://checkout.stripe.com/c/pay/' + id, payment_status: 'unpaid', status: 'open', client_reference_id: p.client_reference_id,
+      amount_total: +p['line_items[0][price_data][unit_amount]'], metadata: { uid: p['metadata[uid]'], count: p['metadata[count]'], service: p['metadata[service]'] }, created: Math.floor(Date.now() / 1000) };
+    return resp(200, SESSIONS[id]);
+  }
+  if (opt.method === 'get' && path === 'checkout/sessions') return resp(200, { data: Object.values(SESSIONS).filter(x => x.status === 'complete'), has_more: false });
+  const m = path.match(/^checkout\/sessions\/(.+)$/);
+  if (m) return SESSIONS[m[1]] ? resp(200, SESSIONS[m[1]]) : resp(404, { error: { message: 'No such checkout.session' } });
+  throw new Error('unexpected stripe ' + url);
+}
 const UrlFetchApp = {
   fetch(url, opt) {
     fetchCount++;
@@ -51,6 +68,7 @@ const UrlFetchApp = {
     const t = auth && auth.replace('Bearer ', ''); const u = TOKENS[t];
     if (url === 'https://api.line.me/v2/profile') return u ? resp(200, { userId: u.uid, displayName: u.name }) : resp(401, {});
     if (url === 'https://api.line.me/friendship/v1/status') return u ? resp(200, { friendFlag: u.friend }) : resp(401, {});
+    if (url.startsWith('https://api.stripe.com/v1/')) return stripe(url, opt);
     throw new Error('unexpected fetch ' + url);
   }
 };
@@ -278,6 +296,35 @@ expire();
 assert.strictEqual(call({ api: 'mock_start', token: 'good', mock: 'n3moji' }).error, 'no_pass');
 assert.strictEqual(call({ api: 'mock_resume', token: 'good', attemptId: late.attemptId }).ok, true);
 assert.strictEqual(call({ api: 'mock_submit', token: 'good', attemptId: late.attemptId, answers: [] }).ok, true);
+
+// --- 購入（Stripe Checkout）---
+const pay = id => { SESSIONS[id].payment_status = 'paid'; SESSIONS[id].status = 'complete'; };
+assert.strictEqual(call({ api: 'me', token: 'good2' }).sales, true);
+r = call({ api: 'buy', token: 'good2', pack: 1 });
+assert.strictEqual(r.ok, true); assert.ok(r.url.startsWith('https://checkout.stripe.com/'));
+assert.deepStrictEqual([lastCreate['line_items[0][price_data][unit_amount]'], lastCreate['metadata[count]'], lastCreate.client_reference_id, lastCreate.mode, lastCreate['line_items[0][price_data][currency]']], ['1760', '30', 'Ubbb', 'payment', 'jpy']);
+assert.strictEqual(lastCreate.success_url, 'https://liff.line.me/2012300446-Oe7H41c2?paid={CHECKOUT_SESSION_ID}');
+assert.strictEqual(call({ api: 'buy', token: 'good2', pack: 9 }).error, 'unknown');
+assert.strictEqual(call({ api: 'buy_check', token: 'good2', session: 'cs_test_1' }).error, 'unpaid', 'not paid yet');
+pay('cs_test_1');
+assert.strictEqual(call({ api: 'buy_check', token: 'good', session: 'cs_test_1' }).error, 'not_found', 'other user cannot claim');
+assert.strictEqual(call({ api: 'buy_check', token: 'good2', session: 'x"; drop' }).error, 'not_found');
+r = call({ api: 'buy_check', token: 'good2', session: 'cs_test_1' });
+assert.deepStrictEqual([r.ok, r.count, r.credits, r.uid], [true, 30, 30, undefined]);
+r = call({ api: 'buy_check', token: 'good2', session: 'cs_test_1' });
+assert.deepStrictEqual([r.ok, r.already, r.credits], [true, true, 30], 'no double credit');
+// ページにもどらなかった支払いは、毎朝の確認で足す（すでに足した分は足さない）
+call({ api: 'buy', token: 'good2', pack: 0 }); pay('cs_test_2');
+assert.strictEqual(ctx.quizBuyReconcile_(), 1);
+assert.strictEqual(ctx.quizBuyReconcile_(), 0);
+assert.strictEqual(call({ api: 'me', token: 'good2' }).credits, 39);
+assert.strictEqual(ss.sheets['購入記録'].data.length, 3);
+console.log('buy rows:', ss.sheets['購入記録'].data.slice(1).map(x => x.slice(1)));
+// キーがないときは売らない
+delete props.STRIPE_SECRET_KEY;
+assert.strictEqual(call({ api: 'buy', token: 'good2', pack: 0 }).error, 'no_sales');
+assert.strictEqual(call({ api: 'me', token: 'good2' }).sales, false);
+props.STRIPE_SECRET_KEY = 'rk_test_x';
 
 // webhook path still works (no events)
 assert.deepStrictEqual(JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify({ destination: 'x', events: [] }) } }).s), { ok: true });

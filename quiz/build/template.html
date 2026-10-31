@@ -55,6 +55,7 @@ header{display:flex;flex-direction:column;gap:6px}
 .credits b{font-family:var(--f-display);font-size:1.6rem;color:var(--ai)}
 .price{background:var(--ai-soft);border-radius:8px;padding:10px 14px}
 .price b{color:var(--ai)}
+.buymsg{background:var(--ok-soft);color:var(--ok);font-weight:700;border-radius:8px;padding:10px 14px;margin:0}
 .needpass{color:var(--ng);font-weight:700;margin:0}
 .ticket{background:var(--surface);border:1px solid var(--line);border-radius:4px 4px 10px 10px;position:relative;padding:22px 18px 18px}
 .ticket::before{content:"";position:absolute;left:12px;right:12px;top:8px;border-top:2px dashed var(--line)}
@@ -271,6 +272,7 @@ async function boot(){
   }
   TOKEN = liff.getAccessToken();
   try {
+    await checkPaid();
     ME = await api({ api:'me' });
     if (!ME.counts) throw { error:'gas_not_updated' };   // GASに練習問題の機能がまだ入っていない
     setWatermark();
@@ -310,6 +312,7 @@ function home(){
   stopAudio();
   S = null;
   const credits = ME.credits;
+  setTimeout(() => { BUY_MSG = ''; }, 0);
   const open = ME.open;
   const mocks = ME.mocks || { skill: { name:'', size: ME.mockSize, minutes: ME.mockMinutes, maxPoints: ME.maxPoints, passPoints: ME.passPoints } };
   const n3c = ME.n3 || { all: 0 };
@@ -327,6 +330,10 @@ function home(){
   const ud = new Date(ME.passUntil || 0);
   const leftMs = (ME.passUntil || 0) - Date.now();
   const leftTxt = `${Math.floor(leftMs / 3600000)}${L.hr}${z(Math.floor(leftMs / 60000) % 60)}${L.min}`;
+  const canBuy = !!(L.salesReady && ME.sales);
+  const buyBox = canBuy && !ME.trial ? `<div class="price"><b>${L.buyHead}</b><br>${fill(L.price, { h: H })}
+      <div class="stack" style="gap:8px;margin-top:10px">${(ME.pack.packs || []).map((k, i) => `<button class="btn ${credits > 0 || active ? 'ghost' : ''} wide" data-buy="${i}">${fill(L.buyBtn, { n: k.count, yen: Number(k.priceTax).toLocaleString('ja-JP') })}</button>`).join('')}</div>
+      <p class="muted" style="margin:8px 0 0">${L.buyNote} <a href="tokushoho.html">${L.tokusho}</a></p></div>` : '';
   const passPanel = `
     <section class="panel mock" id="pass" aria-labelledby="pass-h">
       <div class="row"><h2 id="pass-h">${L.passHead}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>
@@ -335,7 +342,8 @@ function home(){
          ${ME.trial ? `<p>${fill(L.trialNote, { h: H })}</p><button class="btn wide" id="passgo">${fill(L.trialBtn, { h: H })}</button>`
            : credits > 0 ? `<button class="btn wide" id="passgo">${L.useBtn}</button>` : ''}
          <div id="passconfirm"></div>`}
-      ${!active && !ME.trial && credits <= 0 ? `<div class="price">${fill(L.price, { h: H })}<br>${(ME.pack.packs || []).map(k => fill(L.packRow, { n: k.count, yen: Number(k.priceTax).toLocaleString('ja-JP') })).join('<br>')}<br><span class="muted">${L.soon}</span></div>` : ''}
+      ${buyBox}
+      ${!active && !ME.trial && credits <= 0 && !canBuy ? `<div class="price">${fill(L.price, { h: H })}<br>${(ME.pack.packs || []).map(k => fill(L.packRow, { n: k.count, yen: Number(k.priceTax).toLocaleString('ja-JP') })).join('<br>')}<br><span class="muted">${L.soon}</span></div>` : ''}
       <p class="muted">${fill(L.mockNote, { h: H })}${L.noRefund}<br>${L.noGuarantee}<br>${L.noPlacement} <a href="terms.html">${L.terms}</a></p>
     </section>`;
   const priceBox = '';
@@ -385,6 +393,7 @@ function home(){
   app.innerHTML = `
   <div class="stack">
     <p>${fill(L.hello, { name: esc(ME.name) })}</p>
+    ${BUY_MSG ? `<p class="buymsg">${BUY_MSG}</p>` : ''}
     ${passPanel}
     ${n3c.all ? `<div class="tabs" role="tablist">
       <button role="tab" id="tab-skill" aria-selected="${TAB === 'skill'}">${L.tabSkill}</button>
@@ -396,6 +405,7 @@ function home(){
   const ts = document.getElementById('tab-skill'), tn = document.getElementById('tab-n3');
   if (ts) { ts.onclick = () => tabTo('skill'); tn.onclick = () => tabTo('n3'); }
   app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => active ? startPractice(b.dataset.c, b.dataset.x || 'skill') : needPass());
+  app.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => buy(+b.dataset.buy));
   const pg = document.getElementById('passgo');
   if (pg) pg.onclick = () => {
     const box = document.getElementById('passconfirm');
@@ -424,6 +434,21 @@ function needPass(){
   if (!n) { n = document.createElement('p'); n.className = 'needpass verdict'; p.insertBefore(n, p.children[1]); }
   n.innerHTML = L.needPass;
   p.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+async function buy(i){
+  app.innerHTML = `<p class="center muted">${L.buyGoing}</p>`;
+  try { const j = await api({ api:'buy', pack: i }); location.href = j.url; }
+  catch (e) { showError(e, backHome); }
+}
+// 支払いのあと（?paid=セッションID）：GASがStripeに確認してから回数を足す
+let BUY_MSG = '';
+async function checkPaid(){
+  const q = new URLSearchParams(location.search), sid = q.get('paid');
+  if (!sid) return;
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  app.innerHTML = `<p class="center muted">${L.buyChecking}</p>`;
+  try { const j = await api({ api:'buy_check', session: sid }); BUY_MSG = fill(L.buyDone, { n: j.count }); }
+  catch (e) { if (e && e.silent) throw e; BUY_MSG = L.buyLater; }
 }
 async function startPass(){
   app.innerHTML = `<p class="center muted">${L.loading}</p>`;

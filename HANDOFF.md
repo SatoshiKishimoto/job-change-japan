@@ -61,7 +61,8 @@ LINE_TOKEN（必須）／NOTIFY_EMAIL（空ならGAS所有者）／SHEET_ID／AN
 - 問題・ふりがなの元データ：`quiz/build/`（`python3 quiz/build/build.py` で QuizBank.gs と index.html を生成）
 - 確認方法：アクセストークンを LINE の verify・profile・friendship API で確認（LIFF_CHANNEL_ID と一致・友だち）。正解は模擬テストの採点時まで返さない
 - シート：「模擬テスト回数」（残り回数。手で書き換え可）／「模擬テスト受験」（記録・出題データ）
-- 決済方法は未定。それまでは「LINE配信」メニューの「模擬テスト：選んだ行の人に10回分を付与」で手動付与。決済連携は `addMockCredits_` を呼ぶ
+- 決済：Stripe Checkout（2026-10-31〜）。GASのスクリプトプロパティ STRIPE_SECRET_KEY（制限付きキー rk_live_…、権限は Checkout Sessions の作成だけ）。api: buy で支払い画面を作り、もどったら api: buy_check でStripeに確認して回数を足す（シート「購入記録」で二重付与を防ぐ）。もどらなかった分は runDaily の quizBuyReconcile_ が直近3日を確認。ページの購入ボタンは build.py の SALES_READY=True で表示（特定商取引法の表記ページ quiz/tokushoho.html ができてから）
+- 手動付与も可。「LINE配信」メニューの「模擬テスト：選んだ行の人に10回分を付与」で手動付与。決済連携は `addMockCredits_` を呼ぶ
 - 利用規約：`quiz/terms.html`（元は `quiz/build/terms.py`、build.py で生成）。合格を保証しない・返金不可・利用で同意とみなす、などを記載。ページの下・ログイン画面・模擬テスト欄・結果画面に注意書きとリンク。プライバシーポリシーのURLは build.py の PRIVACY_URL（fairlyconnecting.blog.jp のブログ記事）
 - 複製の防止（2026-10-31）：スマホのスクショはWebでは止められないため、LINE表示名と日時のすかし（`setWatermark`）で流出元が分かるようにし、コピー・切り取り・印刷・PrintScreen・Ctrl+S などで黒い画面、画面から離れたらぼかす。文字の選択は翻訳のため残している。利用規約第8条にも記載
 - 設定手順：`quiz/SETUP.md`。テスト：`node gas/line-bot/test/quiz.test.js`／`node gas/line-bot/test/linebot-quiz.test.js`

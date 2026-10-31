@@ -12,6 +12,12 @@
  *
  * スクリプトプロパティ（追加分）
  *   LIFF_CHANNEL_ID : LINEログインチャネルの「チャネルID」（数字）  ※必須
+ *   STRIPE_SECRET_KEY : Stripeの制限付きキー（rk_live_…。権限は Checkout Sessions の「作成」だけ）
+ *
+ * 購入（Stripe Checkout）
+ *  - ページの「買う」→ api: buy でGASが支払い画面（Checkout Session）を作り、そのURLへ移動
+ *  - 支払い後は練習問題のページ（?paid=セッションID）にもどり、api: buy_check でGASがStripeに確認してから回数を足す
+ *  - ページにもどらなかった人の分は、毎朝の runDaily で直近3日の支払いを確認して足す（同じ支払いは二重に足さない）
  *
  * シート（setupQuiz で作成）
  *   模擬テスト回数 : 人ごとの残り回数・利用期限・お試し。手で書き換えても反映される
@@ -64,6 +70,8 @@ var QUIZ_MOCKS = {
 
 var QUIZ_CREDIT_SHEET = '模擬テスト回数';
 var QUIZ_CREDIT_HEADERS = ['LINE userId', 'LINE表示名', '残り回数', '付与回数合計', '最終利用', '初回アクセス', 'メモ', '利用期限', 'お試し利用'];
+var QUIZ_BUY_SHEET = '購入記録';
+var QUIZ_BUY_HEADERS = ['日時', 'StripeセッションID', 'LINE userId', 'LINE表示名', '回数', '金額（税込）', '付与後の残り回数', '確認方法'];
 var QUIZ_USE_SHEET = '利用記録';
 var QUIZ_USE_HEADERS = ['日時', 'LINE userId', 'LINE表示名', '内容', '利用期限', '残り回数'];
 var QUIZ_ATTEMPT_SHEET = '模擬テスト受験';
@@ -90,6 +98,8 @@ function quizRoute_(b) {
 
   switch (b.api) {
     case 'me': return quizMe_(user);
+    case 'buy': return quizBuy_(user, b.pack);
+    case 'buy_check': return quizWithLock_(function () { return quizBuyCheck_(user, String(b.session || '')); });
     case 'pass_start': return quizWithLock_(function () { return quizPassStart_(user); });
     case 'practice':
       if (!quizPassActive_(user)) return quizNoPass_(user);
@@ -206,7 +216,7 @@ function quizMe_(user) {
   var s = mocks.skill;
   return {
     ok: true, name: user.name, credits: quizNum_(row['残り回数']), pack: QUIZ_PACK,
-    passUntil: quizPassUntil_(row), trial: !quizTrialUsed_(row), now: Date.now(),
+    passUntil: quizPassUntil_(row), trial: !quizTrialUsed_(row), now: Date.now(), sales: !!quizStripeKey_(),
     counts: counts, total: skillTotal, n3: n3, mocks: mocks,
     // 前の版のページ用
     mockSize: s.size, mockMinutes: s.minutes, maxPoints: s.maxPoints, passPoints: s.passPoints,
@@ -397,10 +407,103 @@ function quizMockSubmit_(user, attemptId, answers) {
 }
 
 // ============================================================
+// 購入（Stripe Checkout）
+// ============================================================
+function quizStripeKey_() { return PropertiesService.getScriptProperties().getProperty('STRIPE_SECRET_KEY') || ''; }
+
+// Stripe API を呼ぶ（form形式）。エラーは { error } で返す
+function quizStripe_(method, path, params) {
+  var key = quizStripeKey_();
+  if (!key) return { error: { message: 'STRIPE_SECRET_KEY が未設定です' } };
+  var opt = { method: method, headers: { Authorization: 'Bearer ' + key }, muteHttpExceptions: true };
+  var url = 'https://api.stripe.com/v1/' + path;
+  if (params) {
+    var q = Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
+    if (method === 'get') url += (url.indexOf('?') < 0 ? '?' : '&') + q; else { opt.payload = q; opt.contentType = 'application/x-www-form-urlencoded'; }
+  }
+  var r = UrlFetchApp.fetch(url, opt);
+  var j; try { j = JSON.parse(r.getContentText()); } catch (e) { j = { error: { message: 'bad response ' + r.getResponseCode() } }; }
+  return j;
+}
+
+function quizBuy_(user, packNo) {
+  var pack = QUIZ_PACKS[parseInt(packNo, 10)];
+  if (!pack) return { ok: false, error: 'unknown' };
+  if (!quizStripeKey_()) return { ok: false, error: 'no_sales' };
+  var back = QUIZ_URL;
+  var s = quizStripe_('post', 'checkout/sessions', {
+    'mode': 'payment',
+    'line_items[0][quantity]': 1,
+    'line_items[0][price_data][currency]': 'jpy',
+    'line_items[0][price_data][unit_amount]': pack.priceTax,
+    'line_items[0][price_data][product_data][name]': 'Job Change Japan 練習問題 回数券 ' + pack.count + '回分',
+    'line_items[0][price_data][product_data][description]': '1回分で24時間、練習問題と模擬テストをすべて利用できます（税込）',
+    'client_reference_id': user.uid,
+    'metadata[uid]': user.uid,
+    'metadata[count]': pack.count,
+    'metadata[service]': 'quiz',
+    'locale': 'auto',
+    'success_url': back + '?paid={CHECKOUT_SESSION_ID}',
+    'cancel_url': back
+  });
+  if (s.error || !s.url) return { ok: false, error: 'stripe', detail: String(s.error && s.error.message || 'no url').slice(0, 200) };
+  return { ok: true, url: s.url };
+}
+
+// 支払いを確認して回数を足す。同じ支払いは1回だけ
+function quizBuyApply_(s, how) {
+  if (!s || s.error || !s.id) return { ok: false, error: 'not_found' };
+  if (s.payment_status !== 'paid') return { ok: false, error: 'unpaid' };
+  var meta = s.metadata || {};
+  if (meta.service !== 'quiz') return { ok: false, error: 'not_found' };
+  var uid = s.client_reference_id || meta.uid, n = quizNum_(meta.count);
+  if (!uid || !n) return { ok: false, error: 'not_found' };
+  var done = sheetObjects_(quizBuySheet_()).filter(function (r) { return r['StripeセッションID'] === s.id; })[0];
+  if (done) return { ok: true, already: true, count: n, credits: quizNum_((quizCreditRow_({ uid: uid }, false) || {})['残り回数']), uid: uid };
+  var memo = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M/d') + ' 購入 +' + n + '回（' + s.amount_total + '円）';
+  var left = quizAddCredits_(uid, n, memo);
+  var row = quizCreditRow_({ uid: uid }, false) || {};
+  quizBuySheet_().appendRow([new Date(), s.id, uid, safe_(row['LINE表示名'] || ''), n, s.amount_total, left, how]);
+  return { ok: true, count: n, credits: left, uid: uid };
+}
+
+function quizBuyCheck_(user, sessionId) {
+  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return { ok: false, error: 'not_found' };
+  var s = quizStripe_('get', 'checkout/sessions/' + sessionId);
+  if (s && !s.error && (s.client_reference_id || (s.metadata || {}).uid) !== user.uid) return { ok: false, error: 'not_found' };
+  var r = quizBuyApply_(s, 'ページ');
+  delete r.uid;
+  return r;
+}
+
+// 毎朝：直近3日の支払いで、まだ回数を足していないものを足す（支払い後にページへもどらなかった人の分）
+function quizBuyReconcile_() {
+  if (!quizStripeKey_()) return 0;
+  var n = 0, after = '';
+  for (var page = 0; page < 10; page++) {
+    var params = { 'limit': 100, 'created[gte]': Math.floor(Date.now() / 1000) - 3 * 86400, 'status': 'complete' };
+    if (after) params['starting_after'] = after;
+    var list = quizStripe_('get', 'checkout/sessions', params);
+    if (list.error || !list.data) { console.error('Stripe 確認エラー: ' + JSON.stringify(list.error)); break; }
+    list.data.forEach(function (s) {
+      var r = quizBuyApply_(s, '毎朝の確認');
+      if (r.ok && !r.already) n++;
+    });
+    if (!list.has_more || !list.data.length) break;
+    after = list.data[list.data.length - 1].id;
+  }
+  return n;
+}
+
+// ============================================================
 // 回数の付与（手作業・将来の決済連携から使う）
 // ============================================================
 function addMockCredits_(uid, n, memo) {
-  return quizWithLock_(function () {
+  return quizWithLock_(function () { return quizAddCredits_(uid, n, memo); });
+}
+// ロックは呼ぶ側で取る（購入の確認・毎朝の runDaily から）
+function quizAddCredits_(uid, n, memo) {
+  {
     var sh = quizCreditSheet_();
     var row = sheetObjects_(sh).filter(function (r) { return r['LINE userId'] === uid; })[0];
     if (!row) {
@@ -415,7 +518,7 @@ function addMockCredits_(uid, n, memo) {
       sh.getRange(row._row, c).setValue((old ? old + ' / ' : '') + memo);
     }
     return left;
-  });
+  }
 }
 
 // スプレッドシートのメニューから：「模擬テスト回数」シートで選んでいる行の人に10回分を付与
@@ -443,6 +546,7 @@ function menuGiveMockCredits() {
 // ============================================================
 function quizCreditSheet_() { return sheetWithHeaders_(QUIZ_CREDIT_SHEET, QUIZ_CREDIT_HEADERS); }
 function quizAttemptSheet_() { return sheetWithHeaders_(QUIZ_ATTEMPT_SHEET, QUIZ_ATTEMPT_HEADERS); }
+function quizBuySheet_() { return sheetWithHeaders_(QUIZ_BUY_SHEET, QUIZ_BUY_HEADERS); }
 function quizUseSheet_() { return sheetWithHeaders_(QUIZ_USE_SHEET, QUIZ_USE_HEADERS); }
 function quizCol_(sh, name) { return colIndex_(sh, name); }
 function quizNum_(v) { var n = parseInt(v, 10); return isNaN(n) ? 0 : n; }
@@ -495,6 +599,7 @@ function setupQuiz() {
   quizCreditSheet_();
   quizAttemptSheet_();
   quizUseSheet_();
+  quizBuySheet_();
   var ch = PropertiesService.getScriptProperties().getProperty('LIFF_CHANNEL_ID');
   var n3 = QUIZ_BANK.filter(function (q) { return q.x === 'n3'; }).length;
   console.log('問題数: 技能 ' + (QUIZ_BANK.length - n3) + '問・N3 ' + n3 + '問');
@@ -502,6 +607,7 @@ function setupQuiz() {
     var m = QUIZ_MOCKS[id];
     console.log('模擬テスト「' + m.name + '」: ' + quizMockSize_(id) + '問・' + m.minutes + '分' + (quizMaxPoints_(id) ? '・' + quizMaxPoints_(id) + '点満点' : ''));
   });
+  console.log('STRIPE_SECRET_KEY: ' + (quizStripeKey_() ? '設定済み（' + quizStripeKey_().slice(0, 8) + '…）' : '未設定（購入ボタンは出ません）'));
   console.log('LIFF_CHANNEL_ID: ' + (ch ? '設定済み（' + ch + '）' : '未設定 → スクリプトプロパティに追加してください'));
   console.log('シート「' + QUIZ_CREDIT_SHEET + '」「' + QUIZ_ATTEMPT_SHEET + '」「' + QUIZ_USE_SHEET + '」を用意しました: ' + ss_().getUrl());
 }
