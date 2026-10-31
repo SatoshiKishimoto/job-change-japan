@@ -12,6 +12,7 @@ SUMMARY = [
     "一度支払った代金は、回数券を使い切らなかった場合を含めて、どんな理由でも返金できません。",
     "模擬テストは、始めた時点で1回分を使います。途中でやめても、時間切れでも、1回分は戻りません。",
     "問題・解説・音声を、ほかの人に送ったり、SNSなどにのせたりしてはいけません。",
+    "模擬テストを買うかどうかは自由です。買わなくても、当社の職業紹介（仕事の紹介）を受けるときに不利になることはありません。",
     "このサービスを使った時点で、この利用規約に同意したものとみなします。",
 ]
 
@@ -21,6 +22,7 @@ SUMMARY_EN = [
     "Payments cannot be refunded for any reason, including unused mock exam tickets.",
     "One ticket is used when you start a mock exam, even if you stop or run out of time.",
     "Do not share, copy or post the questions, explanations or audio (including on social media).",
+    "Buying mock exams is optional. It has nothing to do with our job placement service, and not buying will never affect your job introductions.",
     "By using this service, you agree to these Terms of Use. The Japanese version is the official version.",
 ]
 
@@ -37,6 +39,12 @@ TERMS = [
         "本サービスは、外食業特定技能2号技能測定試験および日本語能力試験N3の対策のための練習問題を提供するものです。",
         "本サービスは、当社のLINE公式アカウント「Job Change Japan」の友だちの方が、LINEアカウントでログインして利用できます。",
         "練習問題は無料で利用できます。模擬テストは有料で、回数券を使って受験します。",
+    ]),
+    ("第3条の2（職業紹介との関係）", [
+        "本サービスは、当社が行う有料職業紹介事業（許可番号 27-ユ-304918）とは別のサービスです。",
+        "模擬テストの購入は利用者の自由です。購入しないことによって、当社の職業紹介を受けるときに不利になることはありません。また、当社は、職業紹介や面接、採用の条件として、模擬テストの購入をすすめたり、求めたりすることはありません。",
+        "当社は、職業紹介について、求職者の方から手数料を受け取ることはありません。模擬テストの代金は、職業紹介の手数料ではありません。",
+        "模擬テストの得点や受験の記録を、職業紹介の判断や、求人企業への紹介に使うことはありません。",
     ]),
     ("第4条（練習問題の性質と、合格を保証しないこと）", [
         "本サービスの問題・解説・音声は、公開されている出題範囲などをもとに当社が独自に作成した練習用の問題です。実際の試験問題ではありません。",
