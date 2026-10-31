@@ -4,7 +4,7 @@
  * しくみ
  *  - 練習問題ページ（quiz/index.html, LIFF）が LINE ログインのアクセストークンを送ってくる
  *  - このGASで「本物のトークンか」「公式LINEの友だちか」を確認してから問題を返す
- *  - 料金：回数券 500円（税抜・税込550円）で10回分。1回分を使うと、そこから24時間、練習も模擬テストもすべて使い放題
+ *  - 料金：回数券 9回分500円・30回分1,600円・60回分3,000円（税抜。税込550円・1,760円・3,300円）。1回分を使うと、そこから24時間、練習も模擬テストもすべて使い放題
  *    はじめての人は1回だけ、無料で24時間お試しできる（回数券を使わない）
  *    利用の開始はページの「始める」ボタン（api: pass_start）。ページを開いただけでは使わない
  *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）／N3 文法・読解（39問・70分）／N3 聴解（28問・40分）。回数券は共通
@@ -21,7 +21,13 @@
  * 問題データは QuizBank.gs（quiz/build/build.py で自動生成。手で編集しない）
  */
 
-var QUIZ_PACK = { price: 500, priceTax: 550, count: 10, hours: 24 };   // 回数券：500円（税込550円）で10回分。1回分＝24時間使い放題
+// 回数券の種類（金額は税抜・税込）。1回分＝24時間使い放題
+var QUIZ_PACKS = [
+  { count: 9,  price: 500,  priceTax: 550 },
+  { count: 30, price: 1600, priceTax: 1760 },
+  { count: 60, price: 3000, priceTax: 3300 }
+];
+var QUIZ_PACK = { hours: 24, packs: QUIZ_PACKS };
 var QUIZ_RESUME_HOURS = 24;                         // 途中でやめた模擬テストを、続きから受けられる時間
 
 // 模擬テストの種類。plan：[分野, 種類, 問題数, 1問の点数]（点数0＝点数なし）
@@ -422,10 +428,13 @@ function menuGiveMockCredits() {
   var uid = sh.getRange(r, quizCol_(sh, 'LINE userId')).getValue();
   var name = sh.getRange(r, quizCol_(sh, 'LINE表示名')).getValue();
   if (!uid) { ui.alert('この行には LINE userId がありません。'); return; }
-  var ans = ui.alert('回数券を付与しますか？', name + ' さんに ' + QUIZ_PACK.count + '回分（' + QUIZ_PACK.priceTax + '円分。1回分＝' + QUIZ_PACK.hours + '時間）を付与します。', ui.ButtonSet.YES_NO);
-  if (ans !== ui.Button.YES) return;
-  var memo = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M/d') + ' +' + QUIZ_PACK.count + '回';
-  var left = addMockCredits_(uid, QUIZ_PACK.count, memo);
+  var list = QUIZ_PACKS.map(function (p, i) { return (i + 1) + '：' + p.count + '回分（' + p.priceTax + '円・税込）'; }).join('\n');
+  var res = ui.prompt('回数券を付与します', name + ' さんに付与する回数券の番号を入れてください。\n' + list, ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var pack = QUIZ_PACKS[parseInt(res.getResponseText(), 10) - 1];
+  if (!pack) { ui.alert('番号は 1〜' + QUIZ_PACKS.length + ' で入れてください。'); return; }
+  var memo = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M/d') + ' +' + pack.count + '回（' + pack.priceTax + '円）';
+  var left = addMockCredits_(uid, pack.count, memo);
   ui.alert('付与しました', name + ' さんの残り回数：' + left + '回', ui.ButtonSet.OK);
 }
 

@@ -97,7 +97,7 @@ r = call({ api: 'practice', token: 'good', cat: 'chori' });
 assert.deepStrictEqual([r.ok, r.error, r.trial, r.credits], [false, 'no_pass', true, 0], 'practice needs a pass');
 assert.strictEqual(call({ api: 'mock_start', token: 'good' }).error, 'no_pass');
 r = call({ api: 'me', token: 'good' });
-assert.deepStrictEqual([r.trial, r.passUntil, r.pack.priceTax, r.pack.hours], [true, 0, 550, 24]);
+assert.deepStrictEqual([r.trial, r.passUntil, r.pack.hours, JSON.stringify(r.pack.packs.map(p => [p.count, p.priceTax]))], [true, 0, 24, '[[9,550],[30,1760],[60,3300]]']);
 r = call({ api: 'pass_start', token: 'good' });
 assert.deepStrictEqual([r.ok, r.started, r.credits], [true, 'お試し（無料）', 0]);
 assert.ok(Math.abs(r.passUntil - (Date.now() + 24 * 3600e3)) < 5000);
@@ -131,7 +131,7 @@ assert.strictEqual(call({ api: 'practice', token: 'good', cat: 'chori' }).error,
 r = call({ api: 'mock_start', token: 'good' });
 assert.deepStrictEqual([r.ok, r.error, r.trial], [false, 'no_pass', false]);
 r = call({ api: 'pass_start', token: 'good' });
-assert.deepStrictEqual([r.ok, r.error, r.pack.priceTax, r.pack.count], [false, 'no_credits', 550, 10]);
+assert.deepStrictEqual([r.ok, r.error, r.pack.packs.length], [false, 'no_credits', 3]);
 
 // --- give credits (manual / future payment) ---
 assert.strictEqual(ctx.addMockCredits_('Uaaa', 10, 'test'), 10);

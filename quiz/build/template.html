@@ -335,7 +335,7 @@ function home(){
          ${ME.trial ? `<p>${fill(L.trialNote, { h: H })}</p><button class="btn wide" id="passgo">${fill(L.trialBtn, { h: H })}</button>`
            : credits > 0 ? `<button class="btn wide" id="passgo">${L.useBtn}</button>` : ''}
          <div id="passconfirm"></div>`}
-      ${!active && !ME.trial && credits <= 0 ? `<div class="price">${fill(L.price, { yen: ME.pack.priceTax || ME.pack.price, n: ME.pack.count, h: H })}<br><span class="muted">${L.soon}</span></div>` : ''}
+      ${!active && !ME.trial && credits <= 0 ? `<div class="price">${fill(L.price, { h: H })}<br>${(ME.pack.packs || []).map(k => fill(L.packRow, { n: k.count, yen: Number(k.priceTax).toLocaleString('ja-JP') })).join('<br>')}<br><span class="muted">${L.soon}</span></div>` : ''}
       <p class="muted">${fill(L.mockNote, { h: H })}${L.noRefund}<br>${L.noGuarantee}<br>${L.noPlacement} <a href="terms.html">${L.terms}</a></p>
     </section>`;
   const priceBox = '';
