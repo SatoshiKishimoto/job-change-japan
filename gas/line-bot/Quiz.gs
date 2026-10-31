@@ -4,7 +4,9 @@
  * しくみ
  *  - 練習問題ページ（quiz/index.html, LIFF）が LINE ログインのアクセストークンを送ってくる
  *  - このGASで「本物のトークンか」「公式LINEの友だちか」を確認してから問題を返す
- *  - 練習（分野別・全問）は友だちなら無料。模擬テストは回数券（500円で10回）を1回分使う
+ *  - 料金：回数券 500円（税抜・税込550円）で10回分。1回分を使うと、そこから24時間、練習も模擬テストもすべて使い放題
+ *    はじめての人は1回だけ、無料で24時間お試しできる（回数券を使わない）
+ *    利用の開始はページの「始める」ボタン（api: pass_start）。ページを開いただけでは使わない
  *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）／N3 文法・読解（39問・70分）／N3 聴解（28問・40分）。回数券は共通
  *  - 問題の順番と選択肢の順番は毎回シャッフル。模擬テストはまだ出ていない問題を優先して出す
  *
@@ -12,13 +14,14 @@
  *   LIFF_CHANNEL_ID : LINEログインチャネルの「チャネルID」（数字）  ※必須
  *
  * シート（setupQuiz で作成）
- *   模擬テスト回数 : 人ごとの残り回数。手で数字を書き換えても反映される
+ *   模擬テスト回数 : 人ごとの残り回数・利用期限・お試し。手で書き換えても反映される
+ *   利用記録       : 24時間の利用を始めた記録（お試し／回数券）
  *   模擬テスト受験 : 受験の記録（開始・提出・点数）
  *
  * 問題データは QuizBank.gs（quiz/build/build.py で自動生成。手で編集しない）
  */
 
-var QUIZ_PACK = { price: 500, count: 10 };          // 回数券：500円で10回（技能・N3の模擬テストで共通）
+var QUIZ_PACK = { price: 500, priceTax: 550, count: 10, hours: 24 };   // 回数券：500円（税込550円）で10回分。1回分＝24時間使い放題
 var QUIZ_RESUME_HOURS = 24;                         // 途中でやめた模擬テストを、続きから受けられる時間
 
 // 模擬テストの種類。plan：[分野, 種類, 問題数, 1問の点数]（点数0＝点数なし）
@@ -54,7 +57,9 @@ var QUIZ_MOCKS = {
 };
 
 var QUIZ_CREDIT_SHEET = '模擬テスト回数';
-var QUIZ_CREDIT_HEADERS = ['LINE userId', 'LINE表示名', '残り回数', '付与回数合計', '最終利用', '初回アクセス', 'メモ'];
+var QUIZ_CREDIT_HEADERS = ['LINE userId', 'LINE表示名', '残り回数', '付与回数合計', '最終利用', '初回アクセス', 'メモ', '利用期限', 'お試し利用'];
+var QUIZ_USE_SHEET = '利用記録';
+var QUIZ_USE_HEADERS = ['日時', 'LINE userId', 'LINE表示名', '内容', '利用期限', '残り回数'];
 var QUIZ_ATTEMPT_SHEET = '模擬テスト受験';
 var QUIZ_ATTEMPT_HEADERS = ['開始日時', '受験ID', 'LINE userId', 'LINE表示名', '状態', '正解数', '問題数', '正答率', '分野別', '終了日時', '出題データ', '得点', '合否', '種類'];
 
@@ -79,10 +84,14 @@ function quizRoute_(b) {
 
   switch (b.api) {
     case 'me': return quizMe_(user);
+    case 'pass_start': return quizWithLock_(function () { return quizPassStart_(user); });
     case 'practice':
+      if (!quizPassActive_(user)) return quizNoPass_(user);
       var pq = quizPractice_(String(b.cat || 'all'), String(b.exam || 'skill'));
       return { ok: true, questions: pq, passages: quizPassagesFor_(pq) };
-    case 'mock_start': return quizWithLock_(function () { return quizMockStart_(user, String(b.mock || 'skill')); });
+    case 'mock_start':
+      if (!quizPassActive_(user)) return quizNoPass_(user);
+      return quizWithLock_(function () { return quizMockStart_(user, String(b.mock || 'skill')); });
     case 'mock_resume': return quizMockResume_(user, String(b.attemptId || ''));
     case 'mock_submit': return quizWithLock_(function () { return quizMockSubmit_(user, String(b.attemptId || ''), b.answers); });
   }
@@ -130,7 +139,49 @@ function quizAuth_(token) {
 }
 
 // ============================================================
-// 練習（無料）
+// 24時間の利用（お試し・回数券）
+// ============================================================
+function quizPassUntil_(row) {
+  var v = row && row['利用期限'];
+  var t = v ? new Date(v).getTime() : 0;
+  return isNaN(t) ? 0 : t;
+}
+function quizTrialUsed_(row) { return !!(row && row['お試し利用']); }
+function quizPassActive_(user) {
+  var row = quizCreditRow_(user, false);
+  return quizPassUntil_(row) > Date.now();
+}
+function quizNoPass_(user) {
+  var row = quizCreditRow_(user, false);
+  return { ok: false, error: 'no_pass', credits: quizNum_(row && row['残り回数']), trial: !quizTrialUsed_(row), pack: QUIZ_PACK };
+}
+
+// 「始める」：お試しがまだならお試し、なければ回数券を1回分使って、今から24時間使えるようにする
+function quizPassStart_(user) {
+  var sh = quizCreditSheet_();
+  var row = quizCreditRow_(user, true);
+  var until = quizPassUntil_(row), left = quizNum_(row['残り回数']);
+  if (until > Date.now()) return { ok: true, passUntil: until, credits: left, trial: !quizTrialUsed_(row), already: true };
+  var now = new Date(), how;
+  if (!quizTrialUsed_(row)) {
+    how = 'お試し（無料）';
+    sh.getRange(row._row, quizCol_(sh, 'お試し利用')).setValue(now);
+  } else if (left > 0) {
+    how = '回数券';
+    left--;
+    sh.getRange(row._row, quizCol_(sh, '残り回数')).setValue(left);
+  } else {
+    return { ok: false, error: 'no_credits', credits: 0, trial: false, pack: QUIZ_PACK };
+  }
+  until = now.getTime() + QUIZ_PACK.hours * 3600 * 1000;
+  sh.getRange(row._row, quizCol_(sh, '利用期限')).setValue(new Date(until));
+  sh.getRange(row._row, quizCol_(sh, '最終利用')).setValue(now);
+  quizUseSheet_().appendRow([now, user.uid, safe_(user.name), how, new Date(until), left]);
+  return { ok: true, passUntil: until, credits: left, trial: false, started: how };
+}
+
+// ============================================================
+// 練習
 // ============================================================
 function quizMe_(user) {
   var row = quizWithLock_(function () { return quizCreditRow_(user, true); });
@@ -149,6 +200,7 @@ function quizMe_(user) {
   var s = mocks.skill;
   return {
     ok: true, name: user.name, credits: quizNum_(row['残り回数']), pack: QUIZ_PACK,
+    passUntil: quizPassUntil_(row), trial: !quizTrialUsed_(row), now: Date.now(),
     counts: counts, total: skillTotal, n3: n3, mocks: mocks,
     // 前の版のページ用
     mockSize: s.size, mockMinutes: s.minutes, maxPoints: s.maxPoints, passPoints: s.passPoints,
@@ -210,7 +262,7 @@ function quizPassagesFor_(qs) {
 }
 
 // ============================================================
-// 模擬テスト（有料・回数券）
+// 模擬テスト（24時間の利用中は何回でも）
 // ============================================================
 function quizMockSize_(id) { return QUIZ_MOCKS[id].plan.reduce(function (a, p) { return a + p[2]; }, 0); }
 function quizMaxPoints_(id) { return QUIZ_MOCKS[id].plan.reduce(function (a, p) { return a + p[2] * p[3]; }, 0); }
@@ -248,8 +300,6 @@ function quizMockStart_(user, mockId) {
   if (!M) return { ok: false, error: 'unknown' };
   var sh = quizCreditSheet_();
   var row = quizCreditRow_(user, true);
-  var left = quizNum_(row['残り回数']);
-  if (left <= 0) return { ok: false, error: 'no_credits', credits: 0, pack: QUIZ_PACK };
 
   // 前に受けた模擬テストで出た問題は、あとに回す
   var seen = {};
@@ -271,7 +321,6 @@ function quizMockStart_(user, mockId) {
   var items = list.map(function (q) { return [q.id, quizOrder_(q).join('')]; });
 
   var id = 'M' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyMMddHHmmss') + Math.floor(Math.random() * 9000 + 1000);
-  sh.getRange(row._row, quizCol_(sh, '残り回数')).setValue(left - 1);
   sh.getRange(row._row, quizCol_(sh, '最終利用')).setValue(new Date());
   var ash = quizAttemptSheet_();
   var head = ash.getRange(1, 1, 1, ash.getLastColumn()).getValues()[0];
@@ -279,7 +328,7 @@ function quizMockStart_(user, mockId) {
   ash.appendRow(head.map(function (h) { return vals[h] == null ? '' : vals[h]; }));
 
   var mq = quizMockQuestions_(items);
-  return { ok: true, attemptId: id, mock: mockId, credits: left - 1, started: +vals['開始日時'], minutes: M.minutes, questions: mq, passages: quizPassagesFor_(mq) };
+  return { ok: true, attemptId: id, mock: mockId, credits: quizNum_(row['残り回数']), started: +vals['開始日時'], minutes: M.minutes, questions: mq, passages: quizPassagesFor_(mq) };
 }
 
 function quizMockResume_(user, attemptId) {
@@ -373,7 +422,7 @@ function menuGiveMockCredits() {
   var uid = sh.getRange(r, quizCol_(sh, 'LINE userId')).getValue();
   var name = sh.getRange(r, quizCol_(sh, 'LINE表示名')).getValue();
   if (!uid) { ui.alert('この行には LINE userId がありません。'); return; }
-  var ans = ui.alert('模擬テストの回数を付与しますか？', name + ' さんに ' + QUIZ_PACK.count + '回分（' + QUIZ_PACK.price + '円分）を付与します。', ui.ButtonSet.YES_NO);
+  var ans = ui.alert('回数券を付与しますか？', name + ' さんに ' + QUIZ_PACK.count + '回分（' + QUIZ_PACK.priceTax + '円分。1回分＝' + QUIZ_PACK.hours + '時間）を付与します。', ui.ButtonSet.YES_NO);
   if (ans !== ui.Button.YES) return;
   var memo = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M/d') + ' +' + QUIZ_PACK.count + '回';
   var left = addMockCredits_(uid, QUIZ_PACK.count, memo);
@@ -385,6 +434,7 @@ function menuGiveMockCredits() {
 // ============================================================
 function quizCreditSheet_() { return sheetWithHeaders_(QUIZ_CREDIT_SHEET, QUIZ_CREDIT_HEADERS); }
 function quizAttemptSheet_() { return sheetWithHeaders_(QUIZ_ATTEMPT_SHEET, QUIZ_ATTEMPT_HEADERS); }
+function quizUseSheet_() { return sheetWithHeaders_(QUIZ_USE_SHEET, QUIZ_USE_HEADERS); }
 function quizCol_(sh, name) { return colIndex_(sh, name); }
 function quizNum_(v) { var n = parseInt(v, 10); return isNaN(n) ? 0 : n; }
 
@@ -435,6 +485,7 @@ function quizShuffle_(a) {
 function setupQuiz() {
   quizCreditSheet_();
   quizAttemptSheet_();
+  quizUseSheet_();
   var ch = PropertiesService.getScriptProperties().getProperty('LIFF_CHANNEL_ID');
   var n3 = QUIZ_BANK.filter(function (q) { return q.x === 'n3'; }).length;
   console.log('問題数: 技能 ' + (QUIZ_BANK.length - n3) + '問・N3 ' + n3 + '問');
@@ -443,5 +494,5 @@ function setupQuiz() {
     console.log('模擬テスト「' + m.name + '」: ' + quizMockSize_(id) + '問・' + m.minutes + '分' + (quizMaxPoints_(id) ? '・' + quizMaxPoints_(id) + '点満点' : ''));
   });
   console.log('LIFF_CHANNEL_ID: ' + (ch ? '設定済み（' + ch + '）' : '未設定 → スクリプトプロパティに追加してください'));
-  console.log('シート「' + QUIZ_CREDIT_SHEET + '」「' + QUIZ_ATTEMPT_SHEET + '」を用意しました: ' + ss_().getUrl());
+  console.log('シート「' + QUIZ_CREDIT_SHEET + '」「' + QUIZ_ATTEMPT_SHEET + '」「' + QUIZ_USE_SHEET + '」を用意しました: ' + ss_().getUrl());
 }

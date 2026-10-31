@@ -92,6 +92,21 @@ assert.strictEqual(r.mockMinutes, 70); assert.strictEqual(r.maxPoints, 250); ass
 assert.strictEqual(JSON.stringify(r.counts), JSON.stringify({ handan: 36, keikaku: 36, jirei: 12, eisei: 39, chori: 26, sekkyaku: 38, unei: 37 }));
 const before = fetchCount; call({ api: 'me', token: 'good' }); assert.strictEqual(fetchCount, before, 'friend auth cached');
 
+// --- 24時間の利用：はじめはお試し（無料）---
+r = call({ api: 'practice', token: 'good', cat: 'chori' });
+assert.deepStrictEqual([r.ok, r.error, r.trial, r.credits], [false, 'no_pass', true, 0], 'practice needs a pass');
+assert.strictEqual(call({ api: 'mock_start', token: 'good' }).error, 'no_pass');
+r = call({ api: 'me', token: 'good' });
+assert.deepStrictEqual([r.trial, r.passUntil, r.pack.priceTax, r.pack.hours], [true, 0, 550, 24]);
+r = call({ api: 'pass_start', token: 'good' });
+assert.deepStrictEqual([r.ok, r.started, r.credits], [true, 'お試し（無料）', 0]);
+assert.ok(Math.abs(r.passUntil - (Date.now() + 24 * 3600e3)) < 5000);
+assert.strictEqual(call({ api: 'pass_start', token: 'good' }).already, true, 'no double use while active');
+r = call({ api: 'me', token: 'good' });
+assert.strictEqual(r.trial, false); assert.ok(r.passUntil > Date.now());
+const passCol = () => ss.sheets['模擬テスト回数'].data[0].indexOf('利用期限');
+const expire = () => { const d = ss.sheets['模擬テスト回数'].data; d.forEach((row, i) => { if (i && row[0] === 'Uaaa') row[passCol()] = new Date(Date.now() - 1000); }); };
+
 // --- practice ---
 r = call({ api: 'practice', token: 'good', cat: 'chori' });
 assert.strictEqual(r.questions.length, 26);
@@ -110,13 +125,20 @@ const pos = [0, 0, 0]; all.forEach(q => pos[q.a]++); console.log('practice answe
 const o1 = all.map(q => q.id).join(), o2 = call({ api: 'practice', token: 'good', cat: 'all' }).questions.map(q => q.id).join();
 assert.notStrictEqual(o1, o2, 'order shuffles');
 
-// --- mock without credits ---
+// --- お試しが終わり、回数券もない ---
+expire();
+assert.strictEqual(call({ api: 'practice', token: 'good', cat: 'chori' }).error, 'no_pass');
 r = call({ api: 'mock_start', token: 'good' });
-assert.deepStrictEqual([r.ok, r.error, r.pack.price, r.pack.count], [false, 'no_credits', 500, 10]);
+assert.deepStrictEqual([r.ok, r.error, r.trial], [false, 'no_pass', false]);
+r = call({ api: 'pass_start', token: 'good' });
+assert.deepStrictEqual([r.ok, r.error, r.pack.priceTax, r.pack.count], [false, 'no_credits', 550, 10]);
 
 // --- give credits (manual / future payment) ---
 assert.strictEqual(ctx.addMockCredits_('Uaaa', 10, 'test'), 10);
 assert.strictEqual(call({ api: 'me', token: 'good' }).credits, 10);
+r = call({ api: 'pass_start', token: 'good' });
+assert.deepStrictEqual([r.ok, r.started, r.credits], [true, '回数券', 9]);
+assert.strictEqual(ss.sheets['利用記録'].data.length, 3, 'use log: header + trial + ticket');
 
 // --- mock start ---
 r = call({ api: 'mock_start', token: 'good' });
@@ -165,7 +187,7 @@ const m2 = call({ api: 'mock_start', token: 'good' });
 const overlap = m2.questions.filter(q => seen.has(q.id)).length;
 console.log('2nd mock overlap with 1st:', overlap);
 assert.strictEqual(overlap, 0);
-assert.strictEqual(m2.credits, 8);
+assert.strictEqual(m2.credits, 9, 'mocks are unlimited during the pass');
 
 // --- N3 ---
 r = call({ api: 'me', token: 'good' });
@@ -201,7 +223,7 @@ kum.forEach(b => assert.ok(b.q.includes('★') && b.e.includes('★'), b.id));
 const credBefore = call({ api: 'me', token: 'good' }).credits;
 const n3m = call({ api: 'mock_start', token: 'good', mock: 'n3moji' });
 assert.strictEqual(n3m.ok, true); assert.strictEqual(n3m.mock, 'n3moji'); assert.strictEqual(n3m.minutes, 30);
-assert.strictEqual(n3m.credits, credBefore - 1, 'shared credits');
+assert.strictEqual(n3m.credits, credBefore, 'no ticket used per mock');
 assert.strictEqual(n3m.questions.length, 35);
 const kseq = n3m.questions.map(q => q.k);
 assert.deepStrictEqual([...new Set(kseq)], ['yomi', 'hyoki', 'bunmyaku', 'iikae', 'yoho'], 'ordered by type');
@@ -249,6 +271,13 @@ const rb2 = call({ api: 'mock_start', token: 'good', mock: 'n3bunpo' });
 const p1 = new Set(pids), p2 = rb2.questions.filter(q => q.p).map(q => q.p);
 console.log('N3 reading 2nd mock passage overlap:', p2.filter(x => p1.has(x)).length);
 assert.strictEqual(p2.filter(x => p1.has(x)).length, 0);
+
+// 利用時間が終わっても、始めていた模擬テストは提出できる
+const late = call({ api: 'mock_start', token: 'good', mock: 'n3moji' });
+expire();
+assert.strictEqual(call({ api: 'mock_start', token: 'good', mock: 'n3moji' }).error, 'no_pass');
+assert.strictEqual(call({ api: 'mock_resume', token: 'good', attemptId: late.attemptId }).ok, true);
+assert.strictEqual(call({ api: 'mock_submit', token: 'good', attemptId: late.attemptId, answers: [] }).ok, true);
 
 // webhook path still works (no events)
 assert.deepStrictEqual(JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify({ destination: 'x', events: [] }) } }).s), { ok: true });

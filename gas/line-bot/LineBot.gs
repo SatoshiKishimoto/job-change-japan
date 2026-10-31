@@ -55,7 +55,7 @@ var T = {
     fallback: 'メッセージありがとうございます。担当者が確認してご返信します。',
     handoff: '\n\n（担当者にも伝えました。このLINEでご連絡します）',
     aiNote: '※AIによる自動回答です',
-    quizInfo: '【特定技能2号 外食業 練習問題】\n公式LINEの友だちは、技能測定試験の練習問題を無料で使えます（ふりがな付き）。\n・学科と実技（判断・計画立案）の練習：無料\n・本番と同じ55問・70分の模擬テスト：500円で10回\n・日本語能力試験N3（文字・語彙・文法・読解・聴解）の練習：無料\n\n下のリンクか、メニューの「練習問題」から開いてください。\n{url}'
+    quizInfo: '【特定技能2号 外食業 練習問題】\n公式LINEの友だちが使える、技能測定試験の練習問題です（ふりがな付き）。\n・学科と実技（判断・計画立案・事例）の練習\n・本番と同じ55問・70分の模擬テスト\n・日本語能力試験N3（文字・語彙・文法・読解・聴解）の練習と模擬テスト\n\n料金：回数券10回分で550円（税込）。1回分で24時間、すべて使い放題です。\nはじめての方は、1回だけ無料で24時間お試しできます。\n\n下のリンクか、メニューの「練習問題」から開いてください。\n{url}'
   },
   en: {
     welcome: 'Thank you for adding us!\nThis is Job Change Japan (Fairly connecting Inc.).\n\nWe help foreign nationals find jobs in Japan — completely free.',
@@ -80,7 +80,7 @@ var T = {
     fallback: 'Thank you for your message. Our staff will check and reply.',
     handoff: '\n\n(We have also passed this to our staff. They will contact you on this LINE.)',
     aiNote: '* Automatic answer by AI',
-    quizInfo: '[Practice test: Specified Skilled Worker (ii), Food Service]\nFriends of our LINE account can use practice questions for the skills test for free (in Japanese with furigana).\n- Practice (written and practical): free\n- Mock exam in the same format as the real test (55 questions, 70 minutes): 500 yen for 10 tries\n- JLPT N3 practice (vocabulary, grammar, reading and listening): free\n\nOpen the link below, or tap "Practice test" in the menu.\n{url}'
+    quizInfo: '[Practice test: Specified Skilled Worker (ii), Food Service]\nPractice questions for the skills test, for friends of our LINE account (in Japanese with furigana).\n- Practice (written and practical)\n- Mock exam in the same format as the real test (55 questions, 70 minutes)\n- JLPT N3 practice and mock exams (vocabulary, grammar, reading and listening)\n\nPrice: 550 yen (tax incl.) for 10 tickets. 1 ticket = 24 hours of unlimited use.\nFirst-time users can try everything free for 24 hours, once.\n\nOpen the link below, or tap "Practice test" in the menu.\n{url}'
   },
   vi: {
     welcome: 'Cảm ơn bạn đã kết bạn!\nĐây là Job Change Japan (Công ty Fairly connecting).\n\nChúng tôi hỗ trợ người nước ngoài tìm việc tại Nhật Bản — hoàn toàn miễn phí.',
@@ -105,7 +105,7 @@ var T = {
     fallback: 'Cảm ơn tin nhắn của bạn. Nhân viên sẽ kiểm tra và trả lời.',
     handoff: '\n\n(Chúng tôi đã chuyển cho nhân viên. Nhân viên sẽ liên lạc qua LINE này.)',
     aiNote: '* Câu trả lời tự động bởi AI',
-    quizInfo: '[Đề luyện thi Kỹ năng đặc định số 2 – Ngành dịch vụ ăn uống]\nBạn bè của tài khoản LINE này có thể luyện đề thi kỹ năng miễn phí (tiếng Nhật có furigana).\n- Luyện tập (lý thuyết và thực hành): miễn phí\n- Thi thử giống đề thật (55 câu, 70 phút): 500 yên cho 10 lần\n- Luyện JLPT N3 (từ vựng, ngữ pháp, đọc hiểu, nghe hiểu): miễn phí\n\nMở đường link bên dưới, hoặc bấm "Practice test" ở menu.\n{url}'
+    quizInfo: '[Đề luyện thi Kỹ năng đặc định số 2 – Ngành dịch vụ ăn uống]\nĐề luyện thi kỹ năng dành cho bạn bè của tài khoản LINE này (tiếng Nhật có furigana).\n- Luyện tập (lý thuyết và thực hành)\n- Thi thử giống đề thật (55 câu, 70 phút)\n- Luyện tập và thi thử JLPT N3 (từ vựng, ngữ pháp, đọc hiểu, nghe hiểu)\n\nGiá: 550 yên (đã gồm thuế) cho 10 vé. 1 vé = dùng không giới hạn trong 24 giờ.\nLần đầu tiên được dùng thử miễn phí 24 giờ (1 lần).\n\nMở đường link bên dưới, hoặc bấm "Practice test" ở menu.\n{url}'
   },
   ne: {
     welcome: 'साथी थप्नुभएकोमा धन्यवाद!\nयो Job Change Japan (Fairly connecting Inc.) हो।\n\nहामी जापानमा काम खोज्ने विदेशीहरूलाई निःशुल्क सहयोग गर्छौं।',
@@ -130,7 +130,7 @@ var T = {
     fallback: 'सन्देशको लागि धन्यवाद। हाम्रो कर्मचारीले हेरेर जवाफ दिनेछ।',
     handoff: '\n\n(हामीले कर्मचारीलाई पनि जानकारी दियौं। उहाँले यही LINE मा सम्पर्क गर्नुहुनेछ।)',
     aiNote: '* AI द्वारा स्वचालित जवाफ',
-    quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूले सीप परीक्षाको अभ्यास प्रश्न निःशुल्क प्रयोग गर्न सक्नुहुन्छ (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक): निःशुल्क\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट): ५०० येनमा १० पटक\n- JLPT N3 अभ्यास (शब्द, व्याकरण, पढाइ र सुनाइ): निःशुल्क\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
+    quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूका लागि सीप परीक्षाको अभ्यास प्रश्न (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक)\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट)\n- JLPT N3 अभ्यास र मोक टेस्ट (शब्द, व्याकरण, पढाइ र सुनाइ)\n\nशुल्क: १० टिकट ५५० येन (कर सहित)। १ टिकट = २४ घण्टा असीमित प्रयोग।\nपहिलो पटक प्रयोग गर्नेले एक पटक २४ घण्टा निःशुल्क प्रयोग गर्न सक्नुहुन्छ।\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
   }
 };
 
@@ -149,10 +149,10 @@ var STEPS = {
     ne: '[काम बदल्दा ध्यान दिनुपर्ने कुरा]\n\n- कम्पनी बदल्दा भिसा (在留資格) सम्बन्धी प्रक्रिया आवश्यक पर्न सक्छ (विशिष्ट सीप (Tokutei Ginou) भएकाले नयाँ कम्पनीमा काम सुरु गर्नु अघि "स्थिति परिवर्तन अनुमति" लिनुपर्छ)।\n- अनुमति नपाई नयाँ कम्पनीमा काम गरे गैरकानुनी काम हुन सक्छ।\n- आफ्नो रेसिडेन्स कार्डको म्याद जाँच गर्नुहोस्।\n- धेरै शुल्क माग्ने एजेन्टहरूबाट सावधान रहनुहोस्।\n\nतपाईंको अवस्थामा के हुन्छ जान्न "Ask us" थिच्नुहोस्।'
   },
   5: {
-    ja: '【特定技能2号を目指す方へ】\n\n特定技能2号になると、在留期間の更新に上限がなくなり、条件を満たせば家族と一緒に暮らすこともできます。\n外食業で2号になるには、次の3つが必要です。\n・外食業特定技能2号技能測定試験の合格\n・日本語能力試験 N3以上の合格\n・アルバイトや後輩を指導しながら店舗管理を補助した経験（2年以上）\n\nJob Change Japan では、技能測定試験の練習問題を用意しました。友だちは無料で練習できます（ふりがな付き）。\n' + QUIZ_URL + '\n\nメニューの「練習問題」からも開けます。',
-    en: '[For those aiming for Specified Skilled Worker (ii)]\n\nWith SSW (ii), there is no limit on renewing your period of stay, and if you meet the conditions you can live in Japan with your family.\nTo get SSW (ii) in the food service field, you need all three:\n- Pass the Food Service SSW (ii) skills test\n- Pass JLPT N3 or higher\n- 2+ years of experience supervising staff and assisting with store management\n\nJob Change Japan has prepared practice questions for the skills test. Free for friends (Japanese with furigana).\n' + QUIZ_URL + '\n\nYou can also open it from "Practice test" in the menu.',
-    vi: '[Dành cho bạn muốn lên Kỹ năng đặc định số 2]\n\nVới Kỹ năng đặc định số 2, bạn có thể gia hạn thời gian lưu trú không giới hạn, và nếu đủ điều kiện có thể sống cùng gia đình tại Nhật.\nĐể lên số 2 ngành dịch vụ ăn uống, cần đủ 3 điều kiện:\n- Đỗ kỳ thi kỹ năng số 2 ngành ăn uống\n- Đỗ JLPT N3 trở lên\n- Có từ 2 năm kinh nghiệm hướng dẫn nhân viên và hỗ trợ quản lý cửa hàng\n\nJob Change Japan đã chuẩn bị đề luyện thi kỹ năng. Bạn bè được luyện miễn phí (tiếng Nhật có furigana).\n' + QUIZ_URL + '\n\nCũng có thể mở từ "Practice test" ở menu.',
-    ne: '[विशिष्ट सीप २ (Tokutei Ginou 2) लक्ष्य राख्नेहरूका लागि]\n\nविशिष्ट सीप २ भएपछि बसाइ अवधि नवीकरणको सीमा हुँदैन, र सर्त पूरा गरे परिवारसँग जापानमा बस्न सकिन्छ।\nखाद्य सेवा (外食業) मा २ नम्बर पाउन यी ३ कुरा चाहिन्छ:\n- खाद्य सेवा विशिष्ट सीप २ को सीप परीक्षा पास\n- JLPT N3 वा माथि पास\n- कर्मचारीलाई सिकाउँदै पसल व्यवस्थापनमा सहयोग गरेको २ वर्षभन्दा बढी अनुभव\n\nJob Change Japan ले सीप परीक्षाको अभ्यास प्रश्न तयार गरेको छ। साथीहरूका लागि निःशुल्क (फुरिगाना सहित जापानी भाषामा)।\n' + QUIZ_URL + '\n\nमेनुको "Practice test" बाट पनि खोल्न सकिन्छ।'
+    ja: '【特定技能2号を目指す方へ】\n\n特定技能2号になると、在留期間の更新に上限がなくなり、条件を満たせば家族と一緒に暮らすこともできます。\n外食業で2号になるには、次の3つが必要です。\n・外食業特定技能2号技能測定試験の合格\n・日本語能力試験 N3以上の合格\n・アルバイトや後輩を指導しながら店舗管理を補助した経験（2年以上）\n\nJob Change Japan では、技能測定試験の練習問題を用意しました（ふりがな付き）。はじめての方は、1回だけ無料で24時間お試しできます。\n' + QUIZ_URL + '\n\nメニューの「練習問題」からも開けます。',
+    en: '[For those aiming for Specified Skilled Worker (ii)]\n\nWith SSW (ii), there is no limit on renewing your period of stay, and if you meet the conditions you can live in Japan with your family.\nTo get SSW (ii) in the food service field, you need all three:\n- Pass the Food Service SSW (ii) skills test\n- Pass JLPT N3 or higher\n- 2+ years of experience supervising staff and assisting with store management\n\nJob Change Japan has prepared practice questions for the skills test (Japanese with furigana). First-time users can try them free for 24 hours, once.\n' + QUIZ_URL + '\n\nYou can also open it from "Practice test" in the menu.',
+    vi: '[Dành cho bạn muốn lên Kỹ năng đặc định số 2]\n\nVới Kỹ năng đặc định số 2, bạn có thể gia hạn thời gian lưu trú không giới hạn, và nếu đủ điều kiện có thể sống cùng gia đình tại Nhật.\nĐể lên số 2 ngành dịch vụ ăn uống, cần đủ 3 điều kiện:\n- Đỗ kỳ thi kỹ năng số 2 ngành ăn uống\n- Đỗ JLPT N3 trở lên\n- Có từ 2 năm kinh nghiệm hướng dẫn nhân viên và hỗ trợ quản lý cửa hàng\n\nJob Change Japan đã chuẩn bị đề luyện thi kỹ năng. Lần đầu tiên được dùng thử miễn phí 24 giờ (tiếng Nhật có furigana).\n' + QUIZ_URL + '\n\nCũng có thể mở từ "Practice test" ở menu.',
+    ne: '[विशिष्ट सीप २ (Tokutei Ginou 2) लक्ष्य राख्नेहरूका लागि]\n\nविशिष्ट सीप २ भएपछि बसाइ अवधि नवीकरणको सीमा हुँदैन, र सर्त पूरा गरे परिवारसँग जापानमा बस्न सकिन्छ।\nखाद्य सेवा (外食業) मा २ नम्बर पाउन यी ३ कुरा चाहिन्छ:\n- खाद्य सेवा विशिष्ट सीप २ को सीप परीक्षा पास\n- JLPT N3 वा माथि पास\n- कर्मचारीलाई सिकाउँदै पसल व्यवस्थापनमा सहयोग गरेको २ वर्षभन्दा बढी अनुभव\n\nJob Change Japan ले सीप परीक्षाको अभ्यास प्रश्न तयार गरेको छ। पहिलो पटक एक पटक २४ घण्टा निःशुल्क प्रयोग गर्न सकिन्छ (फुरिगाना सहित जापानी भाषामा)।\n' + QUIZ_URL + '\n\nमेनुको "Practice test" बाट पनि खोल्न सकिन्छ।'
   },
   7: {
     ja: '【いつでも相談できます】\n\n・希望の仕事や勤務地が変わったら、メニューの「登録」からいつでも更新できます。\n・わからないことは、このトークに送ってください。AIがすぐ答え、必要なときは担当者からご連絡します。\n・日本で仕事を探している友だちがいたら、このLINEを教えてあげてください。\n\nあなたの「次の仕事」を、一緒に見つけましょう。',
@@ -560,7 +560,7 @@ var AI_SYSTEM = [
   '- 風俗営業に関係する仕事はできない。許可が出る前に働くことはできない。個別の判断は担当者が確認すると伝える。',
   '',
   '# 特定技能2号 外食業の練習問題（当社が提供）',
-  '- 公式LINEの友だちは、外食業特定技能2号技能測定試験の練習問題を無料で使える（学科・実技、ふりがな付き）。模擬テスト（本番と同じ55問・70分）は500円で10回。日本語能力試験N3（文字・語彙・文法・読解・聴解）の練習問題もある（N3の模擬テストは「文字・語彙」35問・30分、「文法・読解」39問・70分、「聴解」28問・40分。回数券は共通。聴解の音声は合成音声）。',
+  '- 公式LINEの友だちは、外食業特定技能2号技能測定試験の練習問題を使える（学科・実技、ふりがな付き）。料金は回数券10回分で550円（税込）、1回分で24時間、練習も模擬テスト（本番と同じ55問・70分）もすべて使い放題。はじめての人は1回だけ無料で24時間お試しできる。日本語能力試験N3（文字・語彙・文法・読解・聴解）の練習問題もある（N3の模擬テストは「文字・語彙」35問・30分、「文法・読解」39問・70分、「聴解」28問・40分。回数券は共通。聴解の音声は合成音声）。練習問題の利用は職業紹介とは関係なく、買わなくても紹介で不利にならない。',
   '- 試験・2号・練習問題について聞かれたら、このリンクを案内する（メニューの「練習問題」からも開ける）: ' + QUIZ_URL,
   '- 外食業で2号になるには、技能測定試験の合格に加えて、日本語能力試験N3以上の合格と、2年以上の指導等の実務経験（店舗管理の補助）が必要。',
   '- 練習問題は当社のオリジナル問題で、実際の試験問題ではない。模擬テストの購入方法は準備中なので、聞かれたら担当者が案内すると伝える。'

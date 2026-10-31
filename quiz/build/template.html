@@ -55,6 +55,7 @@ header{display:flex;flex-direction:column;gap:6px}
 .credits b{font-family:var(--f-display);font-size:1.6rem;color:var(--ai)}
 .price{background:var(--ai-soft);border-radius:8px;padding:10px 14px}
 .price b{color:var(--ai)}
+.needpass{color:var(--ng);font-weight:700;margin:0}
 .ticket{background:var(--surface);border:1px solid var(--line);border-radius:4px 4px 10px 10px;position:relative;padding:22px 18px 18px}
 .ticket::before{content:"";position:absolute;left:12px;right:12px;top:8px;border-top:2px dashed var(--line)}
 .qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.85rem;color:var(--muted);margin-bottom:8px}
@@ -281,7 +282,7 @@ function loginGate(){
   app.innerHTML = `
   <section class="panel">
     <h2>${L.gateHead}</h2>
-    <p>${L.gateBody}<span class="en">Free for friends of the Job Change Japan LINE account. Please log in with LINE.</span></p>
+    <p>${L.gateBody}<span class="en">For friends of the Job Change Japan LINE account. First-time users can try everything free for 24 hours (once). Please log in with LINE.</span></p>
     <button class="btn line wide stacked" id="login"><span>${L.loginBtn}</span><small>Log in with LINE</small></button>
     <p class="muted">${L.agree} <a href="terms.html">${L.terms}</a><span class="en">By using this service, you agree to the <a href="terms.html">Terms of Use</a>.</span></p>
   </section>`;
@@ -293,7 +294,7 @@ function friendGate(name){
   app.innerHTML = `
   <section class="panel">
     <h2>${fill(L.friendHead, { name: esc(name || '') })}</h2>
-    <p>${L.friendBody}<span class="en">These practice questions are free for friends of our official LINE account. Please add us as a friend, then tap "I added".</span></p>
+    <p>${L.friendBody}<span class="en">These practice questions are for friends of our official LINE account. Please add us as a friend, then tap "I added".</span></p>
     <a class="btn line wide stacked" href="${FRIEND_URL}" target="_blank" rel="noopener"><span>${L.friendBtn}</span><small>Add friend on LINE</small></a>
     <button class="btn ghost wide stacked" id="recheck"><span>${L.recheck}</span><small>I added — check again</small></button>
   </section>`;
@@ -318,11 +319,27 @@ function home(){
       <div class="mockrow">
         <p class="muted">${sub}</p>
         ${open && (open.mock || 'skill') === id ? `<button class="btn wide" data-resume="1">${L.resume}</button>` : ''}
-        ${credits > 0 ? `<button class="btn ${open && (open.mock || 'skill') === id ? 'ghost' : ''} wide" data-mock="${id}">${L.mockStart}</button><div class="mconfirm" data-for="${id}"></div>` : ''}
+        ${ME.pack ? `<button class="btn ${open && (open.mock || 'skill') === id ? 'ghost' : ''} wide" data-mock="${id}">${L.mockStart}</button><div class="mconfirm" data-for="${id}"></div>` : ''}
       </div>`;
-  const priceBox = (credits > 0 ? '' : `<div class="price">${fill(L.price, { yen: ME.pack.price, n: ME.pack.count })}<br><span class="muted">${L.soon}</span></div>`)
-    + `<p class="muted">${L.mockNote}${L.noRefund}<br>${L.noGuarantee}<br>${L.noPlacement} <a href="terms.html">${L.terms}</a></p>`;
-  const creditsHead = (title) => `<div class="row"><h2 id="mock-h">${title}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>`;
+  const H = ME.pack.hours || 24;
+  const active = passActive();
+  const z = n => String(n).padStart(2, '0');
+  const ud = new Date(ME.passUntil || 0);
+  const leftMs = (ME.passUntil || 0) - Date.now();
+  const leftTxt = `${Math.floor(leftMs / 3600000)}${L.hr}${z(Math.floor(leftMs / 60000) % 60)}${L.min}`;
+  const passPanel = `
+    <section class="panel mock" id="pass" aria-labelledby="pass-h">
+      <div class="row"><h2 id="pass-h">${L.passHead}</h2><span class="credits">${L.left} <b>${credits}</b> ${L.times}</span></div>
+      ${active ? `<p>${fill(L.passOn, { until: `<b>${ud.getMonth() + 1}/${ud.getDate()} ${z(ud.getHours())}:${z(ud.getMinutes())}</b>`, left: leftTxt })}</p>`
+      : `<p>${fill(L.passOff, { h: H })}</p>
+         ${ME.trial ? `<p>${fill(L.trialNote, { h: H })}</p><button class="btn wide" id="passgo">${fill(L.trialBtn, { h: H })}</button>`
+           : credits > 0 ? `<button class="btn wide" id="passgo">${L.useBtn}</button>` : ''}
+         <div id="passconfirm"></div>`}
+      ${!active && !ME.trial && credits <= 0 ? `<div class="price">${fill(L.price, { yen: ME.pack.priceTax || ME.pack.price, n: ME.pack.count, h: H })}<br><span class="muted">${L.soon}</span></div>` : ''}
+      <p class="muted">${fill(L.mockNote, { h: H })}${L.noRefund}<br>${L.noGuarantee}<br>${L.noPlacement} <a href="terms.html">${L.terms}</a></p>
+    </section>`;
+  const priceBox = '';
+  const creditsHead = (title) => `<div class="row"><h2 id="mock-h">${title}</h2></div>`;
 
   const skillHtml = `
     <p class="muted">${L.skillLead}</p>
@@ -368,6 +385,7 @@ function home(){
   app.innerHTML = `
   <div class="stack">
     <p>${fill(L.hello, { name: esc(ME.name) })}</p>
+    ${passPanel}
     ${n3c.all ? `<div class="tabs" role="tablist">
       <button role="tab" id="tab-skill" aria-selected="${TAB === 'skill'}">${L.tabSkill}</button>
       <button role="tab" id="tab-n3" aria-selected="${TAB === 'n3'}">${L.tabN3}</button>
@@ -377,15 +395,48 @@ function home(){
   const tabTo = t => { TAB = t; store.set('tab', t); home(); };
   const ts = document.getElementById('tab-skill'), tn = document.getElementById('tab-n3');
   if (ts) { ts.onclick = () => tabTo('skill'); tn.onclick = () => tabTo('n3'); }
-  app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => startPractice(b.dataset.c, b.dataset.x || 'skill'));
+  app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => active ? startPractice(b.dataset.c, b.dataset.x || 'skill') : needPass());
+  const pg = document.getElementById('passgo');
+  if (pg) pg.onclick = () => {
+    const box = document.getElementById('passconfirm');
+    box.innerHTML = `<div class="confirm"><p>${ME.trial ? fill(L.trialConfirm, { h: H }) : fill(L.useConfirm, { n: credits - 1, h: H })}</p>
+      <div class="actions"><button class="btn" data-go="1">${L.goBtn}</button><button class="btn ghost" data-cancel="1">${L.cancel}</button></div></div>`;
+    box.querySelector('[data-go]').onclick = startPass;
+    box.querySelector('[data-cancel]').onclick = () => { box.innerHTML = ''; };
+  };
   app.querySelectorAll('[data-mock]').forEach(b => b.onclick = () => {
+    if (!active) return needPass();
     const id = b.dataset.mock, box = app.querySelector(`.mconfirm[data-for="${id}"]`);
-    box.innerHTML = `<div class="confirm"><p>${fill(L.mockConfirm, { n: credits - 1, m: mocks[id].minutes })}</p>
+    box.innerHTML = `<div class="confirm"><p>${fill(L.mockConfirm, { m: mocks[id].minutes })}</p>
       <div class="actions"><button class="btn" data-go="1">${L.mockGo}</button><button class="btn ghost" data-cancel="1">${L.cancel}</button></div></div>`;
     box.querySelector('[data-go]').onclick = () => startMock(id);
     box.querySelector('[data-cancel]').onclick = () => { box.innerHTML = ''; };
   });
   app.querySelectorAll('[data-resume]').forEach(b => b.onclick = () => resumeMock(open.attemptId));
+}
+
+// ---------- 24時間の利用 ----------
+function passActive(){ return !!ME && (ME.passUntil || 0) > Date.now(); }
+function needPass(){
+  const p = document.getElementById('pass');
+  if (!p) return home();
+  let n = p.querySelector('.needpass');
+  if (!n) { n = document.createElement('p'); n.className = 'needpass verdict'; p.insertBefore(n, p.children[1]); }
+  n.innerHTML = L.needPass;
+  p.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+async function startPass(){
+  app.innerHTML = `<p class="center muted">${L.loading}</p>`;
+  try { await api({ api:'pass_start' }); } catch (e) { if (!(e && e.error === 'no_credits')) return showError(e, backHome); }
+  backHome();
+}
+// 練習の途中で利用時間が終わったら、最初の画面にもどす
+function passEndedCheck(){
+  if (passActive()) return false;
+  ME.passUntil = 0; home();
+  const p = document.getElementById('pass');
+  if (p) { const n = document.createElement('p'); n.className = 'needpass verdict'; n.innerHTML = fill(L.passEnded, { h: (ME.pack.hours || 24) }); p.insertBefore(n, p.children[1]); }
+  return true;
 }
 
 async function backHome(){
@@ -401,7 +452,7 @@ async function startPractice(cat, exam){
     takePassages(j);
     S = { mode:'practice', list:j.questions, i:0, ans:[] };
     practiceView();
-  } catch (e) { showError(e, () => startPractice(cat, exam)); }
+  } catch (e) { if (e && e.error === 'no_pass') return backHome(); showError(e, () => startPractice(cat, exam)); }
 }
 
 function practiceView(){
@@ -423,7 +474,7 @@ function practiceView(){
   </div>`;
   app.querySelectorAll('.choice').forEach(b => b.onclick = () => practiceAnswer(+b.dataset.k));
   CUR_AU = document.getElementById('au');
-  document.getElementById('next').onclick = () => { if (S.i+1<n) { S.i++; practiceView(); toTop(); } else practiceResult(); };
+  document.getElementById('next').onclick = () => { if (passEndedCheck()) return; if (S.i+1<n) { S.i++; practiceView(); toTop(); } else practiceResult(); };
   document.getElementById('quit').onclick = () => { S.ans.length ? practiceResult() : home(); };
   if (S.ans[S.i] !== undefined) practiceAnswer(S.ans[S.i], true);
 }
@@ -459,7 +510,7 @@ async function startMock(mockId){
     S = { mode:'mock', id:j.attemptId, list:j.questions, i:0, ans:new Array(j.questions.length).fill(null), end: j.started + j.minutes * 60000 };
     mockSave(); startClock(); mockView();
   } catch (e) {
-    if (e && e.error === 'no_credits') { ME.credits = 0; home(); return; }
+    if (e && (e.error === 'no_credits' || e.error === 'no_pass')) return backHome();
     showError(e, backHome);
   }
 }
