@@ -321,7 +321,8 @@ function home(){
         ${cats.map(c => modeBtn(c, CATS[c], L.sub[c], ME.counts[c])).join('')}</div>
       <div class="free-group"><h3>${L.jitsugiHead}</h3>
         ${modeBtn('handan', KINDS.handan, L.sub.handan, ME.counts.handan)}
-        ${modeBtn('keikaku', KINDS.keikaku, L.sub.keikaku, ME.counts.keikaku)}</div>
+        ${modeBtn('keikaku', KINDS.keikaku, L.sub.keikaku, ME.counts.keikaku)}
+        ${ME.counts.jirei ? modeBtn('jirei', KINDS.jirei, L.sub.jirei, ME.counts.jirei) : ''}</div>
       <div class="free-group"><h3>${L.allHead}</h3>
         ${modeBtn('all', L.all, L.allSub, ME.total)}</div>
     </section>`;

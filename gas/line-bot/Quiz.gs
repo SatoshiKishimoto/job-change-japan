@@ -134,7 +134,7 @@ function quizAuth_(token) {
 // ============================================================
 function quizMe_(user) {
   var row = quizWithLock_(function () { return quizCreditRow_(user, true); });
-  var counts = { handan: 0, keikaku: 0 }, n3 = { all: 0 }, skillTotal = 0;
+  var counts = { handan: 0, keikaku: 0, jirei: 0 }, n3 = { all: 0 }, skillTotal = 0;
   QUIZ_BANK.forEach(function (q) {
     if (q.x === 'n3') { n3[q.k] = (n3[q.k] || 0) + 1; n3[q.c] = (n3[q.c] || 0) + 1; n3.all++; return; }
     skillTotal++;
@@ -173,11 +173,11 @@ function quizPractice_(cat, exam) {
     // cat：問題の種類（yomi など）／科目（moji・bunpo）／all
     list = QUIZ_BANK.filter(function (q) { return q.x === 'n3' && (cat === 'all' || q.k === cat || q.c === cat); });
   } else {
-    // cat：分野名（その分野の学科）／handan・keikaku（実技の全分野）／all
+    // cat：分野名（その分野の学科）／handan・keikaku・jirei（実技の全分野）／all
     list = QUIZ_BANK.filter(function (q) {
       if (q.x) return false;
       if (cat === 'all') return true;
-      return (cat === 'handan' || cat === 'keikaku') ? q.k === cat : (q.k === 'gakka' && q.c === cat);
+      return (cat === 'handan' || cat === 'keikaku' || cat === 'jirei') ? q.k === cat : (q.k === 'gakka' && q.c === cat);
     });
   }
   return quizShuffleKeepSets_(list).map(function (q) {

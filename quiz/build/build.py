@@ -18,6 +18,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from questions import Q, CATS, KINDS  # noqa: E402
+from questions_skill_more import MORE, CASES as SKILL_CASES  # noqa: E402
+Q = Q + MORE   # 追加分は最後に足す（前からの問題IDは変わらない）
 from questions_n3 import N3, N3_KINDS, N3_SECTION, N3_SECTIONS  # noqa: E402
 from questions_n3_reading import P as N3_PASSAGES, N3_READING_KINDS, N3_READING_SECTION  # noqa: E402
 N3_KINDS = {**N3_KINDS, **N3_READING_KINDS}
@@ -46,6 +48,19 @@ for tag, q, ok, w1, w2, e in Q:
     seq[key] = seq.get(key, 0) + 1
     # ch[0] が正解。表示順はGASが毎回シャッフルする
     bank.append({"id": f"{key}{seq[key]:02d}", "c": c, "k": k, "q": F(q), "ch": [F(ok), F(w1), F(w2)], "e": F(e)})
+
+# ===== 技能：事例問題（1つの事例に3〜4問。文章は QUIZ_PASSAGES に入れる。ふりがな付き） =====
+PASSAGES = {}
+for row in SKILL_CASES:
+    c = row["c"]
+    key = "J" + LETTER[c]
+    seq[key] = seq.get(key, 0) + 1
+    pid = f"{key}{seq[key]:02d}"
+    PASSAGES[pid] = F(row["text"]).replace("\n", "<br>")
+    for i, (q, ok, w1, w2, e) in enumerate(row["qs"]):
+        assert len({ok, w1, w2}) == 3, q
+        bank.append({"id": f"{pid}-{i + 1}", "c": c, "k": "jirei", "p": pid, "pi": i,
+                     "q": F(q), "ch": [F(ok), F(w1), F(w2)], "e": F(e)})
 
 # ===== N3（問題文・選択肢はふりがななし。〔〕は下線。解説だけふりがな） =====
 def n3text(t):
@@ -79,7 +94,6 @@ for row in N3:
 def passage_html(t):
     return n3text(t).replace("\n", "<br>")
 
-PASSAGES = {}
 PP = {"bunsho": "RB", "tanbun": "RT", "chubun": "RC", "chobun": "RL", "joho": "RJ"}
 for row in N3_PASSAGES:
     k = row["k"]
@@ -221,6 +235,7 @@ L["sub"] = {k: F(v) for k, v in {
     "unei": "労働基準法・雇用管理・届出・在庫管理",
     "handan": "店の場面を読んで、正しい行動を選ぶ（4分野）",
     "keikaku": "計算して、作業の計画を立てる（4分野）",
+    "jirei": "一つの事例を読んで、いくつかの問題に答える",
 }.items()}
 
 html = open(os.path.join(HERE, "template.html")).read()

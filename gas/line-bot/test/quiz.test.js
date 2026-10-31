@@ -87,20 +87,25 @@ assert.strictEqual(call({ api: 'me', token: 'nofriend' }).ok, true);
 
 // --- me ---
 r = call({ api: 'me', token: 'good' });
-assert.strictEqual(r.ok, true); assert.strictEqual(r.credits, 0); assert.strictEqual(r.total, 175); assert.strictEqual(r.mockSize, 55);
+assert.strictEqual(r.ok, true); assert.strictEqual(r.credits, 0); assert.strictEqual(r.total, 224); assert.strictEqual(r.mockSize, 55);
 assert.strictEqual(r.mockMinutes, 70); assert.strictEqual(r.maxPoints, 250); assert.strictEqual(r.passPoints, 163);
-assert.deepStrictEqual(r.counts, { handan: 32, keikaku: 27, eisei: 32, chori: 21, sekkyaku: 31, unei: 32 });
+assert.strictEqual(JSON.stringify(r.counts), JSON.stringify({ handan: 36, keikaku: 36, jirei: 12, eisei: 39, chori: 26, sekkyaku: 38, unei: 37 }));
 const before = fetchCount; call({ api: 'me', token: 'good' }); assert.strictEqual(fetchCount, before, 'friend auth cached');
 
 // --- practice ---
 r = call({ api: 'practice', token: 'good', cat: 'chori' });
-assert.strictEqual(r.questions.length, 21);
+assert.strictEqual(r.questions.length, 26);
 r.questions.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(q.ch[q.a], src.ch[0]); assert.strictEqual(q.c, 'chori'); assert.strictEqual(q.k, 'gakka'); });
-assert.strictEqual(call({ api: 'practice', token: 'good', cat: 'handan' }).questions.length, 32);
+assert.strictEqual(call({ api: 'practice', token: 'good', cat: 'handan' }).questions.length, 36);
+// 事例問題：3題×4問、同じ事例は続けて順番どおり、事例の文章つき
+const jr = call({ api: 'practice', token: 'good', cat: 'jirei' });
+assert.strictEqual(jr.questions.length, 12); assert.strictEqual(Object.keys(jr.passages).length, 3);
+for (let i = 0; i < 12; i += 4) { const g = jr.questions.slice(i, i + 4); assert.ok(g.every(q => q.p === g[0].p && !q.x)); assert.deepStrictEqual(g.map(q => q.id.split('-')[1]), ['1', '2', '3', '4']); }
+assert.ok(/<rt>/.test(jr.passages[jr.questions[0].p]), 'case text has furigana');
 assert.ok(call({ api: 'practice', token: 'good', cat: 'keikaku' }).questions.every(q => q.k === 'keikaku'));
 const all = call({ api: 'practice', token: 'good', cat: 'all' }).questions;
-assert.strictEqual(all.length, 175);
-assert.strictEqual(new Set(all.map(q => q.id)).size, 175);
+assert.strictEqual(all.length, 224);
+assert.strictEqual(new Set(all.map(q => q.id)).size, 224);
 const pos = [0, 0, 0]; all.forEach(q => pos[q.a]++); console.log('practice answer positions', pos);
 const o1 = all.map(q => q.id).join(), o2 = call({ api: 'practice', token: 'good', cat: 'all' }).questions.map(q => q.id).join();
 assert.notStrictEqual(o1, o2, 'order shuffles');
@@ -117,6 +122,7 @@ assert.strictEqual(call({ api: 'me', token: 'good' }).credits, 10);
 r = call({ api: 'mock_start', token: 'good' });
 assert.strictEqual(r.ok, true); assert.strictEqual(r.credits, 9); assert.strictEqual(r.questions.length, 55); assert.strictEqual(r.minutes, 70); assert.ok(r.started > 0);
 assert.ok(r.questions.every(q => q.a === undefined && q.e === undefined), 'no answers leaked');
+assert.ok(r.questions.every(q => q.k !== 'jirei'), 'skill mock keeps the real format (no case sets)');
 const cnt = {}; r.questions.forEach(q => cnt[q.k + ':' + q.c] = (cnt[q.k + ':' + q.c] || 0) + 1);
 assert.deepStrictEqual(cnt, { 'gakka:eisei': 10, 'gakka:chori': 5, 'gakka:sekkyaku': 10, 'gakka:unei': 10,
   'handan:eisei': 3, 'handan:chori': 3, 'handan:sekkyaku': 3, 'handan:unei': 3, 'keikaku:eisei': 2, 'keikaku:chori': 2, 'keikaku:sekkyaku': 2, 'keikaku:unei': 2 }, JSON.stringify(cnt));
@@ -166,7 +172,7 @@ r = call({ api: 'me', token: 'good' });
 assert.strictEqual(r.n3.all, 205); assert.strictEqual(r.n3.chokai, 37); assert.strictEqual(r.n3.yomi, 20); assert.strictEqual(r.n3.moji, 84); assert.strictEqual(r.n3.bunpo, 52); assert.strictEqual(r.n3.dokkai, 32);
 assert.deepStrictEqual([r.mocks.n3bunpo.size, r.mocks.n3bunpo.minutes, r.mocks.n3bunpo.exam], [39, 70, 'n3']);
 assert.deepStrictEqual([r.mocks.n3moji.size, r.mocks.n3moji.minutes, r.mocks.n3moji.maxPoints], [35, 30, null]);
-assert.strictEqual(r.total, 175, 'skill total excludes N3');
+assert.strictEqual(r.total, 224, 'skill total excludes N3');
 const n3p = call({ api: 'practice', token: 'good', exam: 'n3', cat: 'keishiki' }).questions;
 assert.strictEqual(n3p.length, 30);
 n3p.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(q.ch.length, 4); assert.strictEqual(q.ch[q.a], src.ch[0]); assert.strictEqual(q.x, 'n3'); });

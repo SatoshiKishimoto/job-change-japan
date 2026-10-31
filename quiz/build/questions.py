@@ -914,4 +914,5 @@ KINDS = {
  "gakka": "学科",
  "handan": "実技・判断",
  "keikaku": "実技・計画立案",
+ "jirei": "実技・事例",
 }
