@@ -167,6 +167,7 @@ a{{color:var(--ai)}}
   <div class="box en"><h2>Summary in English</h2><ul>{summary_en}</ul></div>
   <div class="box">{arts}</div>
   {priv}
+  <p><a href="tokushoho.html">{F("特定商取引法に基づく表記")}</a></p>
   <p class="muted">{F("株式会社Fairly connecting（有料職業紹介事業 許可番号 27-ユ-304918）")}</p>
   <p><a href="./">{F("練習問題にもどる")}</a></p>
 </div>
