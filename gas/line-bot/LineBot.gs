@@ -29,7 +29,7 @@ var SITE_URL = 'https://satoshikishimoto.github.io/job-change-japan/';  // Job C
 // ============================================================
 // 言語・文言
 // ============================================================
-var LANGS = [['ja', '日本語'], ['en', 'English'], ['vi', 'Tiếng Việt'], ['ne', 'नेपाली']];
+var LANGS = [['ja', '日本語'], ['en', 'English'], ['vi', 'Tiếng Việt'], ['ne', 'नेपाली'], ['id', 'Bahasa Indonesia']];
 
 var T = {
   ja: {
@@ -131,6 +131,31 @@ var T = {
     handoff: '\n\n(हामीले कर्मचारीलाई पनि जानकारी दियौं। उहाँले यही LINE मा सम्पर्क गर्नुहुनेछ।)',
     aiNote: '* AI द्वारा स्वचालित जवाफ',
     quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूका लागि सीप परीक्षाको अभ्यास प्रश्न (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक)\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट)\n- JLPT N3 र N4 अभ्यास र मोक टेस्ट (शब्द, व्याकरण, पढाइ र सुनाइ)\n\nशुल्क (टिकट; १ टिकट = २४ घण्टा असीमित प्रयोग)\n- ९ टिकट: ५५० येन\n- ३० टिकट: १,७६० येन\n- ६० टिकट: ३,३०० येन\n(कर सहित)\nपहिलो पटक प्रयोग गर्नेले एक पटक २४ घण्टा निःशुल्क प्रयोग गर्न सक्नुहुन्छ।\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
+  },
+  id: {
+    welcome: 'Terima kasih sudah menambahkan kami sebagai teman!\nIni Job Change Japan (Fairly connecting Inc.).\n\nKami membantu warga asing mencari pekerjaan di Jepang — sepenuhnya gratis.',
+    chooseLang: '言語を選んでください。\nPlease choose your language.',
+    intro: 'Cukup jawab 6 pertanyaan, pendaftaran selesai dalam 30 detik.\nPendaftaran dan konsultasi gratis.',
+    startBtn: 'Mulai daftar',
+    q1: 'Pekerjaan apa yang Anda inginkan?', q2: 'Apa status visa Anda sekarang?', q3: 'Tingkat bahasa Jepang Anda?',
+    q4: 'Di mana Anda ingin bekerja?', q5: 'Kapan Anda bisa mulai bekerja?',
+    q6: 'Terakhir, kirimkan nama lengkap Anda dengan huruf Latin.\n(Contoh: SITI RAHAYU)',
+    done: 'Terima kasih, {name}! Pendaftaran berhasil.\nID pendaftaran: {id}\n\nStaf kami akan menghubungi Anda lewat LINE ini dalam 2 hari kerja.\nJika ada lowongan yang cocok, kami akan memberi tahu di sini.\n\nKetuk "Jobs" di menu bawah untuk melihat lowongan saat ini.',
+    updated: '{name}, data Anda sudah diperbarui.',
+    other: 'Lainnya', none: 'Tidak ada',
+    nameRetry: 'Silakan kirim nama Anda dengan huruf Latin.',
+    needRegister: 'Anda belum terdaftar. Ketuk tombol di bawah untuk mendaftar (30 detik).',
+    noJobs: 'Saat ini belum ada lowongan yang sesuai dengan keinginan Anda.\nJika ada lowongan baru, kami akan memberi tahu lewat LINE ini.',
+    jobsHead: 'Lowongan yang cocok untuk Anda ({n})',
+    newJob: '[Lowongan baru]',
+    jobFields: { role: 'Jenis pekerjaan', loc: 'Lokasi', pay: 'Gaji', type: 'Jenis kontrak' },
+    applyHint: 'Untuk melamar atau bertanya, kirim "apply {id}".',
+    applied: 'Lamaran Anda sudah kami terima (ID lowongan: {id}).\nStaf kami akan menghubungi Anda lewat LINE ini.',
+    askPrompt: 'Silakan kirim pertanyaan Anda di obrolan ini.\nAI akan langsung menjawab, dan staf kami akan menghubungi Anda jika perlu.',
+    fallback: 'Terima kasih atas pesan Anda. Staf kami akan memeriksa dan membalas.',
+    handoff: '\n\n(Kami sudah meneruskan ke staf. Staf akan menghubungi Anda lewat LINE ini.)',
+    aiNote: '* Jawaban otomatis oleh AI',
+    quizInfo: '[Latihan soal Tokutei Ginou 2 – Bidang jasa makanan (restoran)]\nLatihan soal ujian keterampilan untuk teman akun LINE kami (bahasa Jepang dengan furigana).\n- Latihan (teori dan praktik)\n- Ujian simulasi seperti ujian asli (55 soal, 70 menit)\n- Latihan dan ujian simulasi JLPT N3 dan N4 (kosakata, tata bahasa, membaca, mendengar)\n\nHarga (tiket; 1 tiket = bebas pakai selama 24 jam)\n- 9 tiket: 550 yen\n- 30 tiket: 1.760 yen\n- 60 tiket: 3.300 yen\n(sudah termasuk pajak)\nPengguna baru bisa mencoba gratis selama 24 jam (satu kali).\n\nBuka tautan di bawah, atau ketuk "Practice test" di menu.\n{url}'
   }
 };
 
@@ -140,25 +165,29 @@ var STEPS = {
     ja: '【Job Change Japan の使い方】\n\n① 担当者とLINEや電話で面談\n② あなたに合う求人をご紹介\n③ 面接の準備・日程調整もお手伝い\n④ 内定後の在留資格の手続きもサポート\n\n求職者の方から手数料をいただくことは一切ありません。\n「紹介料を払って」と言われることもありませんので、安心してご相談ください。\n\n下のメニューの「求人を見る」で、いまの求人をチェックできます。',
     en: '[How Job Change Japan works]\n\n1. Talk with our staff on LINE or by phone\n2. We introduce jobs that suit you\n3. We help you prepare for interviews\n4. We support your visa procedures after you get an offer\n\nWe never charge job seekers any fee.\nNo one from us will ever ask you to pay an introduction fee.\n\nTap "Jobs" in the menu below to see current openings.',
     vi: '[Cách sử dụng Job Change Japan]\n\n1. Trao đổi với nhân viên qua LINE hoặc điện thoại\n2. Chúng tôi giới thiệu việc làm phù hợp\n3. Hỗ trợ chuẩn bị phỏng vấn\n4. Hỗ trợ thủ tục tư cách lưu trú sau khi có kết quả\n\nChúng tôi tuyệt đối không thu phí của người tìm việc.\nSẽ không có ai yêu cầu bạn trả phí giới thiệu.\n\nBấm "Jobs" ở menu bên dưới để xem việc làm hiện có.',
-    ne: '[Job Change Japan कसरी प्रयोग गर्ने]\n\n१. LINE वा फोनमा हाम्रो कर्मचारीसँग कुरा गर्नुहोस्\n२. तपाईंलाई मिल्ने काम परिचय गराउँछौं\n३. अन्तर्वार्ताको तयारीमा सहयोग गर्छौं\n४. काम पक्का भएपछि भिसा प्रक्रियामा सहयोग गर्छौं\n\nहामी काम खोज्नेहरूबाट कुनै पनि शुल्क लिँदैनौं।\nपरिचय शुल्क तिर्न कसैले भन्ने छैन।\n\nतलको मेनुमा "Jobs" थिचेर अहिलेका कामहरू हेर्नुहोस्।'
+    ne: '[Job Change Japan कसरी प्रयोग गर्ने]\n\n१. LINE वा फोनमा हाम्रो कर्मचारीसँग कुरा गर्नुहोस्\n२. तपाईंलाई मिल्ने काम परिचय गराउँछौं\n३. अन्तर्वार्ताको तयारीमा सहयोग गर्छौं\n४. काम पक्का भएपछि भिसा प्रक्रियामा सहयोग गर्छौं\n\nहामी काम खोज्नेहरूबाट कुनै पनि शुल्क लिँदैनौं।\nपरिचय शुल्क तिर्न कसैले भन्ने छैन।\n\nतलको मेनुमा "Jobs" थिचेर अहिलेका कामहरू हेर्नुहोस्।',
+    id: '[Cara menggunakan Job Change Japan]\n\n1. Bicara dengan staf kami lewat LINE atau telepon\n2. Kami memperkenalkan pekerjaan yang cocok untuk Anda\n3. Kami membantu persiapan wawancara\n4. Kami membantu prosedur visa setelah Anda diterima\n\nKami tidak pernah memungut biaya apa pun dari pencari kerja.\nTidak ada staf kami yang akan meminta Anda membayar biaya perkenalan.\n\nKetuk "Jobs" di menu bawah untuk melihat lowongan saat ini.'
   },
   3: {
     ja: '【転職するときの大切な注意】\n\n・会社を変えるときは、在留資格の手続きが必要になることがあります（特定技能の方は、新しい会社で働く前に「在留資格変更許可申請」が必要です）。\n・許可が出る前に新しい会社で働くと、不法就労になるおそれがあります。\n・在留カードの期限も確認しておきましょう。\n・高い手数料を求める業者には注意してください。\n\nあなたの場合はどうなるか、気になることがあれば「相談する」からお気軽にどうぞ。',
     en: '[Important when changing jobs]\n\n- When you change companies, you may need visa procedures. (Specified Skilled Workers must apply for a change of status of residence BEFORE working at the new company.)\n- Working at a new company before permission is granted may be illegal work.\n- Check the expiry date of your residence card.\n- Be careful of agents who ask for high fees.\n\nIf you want to know what applies to you, tap "Ask us" anytime.',
     vi: '[Lưu ý quan trọng khi chuyển việc]\n\n- Khi đổi công ty, có thể cần làm thủ tục tư cách lưu trú (người Kỹ năng đặc định phải xin "thay đổi tư cách lưu trú" TRƯỚC khi làm ở công ty mới).\n- Làm việc ở công ty mới trước khi được cấp phép có thể bị coi là lao động bất hợp pháp.\n- Hãy kiểm tra thời hạn thẻ lưu trú.\n- Cẩn thận với các bên đòi phí cao.\n\nNếu muốn biết trường hợp của bạn, hãy bấm "Ask us" bất cứ lúc nào.',
-    ne: '[काम बदल्दा ध्यान दिनुपर्ने कुरा]\n\n- कम्पनी बदल्दा भिसा (在留資格) सम्बन्धी प्रक्रिया आवश्यक पर्न सक्छ (विशिष्ट सीप (Tokutei Ginou) भएकाले नयाँ कम्पनीमा काम सुरु गर्नु अघि "स्थिति परिवर्तन अनुमति" लिनुपर्छ)।\n- अनुमति नपाई नयाँ कम्पनीमा काम गरे गैरकानुनी काम हुन सक्छ।\n- आफ्नो रेसिडेन्स कार्डको म्याद जाँच गर्नुहोस्।\n- धेरै शुल्क माग्ने एजेन्टहरूबाट सावधान रहनुहोस्।\n\nतपाईंको अवस्थामा के हुन्छ जान्न "Ask us" थिच्नुहोस्।'
+    ne: '[काम बदल्दा ध्यान दिनुपर्ने कुरा]\n\n- कम्पनी बदल्दा भिसा (在留資格) सम्बन्धी प्रक्रिया आवश्यक पर्न सक्छ (विशिष्ट सीप (Tokutei Ginou) भएकाले नयाँ कम्पनीमा काम सुरु गर्नु अघि "स्थिति परिवर्तन अनुमति" लिनुपर्छ)।\n- अनुमति नपाई नयाँ कम्पनीमा काम गरे गैरकानुनी काम हुन सक्छ।\n- आफ्नो रेसिडेन्स कार्डको म्याद जाँच गर्नुहोस्।\n- धेरै शुल्क माग्ने एजेन्टहरूबाट सावधान रहनुहोस्।\n\nतपाईंको अवस्थामा के हुन्छ जान्न "Ask us" थिच्नुहोस्।',
+    id: '[Hal penting saat pindah kerja]\n\n- Saat pindah perusahaan, mungkin perlu prosedur status izin tinggal (pemegang Tokutei Ginou harus mengajukan "perubahan status izin tinggal" SEBELUM bekerja di perusahaan baru).\n- Bekerja di perusahaan baru sebelum izin keluar bisa dianggap kerja ilegal.\n- Periksa masa berlaku kartu izin tinggal (zairyu card) Anda.\n- Hati-hati dengan agen yang meminta biaya tinggi.\n\nJika ingin tahu bagaimana dengan kasus Anda, ketuk "Ask us" kapan saja.'
   },
   5: {
     ja: '【特定技能2号を目指す方へ】\n\n特定技能2号になると、在留期間の更新に上限がなくなり、条件を満たせば家族と一緒に暮らすこともできます。\n外食業で2号になるには、次の3つが必要です。\n・外食業特定技能2号技能測定試験の合格\n・日本語能力試験 N3以上の合格\n・アルバイトや後輩を指導しながら店舗管理を補助した経験（2年以上）\n\nJob Change Japan では、技能測定試験の練習問題を用意しました（ふりがな付き）。はじめての方は、1回だけ無料で24時間お試しできます。\n' + QUIZ_URL + '\n\nメニューの「練習問題」からも開けます。',
     en: '[For those aiming for Specified Skilled Worker (ii)]\n\nWith SSW (ii), there is no limit on renewing your period of stay, and if you meet the conditions you can live in Japan with your family.\nTo get SSW (ii) in the food service field, you need all three:\n- Pass the Food Service SSW (ii) skills test\n- Pass JLPT N3 or higher\n- 2+ years of experience supervising staff and assisting with store management\n\nJob Change Japan has prepared practice questions for the skills test (Japanese with furigana). First-time users can try them free for 24 hours, once.\n' + QUIZ_URL + '\n\nYou can also open it from "Practice test" in the menu.',
     vi: '[Dành cho bạn muốn lên Kỹ năng đặc định số 2]\n\nVới Kỹ năng đặc định số 2, bạn có thể gia hạn thời gian lưu trú không giới hạn, và nếu đủ điều kiện có thể sống cùng gia đình tại Nhật.\nĐể lên số 2 ngành dịch vụ ăn uống, cần đủ 3 điều kiện:\n- Đỗ kỳ thi kỹ năng số 2 ngành ăn uống\n- Đỗ JLPT N3 trở lên\n- Có từ 2 năm kinh nghiệm hướng dẫn nhân viên và hỗ trợ quản lý cửa hàng\n\nJob Change Japan đã chuẩn bị đề luyện thi kỹ năng. Lần đầu tiên được dùng thử miễn phí 24 giờ (tiếng Nhật có furigana).\n' + QUIZ_URL + '\n\nCũng có thể mở từ "Practice test" ở menu.',
-    ne: '[विशिष्ट सीप २ (Tokutei Ginou 2) लक्ष्य राख्नेहरूका लागि]\n\nविशिष्ट सीप २ भएपछि बसाइ अवधि नवीकरणको सीमा हुँदैन, र सर्त पूरा गरे परिवारसँग जापानमा बस्न सकिन्छ।\nखाद्य सेवा (外食業) मा २ नम्बर पाउन यी ३ कुरा चाहिन्छ:\n- खाद्य सेवा विशिष्ट सीप २ को सीप परीक्षा पास\n- JLPT N3 वा माथि पास\n- कर्मचारीलाई सिकाउँदै पसल व्यवस्थापनमा सहयोग गरेको २ वर्षभन्दा बढी अनुभव\n\nJob Change Japan ले सीप परीक्षाको अभ्यास प्रश्न तयार गरेको छ। पहिलो पटक एक पटक २४ घण्टा निःशुल्क प्रयोग गर्न सकिन्छ (फुरिगाना सहित जापानी भाषामा)।\n' + QUIZ_URL + '\n\nमेनुको "Practice test" बाट पनि खोल्न सकिन्छ।'
+    ne: '[विशिष्ट सीप २ (Tokutei Ginou 2) लक्ष्य राख्नेहरूका लागि]\n\nविशिष्ट सीप २ भएपछि बसाइ अवधि नवीकरणको सीमा हुँदैन, र सर्त पूरा गरे परिवारसँग जापानमा बस्न सकिन्छ।\nखाद्य सेवा (外食業) मा २ नम्बर पाउन यी ३ कुरा चाहिन्छ:\n- खाद्य सेवा विशिष्ट सीप २ को सीप परीक्षा पास\n- JLPT N3 वा माथि पास\n- कर्मचारीलाई सिकाउँदै पसल व्यवस्थापनमा सहयोग गरेको २ वर्षभन्दा बढी अनुभव\n\nJob Change Japan ले सीप परीक्षाको अभ्यास प्रश्न तयार गरेको छ। पहिलो पटक एक पटक २४ घण्टा निःशुल्क प्रयोग गर्न सकिन्छ (फुरिगाना सहित जापानी भाषामा)।\n' + QUIZ_URL + '\n\nमेनुको "Practice test" बाट पनि खोल्न सकिन्छ।',
+    id: '[Untuk Anda yang ingin menjadi Tokutei Ginou 2]\n\nDengan Tokutei Ginou 2, perpanjangan masa tinggal tidak dibatasi, dan jika memenuhi syarat Anda bisa tinggal di Jepang bersama keluarga.\nUntuk menjadi Tokutei Ginou 2 di bidang jasa makanan, Anda perlu ketiga hal ini:\n- Lulus ujian keterampilan Tokutei Ginou 2 bidang jasa makanan\n- Lulus JLPT N3 atau lebih tinggi\n- Pengalaman 2 tahun atau lebih membimbing staf dan membantu manajemen toko\n\nJob Change Japan sudah menyiapkan latihan soal ujian keterampilan (bahasa Jepang dengan furigana). Pengguna baru bisa mencoba gratis selama 24 jam (satu kali).\n' + QUIZ_URL + '\n\nBisa juga dibuka dari "Practice test" di menu.'
   },
   7: {
     ja: '【いつでも相談できます】\n\n・希望の仕事や勤務地が変わったら、メニューの「登録」からいつでも更新できます。\n・わからないことは、このトークに送ってください。AIがすぐ答え、必要なときは担当者からご連絡します。\n・日本で仕事を探している友だちがいたら、このLINEを教えてあげてください。\n\nあなたの「次の仕事」を、一緒に見つけましょう。',
     en: '[You can ask us anytime]\n\n- If your preferred job or location changes, tap "Register" in the menu to update.\n- Send any question in this chat. Our AI answers right away, and our staff will follow up if needed.\n- If you have friends looking for work in Japan, please share this LINE with them.\n\nLet\'s find your next job together.',
     vi: '[Bạn có thể hỏi bất cứ lúc nào]\n\n- Nếu thay đổi mong muốn về công việc hoặc nơi làm, hãy bấm "Register" ở menu để cập nhật.\n- Gửi câu hỏi vào cuộc trò chuyện này. AI sẽ trả lời ngay, nhân viên sẽ liên lạc nếu cần.\n- Nếu có bạn bè đang tìm việc ở Nhật, hãy giới thiệu LINE này nhé.\n\nCùng nhau tìm công việc tiếp theo của bạn!',
-    ne: '[जुनसुकै बेला सोध्न सक्नुहुन्छ]\n\n- चाहेको काम वा स्थान बदलियो भने मेनुको "Register" बाट अपडेट गर्नुहोस्।\n- कुनै प्रश्न भए यही च्याटमा पठाउनुहोस्। AI ले तुरुन्तै जवाफ दिन्छ, आवश्यक परे कर्मचारीले सम्पर्क गर्नेछ।\n- जापानमा काम खोजिरहेका साथीहरू भए यो LINE बताइदिनुहोस्।\n\nसँगै तपाईंको अर्को काम खोजौं।'
+    ne: '[जुनसुकै बेला सोध्न सक्नुहुन्छ]\n\n- चाहेको काम वा स्थान बदलियो भने मेनुको "Register" बाट अपडेट गर्नुहोस्।\n- कुनै प्रश्न भए यही च्याटमा पठाउनुहोस्। AI ले तुरुन्तै जवाफ दिन्छ, आवश्यक परे कर्मचारीले सम्पर्क गर्नेछ।\n- जापानमा काम खोजिरहेका साथीहरू भए यो LINE बताइदिनुहोस्।\n\nसँगै तपाईंको अर्को काम खोजौं।',
+    id: '[Anda bisa bertanya kapan saja]\n\n- Jika pekerjaan atau lokasi yang Anda inginkan berubah, ketuk "Register" di menu untuk memperbarui.\n- Kirim pertanyaan apa pun di obrolan ini. AI akan langsung menjawab, dan staf kami akan menghubungi Anda jika perlu.\n- Jika ada teman yang sedang mencari kerja di Jepang, bagikan LINE ini kepada mereka.\n\nMari kita cari pekerjaan Anda berikutnya bersama-sama.'
   }
 };
 
@@ -168,16 +197,17 @@ var STEPS_BAITO = {
     ja: '【留学生のアルバイト 大切なルール】\n\n・アルバイトをするには「資格外活動許可」が必要です。在留カードの裏面で確認できます。\n・働けるのは原則として週28時間まで。学校の長期休みの間は1日8時間までです。\n・アルバイトを掛け持ちする場合は、すべての合計で数えます。\n・風俗営業に関係するお店では働けません。\n・ルールを守らないと、在留資格の更新や、卒業後の就職に影響することがあります。\n\n気になることは「相談する」からお気軽にどうぞ。',
     en: '[Important rules for student part-time work]\n\n- You need "permission to engage in activities other than those permitted" (資格外活動許可). You can check it on the back of your residence card.\n- In principle, up to 28 hours a week. During long school holidays, up to 8 hours a day.\n- If you have more than one job, all hours are added together.\n- You cannot work at adult entertainment businesses (風俗営業).\n- Breaking these rules may affect your visa renewal or your job after graduation.\n\nIf you have questions, tap "Ask us" anytime.',
     vi: '[Quy định quan trọng khi du học sinh làm thêm]\n\n- Cần có "giấy phép hoạt động ngoài tư cách" (資格外活動許可). Có thể kiểm tra ở mặt sau thẻ lưu trú.\n- Về nguyên tắc tối đa 28 giờ/tuần. Trong kỳ nghỉ dài của trường tối đa 8 giờ/ngày.\n- Nếu làm nhiều nơi, tính tổng tất cả số giờ.\n- Không được làm ở các cơ sở kinh doanh giải trí người lớn (風俗営業).\n- Vi phạm có thể ảnh hưởng đến việc gia hạn tư cách lưu trú hoặc xin việc sau khi tốt nghiệp.\n\nCó thắc mắc, hãy bấm "Ask us" bất cứ lúc nào.',
-    ne: '[विद्यार्थीको पार्ट-टाइम: महत्वपूर्ण नियम]\n\n- पार्ट-टाइम गर्न "資格外活動許可" (अनुमति) चाहिन्छ। रेसिडेन्स कार्डको पछाडि हेर्न सकिन्छ।\n- सामान्यतया हप्तामा २८ घण्टासम्म। स्कूलको लामो बिदामा दिनको ८ घण्टासम्म।\n- धेरै ठाउँमा काम गरे सबैको घण्टा जोडिन्छ।\n- वयस्क मनोरञ्जन व्यवसाय (風俗営業) मा काम गर्न पाइँदैन।\n- नियम नमाने भिसा नवीकरण वा पढाइ सकेपछिको काममा असर पर्न सक्छ।\n\nप्रश्न भए "Ask us" थिच्नुहोस्।'
+    ne: '[विद्यार्थीको पार्ट-टाइम: महत्वपूर्ण नियम]\n\n- पार्ट-टाइम गर्न "資格外活動許可" (अनुमति) चाहिन्छ। रेसिडेन्स कार्डको पछाडि हेर्न सकिन्छ।\n- सामान्यतया हप्तामा २८ घण्टासम्म। स्कूलको लामो बिदामा दिनको ८ घण्टासम्म।\n- धेरै ठाउँमा काम गरे सबैको घण्टा जोडिन्छ।\n- वयस्क मनोरञ्जन व्यवसाय (風俗営業) मा काम गर्न पाइँदैन।\n- नियम नमाने भिसा नवीकरण वा पढाइ सकेपछिको काममा असर पर्न सक्छ।\n\nप्रश्न भए "Ask us" थिच्नुहोस्।',
+    id: '[Aturan penting kerja paruh waktu untuk pelajar]\n\n- Anda perlu "izin kegiatan di luar status" (資格外活動許可). Bisa dicek di bagian belakang kartu izin tinggal.\n- Pada prinsipnya maksimal 28 jam per minggu. Saat libur panjang sekolah, maksimal 8 jam per hari.\n- Jika bekerja di lebih dari satu tempat, semua jam kerja dijumlahkan.\n- Tidak boleh bekerja di usaha hiburan dewasa (風俗営業).\n- Melanggar aturan bisa memengaruhi perpanjangan visa atau pekerjaan setelah lulus.\n\nJika ada pertanyaan, ketuk "Ask us" kapan saja.'
   }
 };
 
 // 文字で送られたときに受け付ける言葉
-var KW_REGISTER = ['登録', 'register', 'đăng ký', 'dang ky', 'दर्ता', 'start'];
-var KW_LANG = ['言語', 'language', 'ngôn ngữ', 'भाषा', 'lang'];
-var KW_JOBS = ['求人', 'jobs', 'job', 'việc làm', 'काम'];
-var KW_QUIZ = ['練習問題', '練習', '模擬テスト', '試験', 'テスト', '2号', '特定技能2号', 'test', 'exam', 'quiz', 'practice', 'practice test', 'mock test', 'n3', 'jlpt', '日本語能力試験', '日本語', 'luyện thi', 'thi thử', 'đề thi', 'परीक्षा', 'अभ्यास'];
-var RE_APPLY = /^(応募|apply|ứng tuyển|आवेदन)\s*[:：]?\s*(\S+)/i;
+var KW_REGISTER = ['登録', 'register', 'đăng ký', 'dang ky', 'दर्ता', 'daftar', 'start'];
+var KW_LANG = ['言語', 'language', 'ngôn ngữ', 'भाषा', 'bahasa', 'lang'];
+var KW_JOBS = ['求人', 'jobs', 'job', 'việc làm', 'काम', 'lowongan', 'pekerjaan'];
+var KW_QUIZ = ['練習問題', '練習', '模擬テスト', '試験', 'テスト', '2号', '特定技能2号', 'test', 'exam', 'quiz', 'practice', 'practice test', 'mock test', 'n3', 'jlpt', '日本語能力試験', '日本語', 'luyện thi', 'thi thử', 'đề thi', 'परीक्षा', 'अभ्यास', 'latihan', 'ujian', 'tes'];
+var RE_APPLY = /^(応募|apply|ứng tuyển|आवेदन|lamar)\s*[:：]?\s*(\S+)/i;
 
 // アルバイト（留学生）コース用の文言
 var T_BAITO = {
@@ -208,6 +238,13 @@ var T_BAITO = {
     b5: 'हप्तामा कति घण्टा काम गर्न चाहनुहुन्छ?',
     baitoRule: '\n\n* विद्यार्थीलाई पार्ट-टाइम काम गर्न "資格外活動許可" (अनुमति) चाहिन्छ। सामान्यतया हप्तामा २८ घण्टासम्म मात्र काम गर्न पाइन्छ (स्कूलको लामो बिदामा दिनको ८ घण्टासम्म)। धेरै ठाउँमा काम गरे सबैको घण्टा जोडिन्छ।',
     noPermit: 'अनुमति छैन भने पार्ट-टाइम सुरु गर्नु अघि इमिग्रेसन कार्यालयमा आवेदन दिनुपर्छ। अनुमति नपाएसम्म काम गर्न पाइँदैन। प्रश्न भए "Ask us" थिच्नुहोस्।'
+  },
+  id: {
+    q0: 'Jenis pekerjaan seperti apa yang Anda cari?',
+    b2: 'Apakah Anda punya izin kerja paruh waktu (資格外活動許可)?',
+    b5: 'Berapa jam per minggu Anda ingin bekerja?',
+    baitoRule: '\n\n* Pelajar asing memerlukan "izin kegiatan di luar status" (資格外活動許可) untuk kerja paruh waktu. Pada prinsipnya maksimal 28 jam per minggu (saat libur panjang sekolah maksimal 8 jam per hari). Jika bekerja di lebih dari satu tempat, jam kerjanya dijumlahkan.',
+    noPermit: 'Jika belum punya izin, Anda harus mengajukannya ke Kantor Imigrasi sebelum mulai kerja paruh waktu. Anda tidak boleh bekerja sebelum izin keluar. Jika ada pertanyaan, ketuk "Ask us".'
   }
 };
 Object.keys(T_BAITO).forEach(function (l) { Object.keys(T_BAITO[l]).forEach(function (k) { T[l][k] = T_BAITO[l][k]; }); });
@@ -243,56 +280,56 @@ var FLOW_BAITO = ['q0', 'q1', 'b2', 'q3', 'q4', 'b5'];
 // 質問（v はスプレッドシートに保存する日本語の値）
 var Q = {
   q0: { key: 'type', opts: [
-    ['正社員・フルタイム', { jaen: 'フルタイム/Full-time', ja: '正社員・フルタイム', en: 'Full-time job', vi: 'Việc toàn thời gian', ne: 'पूर्णकालीन काम' }],
-    ['アルバイト', { jaen: 'アルバイト(留学生)/Part-time', ja: 'アルバイト（留学生）', en: 'Part-time (student)', vi: 'Làm thêm (du học sinh)', ne: 'पार्ट-टाइम (विद्यार्थी)' }]
+    ['正社員・フルタイム', { jaen: 'フルタイム/Full-time', ja: '正社員・フルタイム', en: 'Full-time job', vi: 'Việc toàn thời gian', ne: 'पूर्णकालीन काम', id: 'Kerja penuh waktu' }],
+    ['アルバイト', { jaen: 'アルバイト(留学生)/Part-time', ja: 'アルバイト（留学生）', en: 'Part-time (student)', vi: 'Làm thêm (du học sinh)', ne: 'पार्ट-टाइम (विद्यार्थी)', id: 'Paruh waktu (siswa)' }]
   ]},
   b2: { key: 'permit', opts: [
-    ['あり', { ja: 'あり', en: 'Yes', vi: 'Có', ne: 'छ' }],
-    ['申請中', { ja: '申請中', en: 'Applying', vi: 'Đang xin', ne: 'आवेदन गर्दै' }],
-    ['なし・わからない', { jaen: 'なし・不明 / No, Not sure', ja: 'なし・わからない', en: 'No / Not sure', vi: 'Chưa / Không rõ', ne: 'छैन / थाहा छैन' }]
+    ['あり', { ja: 'あり', en: 'Yes', vi: 'Có', ne: 'छ', id: 'Ada' }],
+    ['申請中', { ja: '申請中', en: 'Applying', vi: 'Đang xin', ne: 'आवेदन गर्दै', id: 'Sedang diajukan' }],
+    ['なし・わからない', { jaen: 'なし・不明 / No, Not sure', ja: 'なし・わからない', en: 'No / Not sure', vi: 'Chưa / Không rõ', ne: 'छैन / थाहा छैन', id: 'Tidak / Tidak tahu' }]
   ]},
   b5: { key: 'hours', opts: [
-    ['週10時間まで', { ja: '週10時間まで', en: 'Up to 10 h', vi: 'Tối đa 10 giờ', ne: '१० घण्टासम्म' }],
-    ['週10〜20時間', { ja: '週10〜20時間', en: '10–20 h', vi: '10–20 giờ', ne: '१०–२० घण्टा' }],
-    ['週20〜28時間', { ja: '週20〜28時間', en: '20–28 h', vi: '20–28 giờ', ne: '२०–२८ घण्टा' }]
+    ['週10時間まで', { ja: '週10時間まで', en: 'Up to 10 h', vi: 'Tối đa 10 giờ', ne: '१० घण्टासम्म', id: 'Maks. 10 jam' }],
+    ['週10〜20時間', { ja: '週10〜20時間', en: '10–20 h', vi: '10–20 giờ', ne: '१०–२० घण्टा', id: '10–20 jam' }],
+    ['週20〜28時間', { ja: '週20〜28時間', en: '20–28 h', vi: '20–28 giờ', ne: '२०–२८ घण्टा', id: '20–28 jam' }]
   ]},
   q1: { key: 'role', opts: [
-    ['外食業', { ja: '飲食店・外食', en: 'Restaurant', vi: 'Nhà hàng', ne: 'रेस्टुरेन्ट' }],
-    ['食品製造', { ja: '食品製造', en: 'Food factory', vi: 'Chế biến thực phẩm', ne: 'खाद्य उत्पादन' }],
-    ['ホテル・宿泊', { ja: 'ホテル・宿泊', en: 'Hotel', vi: 'Khách sạn', ne: 'होटल' }],
-    ['介護・医療', { ja: '介護・医療', en: 'Caregiving', vi: 'Điều dưỡng', ne: 'हेरचाह' }],
-    ['製造業', { ja: '工場・製造', en: 'Factory', vi: 'Nhà máy', ne: 'कारखाना' }],
-    ['物流・倉庫', { ja: '物流・倉庫', en: 'Logistics', vi: 'Kho vận', ne: 'गोदाम' }],
-    ['建設・土木', { ja: '建設', en: 'Construction', vi: 'Xây dựng', ne: 'निर्माण' }],
-    ['販売・小売', { ja: '販売・小売', en: 'Retail', vi: 'Bán hàng', ne: 'बिक्री' }],
-    ['IT・テクノロジー', { ja: 'IT', en: 'IT', vi: 'IT', ne: 'IT' }],
+    ['外食業', { ja: '飲食店・外食', en: 'Restaurant', vi: 'Nhà hàng', ne: 'रेस्टुरेन्ट', id: 'Restoran' }],
+    ['食品製造', { ja: '食品製造', en: 'Food factory', vi: 'Chế biến thực phẩm', ne: 'खाद्य उत्पादन', id: 'Pabrik makanan' }],
+    ['ホテル・宿泊', { ja: 'ホテル・宿泊', en: 'Hotel', vi: 'Khách sạn', ne: 'होटल', id: 'Hotel' }],
+    ['介護・医療', { ja: '介護・医療', en: 'Caregiving', vi: 'Điều dưỡng', ne: 'हेरचाह', id: 'Perawatan lansia' }],
+    ['製造業', { ja: '工場・製造', en: 'Factory', vi: 'Nhà máy', ne: 'कारखाना', id: 'Pabrik' }],
+    ['物流・倉庫', { ja: '物流・倉庫', en: 'Logistics', vi: 'Kho vận', ne: 'गोदाम', id: 'Logistik/Gudang' }],
+    ['建設・土木', { ja: '建設', en: 'Construction', vi: 'Xây dựng', ne: 'निर्माण', id: 'Konstruksi' }],
+    ['販売・小売', { ja: '販売・小売', en: 'Retail', vi: 'Bán hàng', ne: 'बिक्री', id: 'Penjualan/Ritel' }],
+    ['IT・テクノロジー', { ja: 'IT', en: 'IT', vi: 'IT', ne: 'IT', id: 'IT' }],
     ['その他', 'other']
   ]},
   q2: { key: 'visa', opts: [
-    ['特定技能1号', { ja: '特定技能1号', en: 'SSW (i)', vi: 'Tokutei Ginou 1', ne: 'Tokutei Ginou 1' }],
-    ['技能実習', { jaen: '技能実習 / Intern', ja: '技能実習', en: 'Technical Intern', vi: 'Thực tập sinh', ne: 'Ginou Jisshu' }],
-    ['留学', { ja: '留学', en: 'Student', vi: 'Du học sinh', ne: 'विद्यार्थी' }],
-    ['技術・人文知識・国際業務', { jaen: '技人国 / Engineer', ja: '技人国', en: 'Engineer/Humanities', vi: 'Gijinkoku', ne: 'Gijinkoku' }],
-    ['永住者・配偶者等', { jaen: '永住・配偶者等/PR, Spouse', ja: '永住・配偶者など', en: 'PR / Spouse', vi: 'Vĩnh trú/Vợ chồng', ne: 'स्थायी / जीवनसाथी' }],
-    ['海外在住', { jaen: 'いま海外 / Abroad', ja: 'いま海外にいる', en: 'Living abroad', vi: 'Đang ở nước ngoài', ne: 'जापान बाहिर' }],
+    ['特定技能1号', { ja: '特定技能1号', en: 'SSW (i)', vi: 'Tokutei Ginou 1', ne: 'Tokutei Ginou 1', id: 'Tokutei Ginou 1' }],
+    ['技能実習', { jaen: '技能実習 / Intern', ja: '技能実習', en: 'Technical Intern', vi: 'Thực tập sinh', ne: 'Ginou Jisshu', id: 'Pemagang (Jisshu)' }],
+    ['留学', { ja: '留学', en: 'Student', vi: 'Du học sinh', ne: 'विद्यार्थी', id: 'Pelajar' }],
+    ['技術・人文知識・国際業務', { jaen: '技人国 / Engineer', ja: '技人国', en: 'Engineer/Humanities', vi: 'Gijinkoku', ne: 'Gijinkoku', id: 'Gijinkoku' }],
+    ['永住者・配偶者等', { jaen: '永住・配偶者等/PR, Spouse', ja: '永住・配偶者など', en: 'PR / Spouse', vi: 'Vĩnh trú/Vợ chồng', ne: 'स्थायी / जीवनसाथी', id: 'PR / Pasangan' }],
+    ['海外在住', { jaen: 'いま海外 / Abroad', ja: 'いま海外にいる', en: 'Living abroad', vi: 'Đang ở nước ngoài', ne: 'जापान बाहिर', id: 'Di luar Jepang' }],
     ['その他', 'other']
   ]},
   q3: { key: 'jp', opts: [
     ['N1', 'N1'], ['N2', 'N2'], ['N3', 'N3'], ['N4', 'N4'], ['N5', 'N5'], ['JFT-Basic', 'JFT-Basic'], ['資格なし', 'none']
   ]},
   q4: { key: 'location', opts: [
-    ['大阪府', { ja: '大阪', en: 'Osaka', vi: 'Osaka', ne: 'ओसाका' }],
-    ['関西（大阪以外）', { jaen: '関西(大阪以外)/Kansai', ja: '関西（大阪以外）', en: 'Kansai', vi: 'Kansai', ne: 'कान्साई' }],
-    ['関東', { jaen: '関東・東京 / Kanto', ja: '関東（東京など）', en: 'Kanto (Tokyo)', vi: 'Kanto (Tokyo)', ne: 'कान्तो (टोकियो)' }],
-    ['中部・東海', { jaen: '中部・東海 / Chubu', ja: '中部・東海', en: 'Chubu (Nagoya)', vi: 'Chubu (Nagoya)', ne: 'चुबु (नागोया)' }],
-    ['全国', { ja: 'どこでもOK', en: 'Anywhere', vi: 'Ở đâu cũng được', ne: 'जहाँ पनि' }],
+    ['大阪府', { ja: '大阪', en: 'Osaka', vi: 'Osaka', ne: 'ओसाका', id: 'Osaka' }],
+    ['関西（大阪以外）', { jaen: '関西(大阪以外)/Kansai', ja: '関西（大阪以外）', en: 'Kansai', vi: 'Kansai', ne: 'कान्साई', id: 'Kansai' }],
+    ['関東', { jaen: '関東・東京 / Kanto', ja: '関東（東京など）', en: 'Kanto (Tokyo)', vi: 'Kanto (Tokyo)', ne: 'कान्तो (टोकियो)', id: 'Kanto (Tokyo)' }],
+    ['中部・東海', { jaen: '中部・東海 / Chubu', ja: '中部・東海', en: 'Chubu (Nagoya)', vi: 'Chubu (Nagoya)', ne: 'चुबु (नागोया)', id: 'Chubu (Nagoya)' }],
+    ['全国', { ja: 'どこでもOK', en: 'Anywhere', vi: 'Ở đâu cũng được', ne: 'जहाँ पनि', id: 'Di mana saja' }],
     ['その他', 'other']
   ]},
   q5: { key: 'start', opts: [
-    ['すぐに働ける', { ja: 'すぐに', en: 'Right away', vi: 'Ngay lập tức', ne: 'तुरुन्तै' }],
-    ['1ヶ月以内', { jaen: '1ヶ月以内 / 1 month', ja: '1ヶ月以内', en: 'Within 1 month', vi: 'Trong 1 tháng', ne: '१ महिनाभित्र' }],
-    ['3ヶ月以内', { jaen: '3ヶ月以内 / 3 months', ja: '3ヶ月以内', en: 'Within 3 months', vi: 'Trong 3 tháng', ne: '३ महिनाभित्र' }],
-    ['未定', { jaen: '未定 / Not decided', ja: 'まだ決めていない', en: 'Not decided', vi: 'Chưa quyết định', ne: 'निश्चित छैन' }]
+    ['すぐに働ける', { ja: 'すぐに', en: 'Right away', vi: 'Ngay lập tức', ne: 'तुरुन्तै', id: 'Segera' }],
+    ['1ヶ月以内', { jaen: '1ヶ月以内 / 1 month', ja: '1ヶ月以内', en: 'Within 1 month', vi: 'Trong 1 tháng', ne: '१ महिनाभित्र', id: 'Dalam 1 bulan' }],
+    ['3ヶ月以内', { jaen: '3ヶ月以内 / 3 months', ja: '3ヶ月以内', en: 'Within 3 months', vi: 'Trong 3 tháng', ne: '३ महिनाभित्र', id: 'Dalam 3 bulan' }],
+    ['未定', { jaen: '未定 / Not decided', ja: 'まだ決めていない', en: 'Not decided', vi: 'Chưa quyết định', ne: 'निश्चित छैन', id: 'Belum ditentukan' }]
   ]}
 };
 
@@ -512,8 +549,8 @@ function jobText_(j, lang, isNew) {
 
 // 雇用形態の行（アルバイト / Part-time など）。空欄・どちらもの求人は表示しない
 var TYPE_LABEL = {
-  'アルバイト': { ja: 'アルバイト', en: 'Part-time', vi: 'Làm thêm (part-time)', ne: 'पार्ट-टाइम' },
-  '正社員・フルタイム': { ja: '正社員・フルタイム', en: 'Full-time', vi: 'Toàn thời gian', ne: 'पूर्णकालीन' }
+  'アルバイト': { ja: 'アルバイト', en: 'Part-time', vi: 'Làm thêm (part-time)', ne: 'पार्ट-टाइम', id: 'Paruh waktu' },
+  '正社員・フルタイム': { ja: '正社員・フルタイム', en: 'Full-time', vi: 'Toàn thời gian', ne: 'पूर्णकालीन', id: 'Penuh waktu' }
 };
 function jobType_(j, lang, f) {
   var l = TYPE_LABEL[String(j['雇用形態'] || '').trim()];
@@ -547,7 +584,7 @@ var AI_SYSTEM = [
   '- 担当者はこのLINEで連絡する。面談はLINE・電話で可能。',
   '',
   '# 答え方のルール',
-  '- 相手と同じ言語で答える（日本語・英語・ベトナム語・ネパール語など）。やさしい言葉で、LINEで読みやすい短さ（300字程度まで）にする。',
+  '- 相手と同じ言語で答える（日本語・英語・ベトナム語・ネパール語・インドネシア語など）。やさしい言葉で、LINEで読みやすい短さ（300字程度まで）にする。',
   '- 一般的な情報（在留資格の種類、転職の一般的な流れ、日本語試験、当社の使い方）は答えてよい。',
   '- 個別のビザ判断（「私は転職できますか」「許可されますか」など）は断定せず、一般論を伝えたうえで担当者が確認すると伝える。',
   '- 求人の有無・給料・内定を約束しない。具体的な求人はメニューの「求人を見る」を案内する。',
