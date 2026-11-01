@@ -7,7 +7,8 @@
  *  - 料金：回数券 9回分500円・30回分1,600円・60回分3,000円（税抜。税込550円・1,760円・3,300円）。1回分を使うと、そこから24時間、練習も模擬テストもすべて使い放題
  *    はじめての人は1回だけ、無料で24時間お試しできる（回数券を使わない）
  *    利用の開始はページの「始める」ボタン（api: pass_start）。ページを開いただけでは使わない
- *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）／N3 文法・読解（39問・70分）／N3 聴解（28問・40分）。回数券は共通
+ *  - 模擬テスト：技能（学科35問＋実技20問＝55問・70分・250点満点）／N3 文字・語彙（35問・30分）／N3 文法・読解（39問・70分）／N3 聴解（28問・40分）
+ *    ／N4 文字・語彙（28問・25分）／N4 文法・読解（29問・55分）／N4 聴解（28問・35分）。回数券は共通
  *  - 問題の順番と選択肢の順番は毎回シャッフル。模擬テストはまだ出ていない問題を優先して出す
  *
  * スクリプトプロパティ（追加分）
@@ -65,6 +66,20 @@ var QUIZ_MOCKS = {
   n3chokai: {
     name: 'N3 聴解', minutes: 40, exam: 'n3',
     plan: [['chokai', 'kadai', 6, 0], ['chokai', 'point', 6, 0], ['chokai', 'gaiyo', 3, 0], ['chokai', 'hatsuwa', 4, 0], ['chokai', 'sokuji', 9, 0]]
+  },
+  // 日本語能力試験N4：言語知識（文字・語彙）28問・25分／言語知識（文法）・読解 29問・55分／聴解 28問・35分
+  n4moji: {
+    name: 'N4 文字・語彙', minutes: 25, exam: 'n4',
+    plan: [['moji', 'yomi', 7, 0], ['moji', 'hyoki', 5, 0], ['moji', 'bunmyaku', 8, 0], ['moji', 'iikae', 4, 0], ['moji', 'yoho', 4, 0]]
+  },
+  n4bunpo: {
+    name: 'N4 文法・読解', minutes: 55, exam: 'n4',
+    plan: [['bunpo', 'keishiki', 13, 0], ['bunpo', 'kumitate', 4, 0], ['bunpo', 'bunsho', 4, 0],
+           ['dokkai', 'tanbun', 3, 0], ['dokkai', 'chubun', 3, 0], ['dokkai', 'joho', 2, 0]]
+  },
+  n4chokai: {
+    name: 'N4 聴解', minutes: 35, exam: 'n4',
+    plan: [['chokai', 'kadai', 8, 0], ['chokai', 'point', 7, 0], ['chokai', 'hatsuwa', 5, 0], ['chokai', 'sokuji', 8, 0]]
   }
 };
 
@@ -201,9 +216,10 @@ function quizPassStart_(user) {
 // ============================================================
 function quizMe_(user) {
   var row = quizWithLock_(function () { return quizCreditRow_(user, true); });
-  var counts = { handan: 0, keikaku: 0, jirei: 0 }, n3 = { all: 0 }, skillTotal = 0;
+  var counts = { handan: 0, keikaku: 0, jirei: 0 }, jl = { n3: { all: 0 }, n4: { all: 0 } }, skillTotal = 0;
   QUIZ_BANK.forEach(function (q) {
-    if (q.x === 'n3') { n3[q.k] = (n3[q.k] || 0) + 1; n3[q.c] = (n3[q.c] || 0) + 1; n3.all++; return; }
+    var j = jl[q.x];
+    if (j) { j[q.k] = (j[q.k] || 0) + 1; j[q.c] = (j[q.c] || 0) + 1; j.all++; return; }
     skillTotal++;
     if (q.k === 'gakka') counts[q.c] = (counts[q.c] || 0) + 1; else counts[q.k]++;
   });
@@ -217,7 +233,7 @@ function quizMe_(user) {
   return {
     ok: true, name: user.name, credits: quizNum_(row['残り回数']), pack: QUIZ_PACK,
     passUntil: quizPassUntil_(row), trial: !quizTrialUsed_(row), now: Date.now(), sales: !!quizStripeKey_(),
-    counts: counts, total: skillTotal, n3: n3, mocks: mocks,
+    counts: counts, total: skillTotal, n3: jl.n3, n4: jl.n4, mocks: mocks,
     // 前の版のページ用
     mockSize: s.size, mockMinutes: s.minutes, maxPoints: s.maxPoints, passPoints: s.passPoints,
     open: open ? { attemptId: open['受験ID'], mock: quizMockIdOf_(open), started: +new Date(open['開始日時']) } : null
@@ -237,9 +253,9 @@ function quizBase_(q) {
 
 function quizPractice_(cat, exam) {
   var list;
-  if (exam === 'n3') {
+  if (exam === 'n3' || exam === 'n4') {
     // cat：問題の種類（yomi など）／科目（moji・bunpo）／all
-    list = QUIZ_BANK.filter(function (q) { return q.x === 'n3' && (cat === 'all' || q.k === cat || q.c === cat); });
+    list = QUIZ_BANK.filter(function (q) { return q.x === exam && (cat === 'all' || q.k === cat || q.c === cat); });
   } else {
     // cat：分野名（その分野の学科）／handan・keikaku・jirei（実技の全分野）／all
     list = QUIZ_BANK.filter(function (q) {
@@ -399,8 +415,8 @@ function quizMockSubmit_(user, attemptId, answers) {
     out.points = points; out.maxPoints = maxPoints; out.passPoints = M.passPoints; out.pass = points >= M.passPoints;
     set['得点'] = points; set['合否'] = out.pass ? '合格ライン' : '未達';
   }
-  var names = M.exam === 'n3' ? QUIZ_N3.kinds : QUIZ_KINDS;
-  var catText = M.exam === 'n3' ? '' : Object.keys(QUIZ_CATS).map(function (c) { var v = byCat[c] || [0, 0]; return QUIZ_CATS[c] + ' ' + v[0] + '/' + v[1]; }).join('、') + '、';
+  var names = M.exam ? QUIZ_JLPT[M.exam].kinds : QUIZ_KINDS;
+  var catText = M.exam ? '' : Object.keys(QUIZ_CATS).map(function (c) { var v = byCat[c] || [0, 0]; return QUIZ_CATS[c] + ' ' + v[0] + '/' + v[1]; }).join('、') + '、';
   set['分野別'] = catText + Object.keys(names).filter(function (k) { return byKind[k]; }).map(function (k) { return names[k] + ' ' + byKind[k][0] + '/' + byKind[k][1]; }).join('、');
   Object.keys(set).forEach(function (k) { ash.getRange(r._row, quizCol_(ash, k)).setValue(set[k]); });
   return out;
@@ -602,7 +618,8 @@ function setupQuiz() {
   quizBuySheet_();
   var ch = PropertiesService.getScriptProperties().getProperty('LIFF_CHANNEL_ID');
   var n3 = QUIZ_BANK.filter(function (q) { return q.x === 'n3'; }).length;
-  console.log('問題数: 技能 ' + (QUIZ_BANK.length - n3) + '問・N3 ' + n3 + '問');
+  var n4 = QUIZ_BANK.filter(function (q) { return q.x === 'n4'; }).length;
+  console.log('問題数: 技能 ' + (QUIZ_BANK.length - n3 - n4) + '問・N3 ' + n3 + '問・N4 ' + n4 + '問');
   Object.keys(QUIZ_MOCKS).forEach(function (id) {
     var m = QUIZ_MOCKS[id];
     console.log('模擬テスト「' + m.name + '」: ' + quizMockSize_(id) + '問・' + m.minutes + '分' + (quizMaxPoints_(id) ? '・' + quizMaxPoints_(id) + '点満点' : ''));

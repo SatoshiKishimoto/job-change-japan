@@ -117,8 +117,8 @@ h1 .ln{display:inline-block}
 .points{font-family:var(--f-display);font-size:1.1rem}
 .free-group{display:flex;flex-direction:column;gap:10px}
 .free-group h3{margin:6px 0 0;font-size:1rem;color:var(--muted)}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--line);padding:4px;border-radius:10px}
-.tabs button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:8px 6px;background:transparent;color:var(--muted);cursor:pointer;line-height:1.5}
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--line);padding:4px;border-radius:10px}
+.tabs button{font:inherit;font-size:.92rem;font-weight:700;border:0;border-radius:8px;padding:8px 4px;background:transparent;color:var(--muted);cursor:pointer;line-height:1.5}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ai)}
 .tabs button:focus-visible{outline:3px solid var(--ai);outline-offset:2px}
 .inst{font-size:.85rem;color:var(--muted);line-height:1.7;margin:0 0 8px}
@@ -174,12 +174,13 @@ img,audio{-webkit-user-drag:none}
 const C = window.QUIZ_CONFIG || {};
 const CATS = __CATS__;
 const KINDS = __KINDS__;
-const chipOf = q => q.x === 'n3' ? `N3｜${N3.kinds[q.k] ? N3.kinds[q.k].name : ''}` : (q.k && q.k !== 'gakka' ? `${KINDS[q.k]}｜${CATS[q.c]}` : CATS[q.c]);
+const chipOf = q => JL[q.x] ? `${q.x.toUpperCase()}｜${JL[q.x].kinds[q.k] ? JL[q.x].kinds[q.k].name : ''}` : (q.k && q.k !== 'gakka' ? `${KINDS[q.k]}｜${CATS[q.c]}` : CATS[q.c]);
 const L = __LBL__;
 const FRIEND_URL = 'https://line.me/R/ti/p/@022akbvw';
 const N3 = __N3__;
-const markOf = q => q.x === 'n3' ? ['1','2','3','4'] : ['A','B','C'];
-const instOf = q => q.x === 'n3' && N3.kinds[q.k] ? `<p class="inst">${N3.kinds[q.k].inst}</p>` : '';
+const JL = { n3: N3, n4: __N4__ };   // 日本語能力試験（レベルごと）
+const markOf = q => JL[q.x] ? ['1','2','3','4'] : ['A','B','C'];
+const instOf = q => JL[q.x] && JL[q.x].kinds[q.k] ? `<p class="inst">${JL[q.x].kinds[q.k].inst}</p>` : '';
 let PASS = {};   // 文章つき問題の文章（サーバーから受け取る）
 const takePassages = j => { if (j && j.passages) Object.assign(PASS, j.passages); };
 const passageOf = q => q.p && PASS[q.p] ? `<div class="passage">${PASS[q.p]}</div>` : '';
@@ -304,7 +305,7 @@ function friendGate(name){
 }
 
 // ---------- ホーム ----------
-let TAB = store.get('tab') === 'n3' ? 'n3' : 'skill';
+let TAB = ['n3', 'n4'].includes(store.get('tab')) ? store.get('tab') : 'skill';
 
 function home(){
   toTop();
@@ -369,41 +370,47 @@ function home(){
         ${modeBtn('all', L.all, L.allSub, ME.total)}</div>
     </section>`;
 
-  const n3Mocks = Object.keys(mocks).filter(id => mocks[id].exam === 'n3' || (!mocks[id].exam && id.indexOf('n3') === 0));
-  const n3Groups = Object.keys(N3.sections).map(sec => {
-    const kinds = Object.keys(N3.kinds).filter(k => n3c[k] && N3.kinds[k].sec === sec);
-    if (!kinds.length) return '';
-    return `<div class="free-group"><h3>${N3.sections[sec]}</h3>${kinds.map(k => modeBtn(k, N3.kinds[k].name, '', n3c[k], 'n3')).join('')}</div>`;
-  }).join('');
-  const n3Html = `
-    <p class="muted">${L.n3Lead}</p>
-    ${n3Mocks.length ? `<section class="panel mock" aria-labelledby="mock-h">
-      ${creditsHead(L.n3Mock)}
-      ${n3Mocks.map(id => mockBlock(id, fill(L.n3MockSub, { name: esc(mocks[id].name), n: mocks[id].size, m: mocks[id].minutes }))).join('')}
+  // 日本語能力試験（N3・N4）の画面。lv：'n3' か 'n4'
+  const jlptHtml = lv => {
+    const M = JL[lv], cnt = ME[lv] || { all: 0 }, up = lv.toUpperCase();
+    const ids = Object.keys(mocks).filter(id => mocks[id].exam === lv || (!mocks[id].exam && id.indexOf(lv) === 0));
+    const groups = Object.keys(M.sections).map(sec => {
+      const kinds = Object.keys(M.kinds).filter(k => cnt[k] && M.kinds[k].sec === sec);
+      if (!kinds.length) return '';
+      return `<div class="free-group"><h3>${M.sections[sec]}</h3>${kinds.map(k => modeBtn(k, M.kinds[k].name, '', cnt[k], lv)).join('')}</div>`;
+    }).join('');
+    return `
+    <p class="muted">${L[lv + 'Lead']}</p>
+    ${ids.length ? `<section class="panel mock" aria-labelledby="mock-h">
+      ${creditsHead(L[lv + 'Mock'])}
+      ${ids.map(id => mockBlock(id, fill(L.n3MockSub, { name: esc(mocks[id].name), n: mocks[id].size, m: mocks[id].minutes }))).join('')}
       ${priceBox}
-      <p class="muted">${L.sharedCredits}${L.n3Soon ? '<br>' + L.n3Soon : ''}</p>
+      <p class="muted">${L.sharedCredits}</p>
     </section>` : ''}
     <section class="modes" aria-labelledby="free-h">
       <h2 id="free-h">${L.free}</h2>
       <p class="muted">${L.freeSub}</p>
-      ${n3Groups}
-      <div class="free-group"><h3>${L.allHead}</h3>${modeBtn('all', L.n3All, L.n3AllSub, n3c.all, 'n3')}</div>
+      ${groups}
+      <div class="free-group"><h3>${L.allHead}</h3>${modeBtn('all', L[lv + 'All'], L[lv + 'AllSub'], cnt.all, lv)}</div>
     </section>`;
+  };
+  const n4c = ME.n4 || { all: 0 };
+  if ((TAB === 'n3' && !n3c.all) || (TAB === 'n4' && !n4c.all)) TAB = 'skill';
 
   app.innerHTML = `
   <div class="stack">
     <p>${fill(L.hello, { name: esc(ME.name) })}</p>
     ${BUY_MSG ? `<p class="buymsg">${BUY_MSG}</p>` : ''}
     ${passPanel}
-    ${n3c.all ? `<div class="tabs" role="tablist">
+    ${n3c.all || n4c.all ? `<div class="tabs" role="tablist">
       <button role="tab" id="tab-skill" aria-selected="${TAB === 'skill'}">${L.tabSkill}</button>
-      <button role="tab" id="tab-n3" aria-selected="${TAB === 'n3'}">${L.tabN3}</button>
+      ${n3c.all ? `<button role="tab" id="tab-n3" aria-selected="${TAB === 'n3'}">${L.tabN3}</button>` : ''}
+      ${n4c.all ? `<button role="tab" id="tab-n4" aria-selected="${TAB === 'n4'}">${L.tabN4}</button>` : ''}
     </div>` : ''}
-    ${TAB === 'n3' && n3c.all ? n3Html : skillHtml}
+    ${TAB === 'skill' ? skillHtml : jlptHtml(TAB)}
   </div>`;
   const tabTo = t => { TAB = t; store.set('tab', t); home(); };
-  const ts = document.getElementById('tab-skill'), tn = document.getElementById('tab-n3');
-  if (ts) { ts.onclick = () => tabTo('skill'); tn.onclick = () => tabTo('n3'); }
+  ['skill', 'n3', 'n4'].forEach(t => { const b = document.getElementById('tab-' + t); if (b) b.onclick = () => tabTo(t); });
   app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => active ? startPractice(b.dataset.c, b.dataset.x || 'skill') : needPass());
   app.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => buy(+b.dataset.buy));
   const pg = document.getElementById('passgo');
@@ -652,7 +659,8 @@ async function submitMock(timeUp){
 function resultView(items, mode, sum){
   toTop();
   stopAudio();
-  const isN3 = items.length > 0 && items.every(x => x.x === 'n3');
+  const lv = items.length > 0 && JL[items[0].x] && items.every(x => x.x === items[0].x) ? items[0].x : '';
+  const isN3 = !!lv, JM = JL[lv] || N3;
   const tot = items.length, ok = items.filter(x => x.you === x.a).length;
   const pct = tot ? Math.round(ok / tot * 100) : 0;
   const hasPoints = mode === 'mock' && sum && sum.maxPoints;
@@ -667,8 +675,8 @@ function resultView(items, mode, sum){
   });
   const wrong = items.filter(x => x.you !== x.a);
   const row = (name, v) => `<tr><td>${name}</td><td>${v[0]} / ${v[1]}</td></tr>`;
-  const kindNames = isN3 ? Object.fromEntries(Object.keys(N3.kinds).map(k => [k, N3.kinds[k].name])) : KINDS;
-  const catNames = isN3 ? N3.sections : CATS;
+  const kindNames = isN3 ? Object.fromEntries(Object.keys(JM.kinds).map(k => [k, JM.kinds[k].name])) : KINDS;
+  const catNames = isN3 ? JM.sections : CATS;
   const pill = isN3 ? '' : `<span class="pill ${pass?'ok':'ng'}">${pass ? L.passOk : L.passNg}</span>`;
   app.innerHTML = `
   <div class="stack">
@@ -679,7 +687,7 @@ function resultView(items, mode, sum){
            <p class="num">${ok} / ${tot} ${L.correct}（${pct}%）</p>`
         : `<div class="score"><span class="big">${pct}%</span><span class="num">${ok} / ${tot} ${L.correct}</span>${pill}</div>`}
       <div class="meter" role="img" aria-label="${Math.round(meterPct)}%"><i style="width:${meterPct}%"></i>${isN3 ? '' : `<b style="left:${linePct}%"></b>`}</div>
-      <p class="muted">${isN3 ? L.n3Line : hasPoints ? fill(L.linePoints, { pass: sum.passPoints, max: sum.maxPoints }) : L.line}</p>
+      <p class="muted">${isN3 ? L[lv + 'Line'] : hasPoints ? fill(L.linePoints, { pass: sum.passPoints, max: sum.maxPoints }) : L.line}</p>
       <p class="muted">${L.noGuarantee}</p>
     </section>
     <section class="panel">

@@ -290,6 +290,32 @@ const p1 = new Set(pids), p2 = rb2.questions.filter(q => q.p).map(q => q.p);
 console.log('N3 reading 2nd mock passage overlap:', p2.filter(x => p1.has(x)).length);
 assert.strictEqual(p2.filter(x => p1.has(x)).length, 0);
 
+// --- N4 ---
+r = call({ api: 'me', token: 'good' });
+assert.strictEqual(r.n4.all, 149); assert.strictEqual(r.n4.yomi, 14); assert.strictEqual(r.n4.chokai, 35); assert.strictEqual(r.total, 224);
+assert.deepStrictEqual([r.mocks.n4moji.size, r.mocks.n4moji.minutes, r.mocks.n4bunpo.size, r.mocks.n4bunpo.minutes, r.mocks.n4chokai.size, r.mocks.n4chokai.minutes, r.mocks.n4chokai.exam], [28, 25, 29, 55, 28, 35, 'n4']);
+const n4p = call({ api: 'practice', token: 'good', exam: 'n4', cat: 'yomi' }).questions;
+assert.strictEqual(n4p.length, 14); assert.ok(n4p.every(q => q.x === 'n4' && q.ch.length === 4));
+n4p.forEach(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); assert.strictEqual(q.ch[q.a], src.ch[0]); });
+assert.ok(call({ api: 'practice', token: 'good', exam: 'n3', cat: 'all' }).questions.every(q => q.x === 'n3'), 'N3 practice has no N4');
+assert.strictEqual(call({ api: 'practice', token: 'good', exam: 'n4', cat: 'all' }).questions.length, 149);
+const m4 = call({ api: 'mock_start', token: 'good', mock: 'n4bunpo' });
+assert.strictEqual(m4.questions.length, 29);
+assert.deepStrictEqual([...new Set(m4.questions.map(q => q.k))], ['keishiki', 'kumitate', 'bunsho', 'tanbun', 'chubun', 'joho']);
+assert.deepStrictEqual(['keishiki', 'kumitate', 'bunsho', 'tanbun', 'chubun', 'joho'].map(k => m4.questions.filter(q => q.k === k).length), [13, 4, 4, 3, 3, 2]);
+assert.ok(m4.questions.every(q => q.x === 'n4'));
+const s4 = call({ api: 'mock_submit', token: 'good', attemptId: m4.attemptId, answers: [] });
+assert.strictEqual(s4.ok, true); assert.strictEqual(s4.points, undefined);
+const c4 = call({ api: 'mock_start', token: 'good', mock: 'n4chokai' });
+assert.deepStrictEqual(['kadai', 'point', 'hatsuwa', 'sokuji'].map(k => c4.questions.filter(q => q.k === k).length), [8, 7, 5, 8]);
+c4.questions.forEach(q => { assert.ok(/^audio\/4L[KPHS]\d\d\.mp3$/.test(q.au)); if (q.hid) assert.ok(q.ch.every((c, i) => c === String(i + 1))); });
+const l4 = c4.questions.map(q => { const src = ctx.QUIZ_BANK.find(b => b.id === q.id); return q.hid ? src.ans : q.ch.indexOf(src.ch[0]); });
+assert.strictEqual(call({ api: 'mock_submit', token: 'good', attemptId: c4.attemptId, answers: l4 }).correct, 28);
+const mm4 = call({ api: 'mock_start', token: 'good', mock: 'n4moji' });
+assert.deepStrictEqual(['yomi', 'hyoki', 'bunmyaku', 'iikae', 'yoho'].map(k => mm4.questions.filter(q => q.k === k).length), [7, 5, 8, 4, 4]);
+call({ api: 'mock_submit', token: 'good', attemptId: mm4.attemptId, answers: [] });
+console.log('N4 attempt row:', ss.sheets['模擬テスト受験'].data.slice(-1)[0].slice(8, 9));
+
 // 利用時間が終わっても、始めていた模擬テストは提出できる
 const late = call({ api: 'mock_start', token: 'good', mock: 'n3moji' });
 expire();

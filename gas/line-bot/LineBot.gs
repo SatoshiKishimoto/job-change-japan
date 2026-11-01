@@ -55,7 +55,7 @@ var T = {
     fallback: 'メッセージありがとうございます。担当者が確認してご返信します。',
     handoff: '\n\n（担当者にも伝えました。このLINEでご連絡します）',
     aiNote: '※AIによる自動回答です',
-    quizInfo: '【特定技能2号 外食業 練習問題】\n公式LINEの友だちが使える、技能測定試験の練習問題です（ふりがな付き）。\n・学科と実技（判断・計画立案・事例）の練習\n・本番と同じ55問・70分の模擬テスト\n・日本語能力試験N3（文字・語彙・文法・読解・聴解）の練習と模擬テスト\n\n料金（回数券。1回分で24時間、すべて使い放題）\n・9回分 550円\n・30回分 1,760円\n・60回分 3,300円\n（すべて税込）\nはじめての方は、1回だけ無料で24時間お試しできます。\n\n下のリンクか、メニューの「練習問題」から開いてください。\n{url}'
+    quizInfo: '【特定技能2号 外食業 練習問題】\n公式LINEの友だちが使える、技能測定試験の練習問題です（ふりがな付き）。\n・学科と実技（判断・計画立案・事例）の練習\n・本番と同じ55問・70分の模擬テスト\n・日本語能力試験N3・N4（文字・語彙・文法・読解・聴解）の練習と模擬テスト\n\n料金（回数券。1回分で24時間、すべて使い放題）\n・9回分 550円\n・30回分 1,760円\n・60回分 3,300円\n（すべて税込）\nはじめての方は、1回だけ無料で24時間お試しできます。\n\n下のリンクか、メニューの「練習問題」から開いてください。\n{url}'
   },
   en: {
     welcome: 'Thank you for adding us!\nThis is Job Change Japan (Fairly connecting Inc.).\n\nWe help foreign nationals find jobs in Japan — completely free.',
@@ -80,7 +80,7 @@ var T = {
     fallback: 'Thank you for your message. Our staff will check and reply.',
     handoff: '\n\n(We have also passed this to our staff. They will contact you on this LINE.)',
     aiNote: '* Automatic answer by AI',
-    quizInfo: '[Practice test: Specified Skilled Worker (ii), Food Service]\nPractice questions for the skills test, for friends of our LINE account (in Japanese with furigana).\n- Practice (written and practical)\n- Mock exam in the same format as the real test (55 questions, 70 minutes)\n- JLPT N3 practice and mock exams (vocabulary, grammar, reading and listening)\n\nPrice (tickets; 1 ticket = 24 hours of unlimited use)\n- 9 tickets: 550 yen\n- 30 tickets: 1,760 yen\n- 60 tickets: 3,300 yen\n(tax included)\nFirst-time users can try everything free for 24 hours, once.\n\nOpen the link below, or tap "Practice test" in the menu.\n{url}'
+    quizInfo: '[Practice test: Specified Skilled Worker (ii), Food Service]\nPractice questions for the skills test, for friends of our LINE account (in Japanese with furigana).\n- Practice (written and practical)\n- Mock exam in the same format as the real test (55 questions, 70 minutes)\n- JLPT N3 and N4 practice and mock exams (vocabulary, grammar, reading and listening)\n\nPrice (tickets; 1 ticket = 24 hours of unlimited use)\n- 9 tickets: 550 yen\n- 30 tickets: 1,760 yen\n- 60 tickets: 3,300 yen\n(tax included)\nFirst-time users can try everything free for 24 hours, once.\n\nOpen the link below, or tap "Practice test" in the menu.\n{url}'
   },
   vi: {
     welcome: 'Cảm ơn bạn đã kết bạn!\nĐây là Job Change Japan (Công ty Fairly connecting).\n\nChúng tôi hỗ trợ người nước ngoài tìm việc tại Nhật Bản — hoàn toàn miễn phí.',
@@ -105,7 +105,7 @@ var T = {
     fallback: 'Cảm ơn tin nhắn của bạn. Nhân viên sẽ kiểm tra và trả lời.',
     handoff: '\n\n(Chúng tôi đã chuyển cho nhân viên. Nhân viên sẽ liên lạc qua LINE này.)',
     aiNote: '* Câu trả lời tự động bởi AI',
-    quizInfo: '[Đề luyện thi Kỹ năng đặc định số 2 – Ngành dịch vụ ăn uống]\nĐề luyện thi kỹ năng dành cho bạn bè của tài khoản LINE này (tiếng Nhật có furigana).\n- Luyện tập (lý thuyết và thực hành)\n- Thi thử giống đề thật (55 câu, 70 phút)\n- Luyện tập và thi thử JLPT N3 (từ vựng, ngữ pháp, đọc hiểu, nghe hiểu)\n\nGiá (vé; 1 vé = dùng không giới hạn trong 24 giờ)\n- 9 vé: 550 yên\n- 30 vé: 1.760 yên\n- 60 vé: 3.300 yên\n(đã gồm thuế)\nLần đầu tiên được dùng thử miễn phí 24 giờ (1 lần).\n\nMở đường link bên dưới, hoặc bấm "Practice test" ở menu.\n{url}'
+    quizInfo: '[Đề luyện thi Kỹ năng đặc định số 2 – Ngành dịch vụ ăn uống]\nĐề luyện thi kỹ năng dành cho bạn bè của tài khoản LINE này (tiếng Nhật có furigana).\n- Luyện tập (lý thuyết và thực hành)\n- Thi thử giống đề thật (55 câu, 70 phút)\n- Luyện tập và thi thử JLPT N3, N4 (từ vựng, ngữ pháp, đọc hiểu, nghe hiểu)\n\nGiá (vé; 1 vé = dùng không giới hạn trong 24 giờ)\n- 9 vé: 550 yên\n- 30 vé: 1.760 yên\n- 60 vé: 3.300 yên\n(đã gồm thuế)\nLần đầu tiên được dùng thử miễn phí 24 giờ (1 lần).\n\nMở đường link bên dưới, hoặc bấm "Practice test" ở menu.\n{url}'
   },
   ne: {
     welcome: 'साथी थप्नुभएकोमा धन्यवाद!\nयो Job Change Japan (Fairly connecting Inc.) हो।\n\nहामी जापानमा काम खोज्ने विदेशीहरूलाई निःशुल्क सहयोग गर्छौं।',
@@ -130,7 +130,7 @@ var T = {
     fallback: 'सन्देशको लागि धन्यवाद। हाम्रो कर्मचारीले हेरेर जवाफ दिनेछ।',
     handoff: '\n\n(हामीले कर्मचारीलाई पनि जानकारी दियौं। उहाँले यही LINE मा सम्पर्क गर्नुहुनेछ।)',
     aiNote: '* AI द्वारा स्वचालित जवाफ',
-    quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूका लागि सीप परीक्षाको अभ्यास प्रश्न (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक)\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट)\n- JLPT N3 अभ्यास र मोक टेस्ट (शब्द, व्याकरण, पढाइ र सुनाइ)\n\nशुल्क (टिकट; १ टिकट = २४ घण्टा असीमित प्रयोग)\n- ९ टिकट: ५५० येन\n- ३० टिकट: १,७६० येन\n- ६० टिकट: ३,३०० येन\n(कर सहित)\nपहिलो पटक प्रयोग गर्नेले एक पटक २४ घण्टा निःशुल्क प्रयोग गर्न सक्नुहुन्छ।\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
+    quizInfo: '[विशिष्ट सीप २ (Tokutei Ginou 2) – खाद्य सेवा: अभ्यास प्रश्न]\nहाम्रो LINE का साथीहरूका लागि सीप परीक्षाको अभ्यास प्रश्न (फुरिगाना सहित जापानी भाषामा)।\n- अभ्यास (लिखित र व्यावहारिक)\n- वास्तविक परीक्षा जस्तै मोक टेस्ट (५५ प्रश्न, ७० मिनेट)\n- JLPT N3 र N4 अभ्यास र मोक टेस्ट (शब्द, व्याकरण, पढाइ र सुनाइ)\n\nशुल्क (टिकट; १ टिकट = २४ घण्टा असीमित प्रयोग)\n- ९ टिकट: ५५० येन\n- ३० टिकट: १,७६० येन\n- ६० टिकट: ३,३०० येन\n(कर सहित)\nपहिलो पटक प्रयोग गर्नेले एक पटक २४ घण्टा निःशुल्क प्रयोग गर्न सक्नुहुन्छ।\n\nतलको लिङ्क खोल्नुहोस्, वा मेनुको "Practice test" थिच्नुहोस्।\n{url}'
   }
 };
 
@@ -560,7 +560,7 @@ var AI_SYSTEM = [
   '- 風俗営業に関係する仕事はできない。許可が出る前に働くことはできない。個別の判断は担当者が確認すると伝える。',
   '',
   '# 特定技能2号 外食業の練習問題（当社が提供）',
-  '- 公式LINEの友だちは、外食業特定技能2号技能測定試験の練習問題を使える（学科・実技、ふりがな付き）。料金は回数券9回分550円・30回分1,760円・60回分3,300円（税込。税抜は500円・1,600円・3,000円）、1回分で24時間、練習も模擬テスト（本番と同じ55問・70分）もすべて使い放題。はじめての人は1回だけ無料で24時間お試しできる。日本語能力試験N3（文字・語彙・文法・読解・聴解）の練習問題もある（N3の模擬テストは「文字・語彙」35問・30分、「文法・読解」39問・70分、「聴解」28問・40分。回数券は共通。聴解の音声は合成音声）。練習問題の利用は職業紹介とは関係なく、買わなくても紹介で不利にならない。',
+  '- 公式LINEの友だちは、外食業特定技能2号技能測定試験の練習問題を使える（学科・実技、ふりがな付き）。料金は回数券9回分550円・30回分1,760円・60回分3,300円（税込。税抜は500円・1,600円・3,000円）、1回分で24時間、練習も模擬テスト（本番と同じ55問・70分）もすべて使い放題。はじめての人は1回だけ無料で24時間お試しできる。日本語能力試験N3（文字・語彙・文法・読解・聴解）の練習問題もある（N3の模擬テストは「文字・語彙」35問・30分、「文法・読解」39問・70分、「聴解」28問・40分。回数券は共通。聴解の音声は合成音声）。日本語能力試験N4の練習問題と模擬テスト（「文字・語彙」28問・25分、「文法・読解」29問・55分、「聴解」28問・35分）もある。練習問題の利用は職業紹介とは関係なく、買わなくても紹介で不利にならない。',
   '- 試験・2号・練習問題について聞かれたら、このリンクを案内する（メニューの「練習問題」からも開ける）: ' + QUIZ_URL,
   '- 外食業で2号になるには、技能測定試験の合格に加えて、日本語能力試験N3以上の合格と、2年以上の指導等の実務経験（店舗管理の補助）が必要。',
   '- 練習問題は当社のオリジナル問題で、実際の試験問題ではない。模擬テストの購入方法は準備中なので、聞かれたら担当者が案内すると伝える。'

@@ -30,6 +30,12 @@ N3_KINDS = {**N3_KINDS, **N3_LISTEN_KINDS}
 for _k in N3_LISTEN_KINDS:
     N3_SECTION[_k] = "chokai"
 N3_SECTIONS = {**N3_SECTIONS, "dokkai": "読解", "chokai": "聴解"}
+from questions_n4 import N4, N4_KINDS, N4_SECTION, N4_SECTIONS  # noqa: E402
+from questions_n4_reading import P as N4_PASSAGES, N4_READING_KINDS, N4_READING_SECTION  # noqa: E402
+from questions_n4_listening import L as N4_LISTEN, N4_LISTEN_KINDS  # noqa: E402
+N4_KINDS = {**N4_KINDS, **N4_READING_KINDS, **N4_LISTEN_KINDS}
+N4_SECTION = {**N4_SECTION, **N4_READING_SECTION, **{k: "chokai" for k in N4_LISTEN_KINDS}}
+N4_SECTIONS = {**N4_SECTIONS, "dokkai": "読解", "chokai": "聴解"}
 from furi import furigana as F       # noqa: E402
 import html as H                      # noqa: E402
 import terms                          # noqa: E402
@@ -141,7 +147,65 @@ for it, qid in zip(N3_LISTEN, listening_ids()):
     bank.append(item)
     n3n += 1
 
+# ===== N4（N3と同じ作り。IDの頭に4を付ける） =====
+N4P = {"yomi": "4Y", "hyoki": "4H", "bunmyaku": "4B", "iikae": "4I", "yoho": "4U", "keishiki": "4G", "kumitate": "4K",
+       "bunsho": "4RB", "tanbun": "4RT", "chubun": "4RC", "joho": "4RJ"}
+n4n = 0
+for row in N4:
+    k = row[0]
+    seq[N4P[k]] = seq.get(N4P[k], 0) + 1
+    qid = f"{N4P[k]}{seq[N4P[k]]:02d}"
+    if k == "kumitate":
+        _, before, after, parts, star, note = row
+        blanks = ["＿＿＿＿"] * 4
+        blanks[star] = "＿★＿"
+        q = n3text(before) + "　" + "　".join(blanks) + "　" + n3text(after)
+        ch = [parts[star]] + [p for i, p in enumerate(parts) if i != star]
+        e = F("正しい順番：" + before + "".join(parts) + after + "\n★には「" + parts[star] + "」が入ります。" + note)
+        bank.append({"id": qid, "x": "n4", "c": N4_SECTION[k], "k": k, "q": q, "ch": [H.escape(c) for c in ch], "e": e})
+    else:
+        _, q, ok, w1, w2, w3, e = row
+        q = "<b class=\"word\">" + H.escape(q) + "</b>" if k == "yoho" else n3text(q)
+        bank.append({"id": qid, "x": "n4", "c": N4_SECTION[k], "k": k, "q": q,
+                     "ch": [H.escape(c) for c in (ok, w1, w2, w3)], "e": F(e)})
+    n4n += 1
+for row in N4_PASSAGES:
+    k = row["k"]
+    seq[N4P[k]] = seq.get(N4P[k], 0) + 1
+    pid = f"{N4P[k]}{seq[N4P[k]]:02d}"
+    PASSAGES[pid] = passage_html(row["text"])
+    for i, (q, ok, w1, w2, w3, e) in enumerate(row["qs"]):
+        assert len({ok, w1, w2, w3}) == 4, q
+        bank.append({"id": f"{pid}-{i + 1}", "x": "n4", "c": N4_SECTION[k], "k": k, "p": pid, "pi": i,
+                     "q": n3text(q), "ch": [H.escape(c) for c in (ok, w1, w2, w3)], "e": F(e)})
+        n4n += 1
+for it, qid in zip(N4_LISTEN, listening_ids("n4")):
+    k = it["k"]
+    assert os.path.exists(os.path.join(ROOT, "quiz", "audio", qid + ".mp3")), qid + ".mp3 がありません（make_audio.py を実行）"
+    spoken = k in ("hatsuwa", "sokuji")
+    script = []
+    if it.get("intro") or it.get("q"):
+        script.append("ナレーター：" + it.get("intro", "") + it.get("q", ""))
+    for spk, text in it.get("lines", []):
+        script.append(SPK[spk] + "：" + text)
+    if spoken:
+        who = SPK.get(it.get("voice", "N"), "")
+        for i, c in enumerate(it["ch"]):
+            script.append(f"{NUMS[i]}　{who}：{c}")
+    e = "【スクリプト】\n" + "\n".join(script) + "\n\n【解説】" + it["e"]
+    qtext = "「" + it["lines"][0][1] + "」への返事として、最もよいものはどれか。" if k == "sokuji" else it["q"]
+    item = {"id": qid, "x": "n4", "c": "chokai", "k": k, "au": f"audio/{qid}.mp3",
+            "q": H.escape(qtext), "ch": [H.escape(c) for c in it["ch"]], "e": F(e)}
+    if spoken:
+        item.update({"fx": 1, "ans": it["ans"], "hid": 1})
+    if it.get("scene"):
+        item["sc"] = H.escape(it["scene"])
+    assert len(set(it["ch"])) == len(it["ch"]), qid
+    bank.append(item)
+    n4n += 1
+
 N3_META = {"sections": N3_SECTIONS, "kinds": {k: v[0] for k, v in N3_KINDS.items()}}
+N4_META = {"sections": N4_SECTIONS, "kinds": {k: v[0] for k, v in N4_KINDS.items()}}
 
 gs = (
     "/**\n * 練習問題データ（自動生成：quiz/build/build.py）。手で編集しないでください。\n"
@@ -149,6 +213,8 @@ gs = (
     f"var QUIZ_CATS = {json.dumps(CATS, ensure_ascii=False)};\n"
     f"var QUIZ_KINDS = {json.dumps(KINDS, ensure_ascii=False)};\n"
     f"var QUIZ_N3 = {json.dumps(N3_META, ensure_ascii=False)};\n"
+    f"var QUIZ_N4 = {json.dumps(N4_META, ensure_ascii=False)};\n"
+    "var QUIZ_JLPT = { n3: QUIZ_N3, n4: QUIZ_N4 };\n"
     "var QUIZ_PASSAGES = {\n" + ",\n".join(json.dumps(k, ensure_ascii=False) + ": " + json.dumps(v, ensure_ascii=False) for k, v in PASSAGES.items()) + "\n};\n"
     "var QUIZ_BANK = [\n" + ",\n".join(json.dumps(b, ensure_ascii=False) for b in bank) + "\n];\n"
 )
@@ -205,12 +271,16 @@ L = {k: F(v) for k, v in {
     "allHead": "まとめて",
     "byCat": "分野別の正解数", "retryWrong": "間違えた問題だけもう一度", "home": "最初の画面にもどる",
     "review": "間違えた問題の復習",
-    "tabSkill": "技能測定試験", "tabN3": "日本語能力試験 N3",
+    "tabSkill": "技能測定試験", "tabN3": "日本語 N3", "tabN4": "日本語 N4",
+    "n4Lead": "日本語能力試験（JLPT）N4の練習です。本番と同じく、問題にはふりがながありません（解説にはあります）。本番の聴解の一部は絵を見て答えますが、ここでは文字や場面の説明で答えます。",
+    "n4Mock": "N4 模擬テスト",
+    "n4Line": "N4の合否は、総合得点（180点満点）が90点以上で、さらに「言語知識・読解」が38点以上、「聴解」が19点以上必要です。本番の得点は、正答数から計算された尺度得点なので、この正答率とは一致しません。目安として使ってください。",
+    "n4All": "N4 全問チャレンジ", "n4AllSub": "文字・語彙・文法・読解の問題を、ランダムな順番で出します",
     "skillLead": "外食業特定技能2号技能測定試験（学科・実技）の練習です。",
     "n3Lead": "日本語能力試験（JLPT）N3の練習です。本番と同じく、問題にはふりがながありません（解説にはあります）。",
     "n3Mock": "N3 模擬テスト",
     "n3MockSub": "{name}：本番と同じ{n}問・{m}分",
-    "sharedCredits": "回数券は、技能測定試験とN3で共通です。利用中なら、模擬テストは何回でも受けられます。",
+    "sharedCredits": "回数券は、技能測定試験・N3・N4で共通です。利用中なら、模擬テストは何回でも受けられます。",
     "n3Soon": "",
     "audioPlay": "▶ 音声を聞く", "audioPlaying": "再生中…", "audioReplay": "▶ もう一度聞く",
     "audioOnce": "本番と同じく、音声は1回だけ聞けます。", "audioDone": "音声は聞き終わりました",
@@ -254,7 +324,7 @@ L = {k: F(v) for k, v in {
 L["price"] = F("回数券（1回分を使うと、そこから{h}時間、練習問題も模擬テストもすべて使えます）")
 L["salesReady"] = SALES_READY
 L["packRow"] = "<b>" + F("{n}回分") + "</b>　" + F("{yen}円（税込）")
-L["title"] = '<span class="ln">' + F("外食業2号・N3") + '</span> <span class="ln">' + F("練習問題") + '</span>'
+L["title"] = '<span class="ln">' + F("外食業2号・N3・N4") + '</span> <span class="ln">' + F("練習問題") + '</span>'
 L["sub"] = {k: F(v) for k, v in {
     "eisei": "食中毒・HACCP・食品衛生法",
     "chori": "食材・調理方法・調理機器・労働安全",
@@ -274,7 +344,10 @@ html = html.replace("__NOCOPY__", L["noCopy"]).replace("__NOCOPYSUB__", L["noCop
 html = html.replace("__LBL__", json.dumps(L, ensure_ascii=False))
 open(os.path.join(ROOT, "quiz", "terms.html"), "w").write(terms.render(F, PRIVACY_URL))
 open(os.path.join(ROOT, "quiz", "tokushoho.html"), "w").write(tokushoho.render(F))
-html = html.replace("__N3__", json.dumps({"sections": {k: F(v) for k, v in N3_SECTIONS.items()},
-                                          "kinds": {k: {"name": F(v[0]), "inst": H.escape(v[1]), "sec": N3_SECTION[k]} for k, v in N3_KINDS.items()}}, ensure_ascii=False))
+def jlpt_meta(sections, kinds, section):
+    return {"sections": {k: F(v) for k, v in sections.items()},
+            "kinds": {k: {"name": F(v[0]), "inst": H.escape(v[1]), "sec": section[k]} for k, v in kinds.items()}}
+html = html.replace("__N3__", json.dumps(jlpt_meta(N3_SECTIONS, N3_KINDS, N3_SECTION), ensure_ascii=False))
+html = html.replace("__N4__", json.dumps(jlpt_meta(N4_SECTIONS, N4_KINDS, N4_SECTION), ensure_ascii=False))
 open(os.path.join(ROOT, "quiz", "index.html"), "w").write(html)
-print(f"QuizBank.gs: {len(bank)}問（うちN3 {n3n}問） / quiz/index.html を作成しました")
+print(f"QuizBank.gs: {len(bank)}問（うちN3 {n3n}問・N4 {n4n}問） / quiz/index.html を作成しました")

@@ -3,7 +3,7 @@
   python3 quiz/build/make_audio.py          # まだない音声だけ作る
   python3 quiz/build/make_audio.py --all    # 全部作り直す
 
-questions_n3_listening.py のスクリプトから、quiz/audio/<問題ID>.mp3 を作ります。
+questions_n3_listening.py・questions_n4_listening.py のスクリプトから、quiz/audio/<問題ID>.mp3 を作ります。
 声は Open JTalk（pyopenjtalk）の合成音声です。
   ナレーター：女性の声（少し低め・ゆっくり）
   女の人  ：女性の声
@@ -18,19 +18,22 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 OUT = os.path.join(ROOT, "quiz", "audio")
 sys.path.insert(0, HERE)
 from questions_n3_listening import L  # noqa: E402
+from questions_n4_listening import L as L4  # noqa: E402
 
 SR = 48000
 # 合成音声が読みまちがえる言葉だけ、かなで読ませる
-SAY = {"辛すぎ": "からすぎ", "明日行って": "あした行って"}
+SAY = {"辛すぎ": "からすぎ", "明日行って": "あした行って", "外国の方": "外国のかた", "何で駅": "なにで駅"}
 NUM = ["いち", "に", "さん", "よん"]
 PREFIX = {"kadai": "LK", "point": "LP", "gaiyo": "LG", "hatsuwa": "LH", "sokuji": "LS"}
+LEVELS = {"n3": (L, ""), "n4": (L4, "4")}   # N4 の音声は 4LK01.mp3 など
 
 
-def listening_ids():
+def listening_ids(level="n3"):
     """問題IDを付ける（build.py と同じ規則）"""
+    items, head = LEVELS[level]
     seq, out = {}, []
-    for it in L:
-        p = PREFIX[it["k"]]
+    for it in items:
+        p = head + PREFIX[it["k"]]
         seq[p] = seq.get(p, 0) + 1
         out.append(f"{p}{seq[p]:02d}")
     return out
@@ -119,7 +122,8 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     redo = "--all" in sys.argv
     total = 0.0
-    for it, qid in zip(L, listening_ids()):
+    pairs = [(it, qid) for lv in LEVELS for it, qid in zip(LEVELS[lv][0], listening_ids(lv))]
+    for it, qid in pairs:
         path = os.path.join(OUT, qid + ".mp3")
         if os.path.exists(path) and not redo:
             continue
