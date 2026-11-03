@@ -42,7 +42,7 @@ import terms                          # noqa: E402
 import tokushoho                      # noqa: E402
 
 # プライバシーポリシーのURL（わかったら入れる。空なら、リンクを出さない）
-SALES_READY = False   # 特定商取引法の表記ページができたら True（購入ボタンを出す）
+SALES_READY = True    # 特定商取引法の表記ページができたら True（購入ボタンを出す）
 PRIVACY_URL = "https://fairlyconnecting.blog.jp/archives/11232068.html"
 
 # 問題ID：学科は E/C/S/U＋番号、実技・判断は H＋分野、実技・計画立案は K＋分野
