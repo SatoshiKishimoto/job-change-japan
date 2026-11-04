@@ -320,8 +320,12 @@ var Q = {
   q4: { key: 'location', opts: [
     ['大阪府', { ja: '大阪', en: 'Osaka', vi: 'Osaka', ne: 'ओसाका', id: 'Osaka' }],
     ['関西（大阪以外）', { jaen: '関西(大阪以外)/Kansai', ja: '関西（大阪以外）', en: 'Kansai', vi: 'Kansai', ne: 'कान्साई', id: 'Kansai' }],
-    ['関東', { jaen: '関東・東京 / Kanto', ja: '関東（東京など）', en: 'Kanto (Tokyo)', vi: 'Kanto (Tokyo)', ne: 'कान्तो (टोकियो)', id: 'Kanto (Tokyo)' }],
+    ['東京都', { jaen: '東京 / Tokyo', ja: '東京', en: 'Tokyo', vi: 'Tokyo', ne: 'टोकियो', id: 'Tokyo' }],
+    ['関東（東京以外）', { jaen: '関東(東京以外)/Kanto', ja: '関東（東京以外）', en: 'Kanto (not Tokyo)', vi: 'Kanto (ngoài Tokyo)', ne: 'टोकियो बाहेक कान्तो', id: 'Kanto (selain Tokyo)' }],
     ['中部・東海', { jaen: '中部・東海 / Chubu', ja: '中部・東海', en: 'Chubu (Nagoya)', vi: 'Chubu (Nagoya)', ne: 'चुबु (नागोया)', id: 'Chubu (Nagoya)' }],
+    ['北海道・東北', { jaen: '北海道・東北/Hokkaido', ja: '北海道・東北', en: 'Hokkaido / Tohoku', vi: 'Hokkaido / Tohoku', ne: 'होक्काइडो / तोहोकु', id: 'Hokkaido / Tohoku' }],
+    ['中国・四国', { jaen: '中国・四国/Chugoku', ja: '中国・四国', en: 'Chugoku / Shikoku', vi: 'Chugoku / Shikoku', ne: 'चुगोकु / शिकोकु', id: 'Chugoku / Shikoku' }],
+    ['九州・沖縄', { jaen: '九州・沖縄/Kyushu', ja: '九州・沖縄', en: 'Kyushu / Okinawa', vi: 'Kyushu / Okinawa', ne: 'क्युशु / ओकिनावा', id: 'Kyushu / Okinawa' }],
     ['全国', { ja: 'どこでもOK', en: 'Anywhere', vi: 'Ở đâu cũng được', ne: 'जहाँ पनि', id: 'Di mana saja' }],
     ['その他', 'other']
   ]},
@@ -511,11 +515,35 @@ function norm_(s, qid) {
   return s.replace(/(府|県|都)$/, '').replace(/^全国.*$/, '全国');
 }
 
+// 都道府県 → 勤務地の地域（求人の勤務地に「兵庫県」「福岡」などと書いても、地域で合わせる）
+var PREF_REGION = (function () {
+  var m = {}, g = {
+    '大阪': ['大阪'],
+    '関西（大阪以外）': ['京都', '兵庫', '奈良', '和歌山', '滋賀'],
+    '東京': ['東京'],
+    '関東（東京以外）': ['神奈川', '埼玉', '千葉', '茨城', '栃木', '群馬'],
+    '中部・東海': ['愛知', '静岡', '岐阜', '三重', '長野', '山梨', '新潟', '富山', '石川', '福井'],
+    '北海道・東北': ['北海道', '青森', '岩手', '宮城', '秋田', '山形', '福島'],
+    '中国・四国': ['鳥取', '島根', '岡山', '広島', '山口', '徳島', '香川', '愛媛', '高知'],
+    '九州・沖縄': ['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄']
+  };
+  Object.keys(g).forEach(function (r) { g[r].forEach(function (p) { m[p] = r; }); });
+  return m;
+})();
+// 前の選択肢「関東」（東京を含む）で登録した人・求人は、東京と関東（東京以外）の両方に合わせる
+var LOC_WIDE = { '関東': ['東京', '関東（東京以外）'] };
+function locMatch_(jl, ul) {
+  if (!jl || jl === '全国' || ul === '全国' || ul === 'その他') return true;
+  jl = PREF_REGION[jl] || jl; ul = PREF_REGION[ul] || ul;
+  if (jl === ul) return true;
+  return (LOC_WIDE[jl] || []).indexOf(ul) >= 0 || (LOC_WIDE[ul] || []).indexOf(jl) >= 0;
+}
+
 function jobMatches_(job, user) {
   var jr = norm_(job['職種'], 'q1'), jl = norm_(job['勤務地'], 'q4');
   var ur = norm_(user['希望職種'], 'q1'), ul = norm_(user['希望勤務地'], 'q4');
   var roleOk = !jr || jr === ur || ur === 'その他';
-  var locOk = !jl || jl === '全国' || jl === ul || ul === '全国' || ul === 'その他';
+  var locOk = locMatch_(jl, ul);
   // 雇用形態：求人が「アルバイト」ならアルバイト希望者だけ、「正社員・フルタイム」ならそれ以外の人に
   var jt = String(job['雇用形態'] || '').trim(), ut = String(user['雇用形態'] || '').trim() || '正社員・フルタイム';
   var typeOk = !jt || jt === 'どちらも' || jt === ut;
