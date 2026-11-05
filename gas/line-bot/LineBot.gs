@@ -766,6 +766,7 @@ function onSheetOpen() {
     .addSeparator()
     .addItem('回数券：選んだ行の人に付与（9・30・60回分）', 'menuGiveMockCredits')
     .addItem('練習問題の案内を登録者に送る（1回だけ）', 'menuAnnounceQuiz')
+    .addItem('取りこぼしたステップ配信をまとめて送る', 'menuSendMissedSteps')
     .addToUi();
 }
 
@@ -811,6 +812,91 @@ function menuAnnounceQuiz() {
     var total = sendQuizAnnounce_(plan.byLang, done);
     props.setProperty('QUIZ_ANNOUNCED', JSON.stringify(done));
     ui.alert('送信しました', total + '人に練習問題の案内を送りました。', ui.ButtonSet.OK);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ============================================================
+// 取りこぼしたステップ配信をまとめて送る
+//  毎朝の配信が止まっていた日などに、送る期間（その日から3日）を過ぎてしまった配信を、1人1通にまとめて送る。
+//  まだ送る期間中の配信は、ふだんどおり毎朝の runDaily に任せる。
+//  練習問題の一斉案内（menuAnnounceQuiz）をすでに受け取った人には、5日後（練習問題の案内）を送らない。
+// ============================================================
+function missedStepsPlan_() {
+  var sh = regSheet_(), rows = sheetObjects_(sh), today = dayNum_(new Date());
+  var announced = JSON.parse(PropertiesService.getScriptProperties().getProperty('QUIZ_ANNOUNCED') || '{}');
+  var byUser = {}, order = [];
+  rows.forEach(function (r) {
+    var id = r['LINE userId'];
+    if (!id || !(r['登録日時'] instanceof Date)) return;
+    if (!byUser[id]) { byUser[id] = { uid: id, rows: [], done: {}, blocked: false, first: r }; order.push(id); }
+    var u = byUser[id];
+    u.rows.push(r);
+    if (r['ブロック'] === '○') u.blocked = true;
+    String(r['ステップ送信済'] || '').split(',').filter(String).forEach(function (d) { u.done[d] = 1; });
+    if (dayNum_(r['登録日時']) < dayNum_(u.first['登録日時'])) u.first = r;   // いちばん早い登録日で数える
+  });
+  var plan = [];
+  order.forEach(function (id) {
+    var u = byUser[id];
+    if (u.blocked) return;
+    var last = u.rows[u.rows.length - 1];   // 言語・雇用形態は、いちばん新しい行に合わせる
+    var days = today - dayNum_(u.first['登録日時']);
+    var steps = STEP_DAYS.filter(function (d) { return days > d + 2 && !u.done[String(d)]; });
+    var skip = steps.filter(function (d) { return d === 5 && announced[id]; });   // 練習問題の案内は受け取り済み
+    var send = steps.filter(function (d) { return skip.indexOf(d) < 0; });
+    if (!steps.length) return;
+    plan.push({ uid: id, rows: u.rows, steps: steps, send: send, lang: langCode_(last['言語']), baito: last['雇用形態'] === 'アルバイト',
+                name: last['お名前'] || last['LINE表示名'] || id });
+  });
+  return plan;
+}
+
+function missedStepsMessages_(p) {
+  return p.send.map(function (d) {
+    var set = (p.baito && STEPS_BAITO[d]) ? STEPS_BAITO[d] : STEPS[d];
+    return text_(tk_(p.lang) === 'jaen' ? set.ja + '\n\n― English ―\n' + set.en : (set[p.lang] || set.ja));
+  });
+}
+
+// 送った（または送らなくてよい）配信を、その人のすべての行の「ステップ送信済」に書く
+function markSteps_(sh, p) {
+  var col = colIndex_(sh, 'ステップ送信済');
+  p.rows.forEach(function (r) {
+    var done = String(r['ステップ送信済'] || '').split(',').filter(String);
+    p.steps.forEach(function (d) { if (done.indexOf(String(d)) < 0) done.push(String(d)); });
+    done.sort(function (a, b) { return a - b; });
+    sh.getRange(r._row, col).setValue(done.join(','));
+  });
+}
+
+function sendMissedSteps_(plan) {
+  var sh = regSheet_(), n = 0;
+  plan.forEach(function (p) {
+    if (!p.send.length) { markSteps_(sh, p); return; }
+    // 1人に1回のプッシュ（吹き出しは最大4つ）＝ LINEの無料枠は1通分
+    if (push_(p.uid, missedStepsMessages_(p))) { markSteps_(sh, p); n++; }
+  });
+  return n;
+}
+
+function menuSendMissedSteps() {
+  var ui = SpreadsheetApp.getUi();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var plan = missedStepsPlan_();
+    var sendTo = plan.filter(function (p) { return p.send.length; });
+    if (!plan.length) { ui.alert('取りこぼしたステップ配信', '取りこぼしている配信はありません。', ui.ButtonSet.OK); return; }
+    var lines = plan.map(function (p) {
+      return '・' + p.name + '：' + p.steps.map(function (d) { return d + '日後'; }).join('・') + (p.send.length < p.steps.length ? '（練習問題の案内は受け取り済みのため送らない）' : '');
+    });
+    var ans = ui.alert('取りこぼしたステップ配信を送りますか？',
+      lines.join('\n') + '\n\n' + sendTo.length + '人に送ります。1人1通にまとめるので、LINEの月200通の無料枠を' + sendTo.length + '通使います。', ui.ButtonSet.YES_NO);
+    if (ans !== ui.Button.YES) return;
+    var n = sendMissedSteps_(plan);
+    ui.alert('送信しました', n + '人に、取りこぼしたステップ配信を送りました。', ui.ButtonSet.OK);
   } finally {
     lock.releaseLock();
   }
