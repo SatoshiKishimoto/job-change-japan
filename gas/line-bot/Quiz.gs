@@ -84,7 +84,7 @@ var QUIZ_MOCKS = {
 };
 
 var QUIZ_CREDIT_SHEET = '模擬テスト回数';
-var QUIZ_CREDIT_HEADERS = ['LINE userId', 'LINE表示名', '残り回数', '付与回数合計', '最終利用', '初回アクセス', 'メモ', '利用期限', 'お試し利用', 'お名前'];
+var QUIZ_CREDIT_HEADERS = ['LINE userId', 'LINE表示名', '残り回数', '付与回数合計', '最終利用', '初回アクセス', 'メモ', '利用期限', 'お試し利用', 'お名前', 'ブロック'];
 var QUIZ_BUY_SHEET = '購入記録';
 var QUIZ_BUY_HEADERS = ['日時', 'StripeセッションID', 'LINE userId', 'LINE表示名', '回数', '金額（税込）', '付与後の残り回数', '確認方法'];
 var QUIZ_USE_SHEET = '利用記録';
@@ -633,15 +633,23 @@ function quizCreditRow_(user, create) {
 
 // 「LINE登録」シートの登録者を、まだ練習問題を開いていない人も含めて「模擬テスト回数」シートに並べる
 // （初回アクセスが空欄の行＝まだ練習問題を開いていない人）。手で回数券を付与するときに探しやすくするため
+// ブロックしている人は並べない。すでにある行は、ブロック列に○を付けて行を隠す（記録は消さない。ブロック解除で元に戻す）
 function quizSyncCreditRows_() {
   var sh = quizCreditSheet_();
-  var have = {}, nameCol = quizCol_(sh, 'お名前');
-  sheetObjects_(sh).forEach(function (r) { have[r['LINE userId']] = r; });
+  var have = {}, nameCol = quizCol_(sh, 'お名前'), blockCol = quizCol_(sh, 'ブロック');
+  var regs = sheetObjects_(regSheet_()), blocked = {};
+  regs.forEach(function (u) { if (u['LINE userId'] && u['ブロック'] === '○') blocked[u['LINE userId']] = 1; });
+  sheetObjects_(sh).forEach(function (r) {
+    have[r['LINE userId']] = r;
+    var isBlocked = blocked[r['LINE userId']] || r['ブロック'] === '○';
+    if (isBlocked && r['ブロック'] !== '○') sh.getRange(r._row, blockCol).setValue('○');
+    quizShowRow_(sh, r._row, !isBlocked);
+  });
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
   var add = [], seen = {};
-  sheetObjects_(regSheet_()).forEach(function (u) {
+  regs.forEach(function (u) {
     var id = u['LINE userId'];
-    if (!id || seen[id]) return;
+    if (!id || seen[id] || blocked[id]) return;
     seen[id] = 1;
     var r = have[id];
     if (r) {   // すでにある行は、お名前だけ入れる
@@ -653,6 +661,19 @@ function quizSyncCreditRows_() {
   });
   if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, head.length).setValues(add);
   return add.length;
+}
+
+function quizShowRow_(sh, row, show) {
+  try { if (show) sh.showRows(row); else sh.hideRows(row); } catch (e) {}
+}
+
+// 友だち追加・ブロックのとき（LineBot.gs の follow / unfollow から）：模擬テスト回数シートの行を出す／隠す
+function quizMarkBlocked_(uid, isBlocked) {
+  var sh = quizCreditSheet_();
+  var r = sheetObjects_(sh).filter(function (x) { return x['LINE userId'] === uid; })[0];
+  if (!r) return;
+  sh.getRange(r._row, quizCol_(sh, 'ブロック')).setValue(isBlocked ? '○' : '');
+  quizShowRow_(sh, r._row, !isBlocked);
 }
 
 function quizAttempts_(uid) {

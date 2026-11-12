@@ -383,10 +383,15 @@ function handleEventLocked_(ev, uid) {
 
   if (ev.type === 'follow') {
     setRegField_(uid, 'ブロック', '');
+    try { if (typeof quizMarkBlocked_ === 'function') quizMarkBlocked_(uid, false); } catch (e) { console.error(e); }
     reply_(ev.replyToken, [text_(T.jaen.welcome), langMenu_()]);
     return;
   }
-  if (ev.type === 'unfollow') { setRegField_(uid, 'ブロック', '○'); return; }
+  if (ev.type === 'unfollow') {
+    setRegField_(uid, 'ブロック', '○');
+    try { if (typeof quizMarkBlocked_ === 'function') quizMarkBlocked_(uid, true); } catch (e) { console.error(e); }
+    return;
+  }
 
   if (ev.type === 'postback') {
     var p = parseQs_(ev.postback.data);

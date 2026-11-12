@@ -9,7 +9,8 @@ function makeSheet(name, ss) {
     getName: () => name,
     getParent: () => ss,
     appendRow(r) { data.push(r.slice()); },
-    setFrozenRows() {},
+    setFrozenRows() {}, hidden: {},
+    hideRows(r) { sh.hidden[r] = 1; }, showRows(r) { delete sh.hidden[r]; },
     getLastRow: () => data.length,
     getLastColumn: () => data.reduce((m, r) => Math.max(m, r.length), 0),
     getDataRange() { const w = sh.getLastColumn(); return { getValues: () => data.map(r => { const x = r.slice(); while (x.length < w) x.push(''); return x; }) }; },
@@ -376,6 +377,33 @@ props.STRIPE_SECRET_KEY = 'rk_test_x';
   ctx.addMockCredits_('Unew1', 9, 'test');
   assert.strictEqual(ctx.sheetObjects_(ctx.quizCreditSheet_()).filter(r => r['LINE userId'] === 'Unew1').length, 1);
 }
+// --- ブロックしている人は並べない・隠す ---
+{
+  const reg = ctx.regSheet_();
+  const rh = reg.getRange(1, 1, 1, reg.getLastColumn()).getValues()[0];
+  reg.appendRow(rh.map(h => ({ '登録日時': new Date(), 'LINE userId': 'Ubk1', 'LINE表示名': 'Blocked New', 'ブロック': '○' })[h] || ''));
+  // すでに行がある人がブロックした
+  const bi = reg.data.findIndex(r => r[rh.indexOf('LINE userId')] === 'Unew2');
+  reg.data[bi][rh.indexOf('ブロック')] = '○';
+  ctx.quizSyncCreditRows_();
+  const cs = ctx.quizCreditSheet_();
+  let rows = ctx.sheetObjects_(cs);
+  assert.ok(!rows.some(r => r['LINE userId'] === 'Ubk1'), 'blocked person is not added');
+  const u2 = rows.find(r => r['LINE userId'] === 'Unew2');
+  assert.strictEqual(u2['ブロック'], '○'); assert.ok(cs.hidden[u2._row], 'blocked row is hidden');
+  // ブロック解除（友だち追加）で元に戻る
+  ctx.quizMarkBlocked_('Unew2', false);
+  rows = ctx.sheetObjects_(cs);
+  assert.strictEqual(rows.find(r => r['LINE userId'] === 'Unew2')['ブロック'], '');
+  assert.ok(!cs.hidden[u2._row]);
+  // ブロック（unfollow）で隠れる：登録していない人の行でも
+  const ua = rows.find(r => r['LINE userId'] === 'Uaaa');
+  ctx.quizMarkBlocked_('Uaaa', true);
+  assert.ok(cs.hidden[ua._row]);
+  ctx.quizMarkBlocked_('Uaaa', false);
+  reg.data[bi][rh.indexOf('ブロック')] = '';
+}
+
 // --- 回数券を付与したことをLINEで知らせる ---
 {
   const reg = ctx.regSheet_();
