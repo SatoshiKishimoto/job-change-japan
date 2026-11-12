@@ -686,6 +686,7 @@ function runDaily() {
     var j = sendNewJobs_();
     var b = 0;
     try { if (typeof quizBuyReconcile_ === 'function') b = quizBuyReconcile_(); } catch (e) { console.error('回数券の購入確認エラー: ' + (e && e.message || e)); }
+    try { if (typeof quizSyncCreditRows_ === 'function') quizSyncCreditRows_(); } catch (e) { console.error('回数券シートの登録者追加エラー: ' + (e && e.message || e)); }
     console.log('ステップ配信: ' + s + '件 / 求人配信: ' + j + '件 / 回数券の追加: ' + b + '件');
   } finally {
     lock.releaseLock();

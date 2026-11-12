@@ -84,7 +84,7 @@ var QUIZ_MOCKS = {
 };
 
 var QUIZ_CREDIT_SHEET = '模擬テスト回数';
-var QUIZ_CREDIT_HEADERS = ['LINE userId', 'LINE表示名', '残り回数', '付与回数合計', '最終利用', '初回アクセス', 'メモ', '利用期限', 'お試し利用'];
+var QUIZ_CREDIT_HEADERS = ['LINE userId', 'LINE表示名', '残り回数', '付与回数合計', '最終利用', '初回アクセス', 'メモ', '利用期限', 'お試し利用', 'お名前'];
 var QUIZ_BUY_SHEET = '購入記録';
 var QUIZ_BUY_HEADERS = ['日時', 'StripeセッションID', 'LINE userId', 'LINE表示名', '回数', '金額（税込）', '付与後の残り回数', '確認方法'];
 var QUIZ_USE_SHEET = '利用記録';
@@ -582,6 +582,30 @@ function quizCreditRow_(user, create) {
   return sheetObjects_(sh).filter(function (r) { return r['LINE userId'] === user.uid; })[0];
 }
 
+// 「LINE登録」シートの登録者を、まだ練習問題を開いていない人も含めて「模擬テスト回数」シートに並べる
+// （初回アクセスが空欄の行＝まだ練習問題を開いていない人）。手で回数券を付与するときに探しやすくするため
+function quizSyncCreditRows_() {
+  var sh = quizCreditSheet_();
+  var have = {}, nameCol = quizCol_(sh, 'お名前');
+  sheetObjects_(sh).forEach(function (r) { have[r['LINE userId']] = r; });
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  var add = [], seen = {};
+  sheetObjects_(regSheet_()).forEach(function (u) {
+    var id = u['LINE userId'];
+    if (!id || seen[id]) return;
+    seen[id] = 1;
+    var r = have[id];
+    if (r) {   // すでにある行は、お名前だけ入れる
+      if (!r['お名前'] && u['お名前']) sh.getRange(r._row, nameCol).setValue(safe_(u['お名前']));
+      return;
+    }
+    var vals = { 'LINE userId': id, 'LINE表示名': safe_(u['LINE表示名'] || ''), 'お名前': safe_(u['お名前'] || ''), '残り回数': 0, '付与回数合計': 0 };
+    add.push(head.map(function (h) { return vals[h] == null ? '' : vals[h]; }));
+  });
+  if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, head.length).setValues(add);
+  return add.length;
+}
+
 function quizAttempts_(uid) {
   return sheetObjects_(quizAttemptSheet_()).filter(function (r) { return r['LINE userId'] === uid; });
 }
@@ -616,6 +640,8 @@ function setupQuiz() {
   quizAttemptSheet_();
   quizUseSheet_();
   quizBuySheet_();
+  var synced = quizSyncCreditRows_();
+  console.log('模擬テスト回数シートに登録者を追加: ' + synced + '人');
   var ch = PropertiesService.getScriptProperties().getProperty('LIFF_CHANNEL_ID');
   var n3 = QUIZ_BANK.filter(function (q) { return q.x === 'n3'; }).length;
   var n4 = QUIZ_BANK.filter(function (q) { return q.x === 'n4'; }).length;

@@ -19,6 +19,7 @@ function makeSheet(name, ss) {
         getValues() { const out = []; for (let i = 0; i < nr; i++) { const row = []; for (let j = 0; j < nc; j++) { const v = (data[r - 1 + i] || [])[c - 1 + j]; row.push(v === undefined ? '' : v); } out.push(row); } return out; },
         getValue() { return rg.getValues()[0][0]; },
         setValue(v) { while (data.length < r) data.push([]); const row = data[r - 1]; while (row.length < c) row.push(''); row[c - 1] = v; return rg; },
+        setValues(vs) { vs.forEach((vr, i) => vr.forEach((v, j) => { while (data.length < r + i) data.push([]); const row = data[r - 1 + i]; while (row.length < c + j) row.push(''); row[c - 1 + j] = v; })); return rg; },
         setFontWeight() { return rg; }, setBackground() { return rg; }, setDataValidation() { return rg; }, getRow: () => r
       };
       return rg;
@@ -351,6 +352,28 @@ delete props.STRIPE_SECRET_KEY;
 assert.strictEqual(call({ api: 'buy', token: 'good2', pack: 0 }).error, 'no_sales');
 assert.strictEqual(call({ api: 'me', token: 'good2' }).sales, false);
 props.STRIPE_SECRET_KEY = 'rk_test_x';
+
+// --- 登録者全員を「模擬テスト回数」シートに並べる ---
+{
+  const reg = ctx.regSheet_();
+  const rh = reg.getRange(1, 1, 1, reg.getLastColumn()).getValues()[0];
+  const rr = o => rh.map(h => o[h] === undefined ? '' : o[h]);
+  reg.appendRow(rr({ '登録日時': new Date(), 'LINE userId': 'Uaaa', 'LINE表示名': 'Ram', 'お名前': 'RAM THAPA' }));
+  reg.appendRow(rr({ '登録日時': new Date(), 'LINE userId': 'Unew1', 'LINE表示名': 'New One', 'お名前': 'NEW ONE' }));
+  reg.appendRow(rr({ '登録日時': new Date(), 'LINE userId': 'Unew1', 'LINE表示名': 'New One', 'お名前': 'NEW ONE', '雇用形態': 'アルバイト' }));
+  reg.appendRow(rr({ '登録日時': new Date(), 'LINE userId': 'Unew2', 'LINE表示名': 'Two', 'お名前': '' }));
+  const before = ctx.sheetObjects_(ctx.quizCreditSheet_()).length;
+  assert.strictEqual(ctx.quizSyncCreditRows_(), 2, 'adds only people not yet in the sheet, once each');
+  const rows = ctx.sheetObjects_(ctx.quizCreditSheet_());
+  assert.strictEqual(rows.length, before + 2);
+  const n1 = rows.find(r => r['LINE userId'] === 'Unew1');
+  assert.deepStrictEqual([n1['LINE表示名'], n1['お名前'], n1['残り回数'], n1['初回アクセス']], ['New One', 'NEW ONE', 0, '']);
+  assert.strictEqual(rows.find(r => r['LINE userId'] === 'Uaaa')['お名前'], 'RAM THAPA', 'fills name on existing row');
+  assert.strictEqual(ctx.quizSyncCreditRows_(), 0, 'second run adds nothing');
+  // 回数券を付与できる・ログインしたら同じ行を使う
+  ctx.addMockCredits_('Unew1', 9, 'test');
+  assert.strictEqual(ctx.sheetObjects_(ctx.quizCreditSheet_()).filter(r => r['LINE userId'] === 'Unew1').length, 1);
+}
 
 // webhook path still works (no events)
 assert.deepStrictEqual(JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify({ destination: 'x', events: [] }) } }).s), { ok: true });
