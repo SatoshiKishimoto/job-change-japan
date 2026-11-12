@@ -554,7 +554,28 @@ function menuGiveMockCredits() {
   if (!pack) { ui.alert('番号は 1〜' + QUIZ_PACKS.length + ' で入れてください。'); return; }
   var memo = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M/d') + ' +' + pack.count + '回（' + pack.priceTax + '円）';
   var left = addMockCredits_(uid, pack.count, memo);
-  ui.alert('付与しました', name + ' さんの残り回数：' + left + '回', ui.ButtonSet.OK);
+  var tell = ui.alert('付与しました', name + ' さんの残り回数：' + left + '回\n\n本人にLINEで知らせますか？（LINEの月200通の無料枠を1通使います）', ui.ButtonSet.YES_NO);
+  if (tell !== ui.Button.YES) return;
+  var ok = quizNotifyCredits_(uid, pack.count, left);
+  ui.alert(ok ? '送信しました' : '送れませんでした', ok ? name + ' さんにLINEで知らせました。' : 'ブロックされているか、LINEの送信に失敗しました。', ui.ButtonSet.OK);
+}
+
+// 回数券を付与したことを、本人の言語でLINEに知らせる
+var QUIZ_GIFT_MSG = {
+  ja: '回数券を{n}回分お送りしました（残り{left}回分）。\n練習問題のページで「始める」を押すと、1回分で24時間、練習問題も模擬テストもすべて使えます。\n{url}',
+  en: 'We have added {n} tickets to your account ({left} left).\nTap "Start" on the practice page — 1 ticket gives you 24 hours of full access to practice questions and mock exams.\n{url}',
+  vi: 'Chúng tôi đã gửi {n} vé cho bạn (còn {left} vé).\nNhấn "Bắt đầu" trên trang luyện tập — 1 vé = dùng tất cả bài luyện và thi thử trong 24 giờ.\n{url}',
+  ne: 'तपाईंलाई {n} टिकट पठाइएको छ (बाँकी {left} टिकट)।\nअभ्यास पेजमा "सुरु" थिच्नुहोस् — १ टिकटले २४ घण्टा सबै अभ्यास र मोक टेस्ट प्रयोग गर्न सकिन्छ।\n{url}',
+  id: 'Kami telah mengirim {n} tiket untuk Anda (sisa {left} tiket).\nKetuk "Mulai" di halaman latihan — 1 tiket = bebas memakai semua latihan dan ujian simulasi selama 24 jam.\n{url}'
+};
+function quizNotifyCredits_(uid, n, left) {
+  var u = sheetObjects_(regSheet_()).filter(function (r) { return r['LINE userId'] === uid; }).pop();
+  if (u && u['ブロック'] === '○') return false;
+  var lang = langCode_(u ? u['言語'] : '');
+  var o = { n: n, left: left, url: QUIZ_URL };
+  var body = tk_(lang) === 'jaen' ? fmt_(QUIZ_GIFT_MSG.ja, o).replace('\n' + QUIZ_URL, '') + '\n\n― English ―\n' + fmt_(QUIZ_GIFT_MSG.en, o)
+                                  : fmt_(QUIZ_GIFT_MSG[lang] || QUIZ_GIFT_MSG.ja, o);
+  return !!push_(uid, [text_(body)]);
 }
 
 // ============================================================

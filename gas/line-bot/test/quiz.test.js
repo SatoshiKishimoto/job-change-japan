@@ -41,6 +41,7 @@ const TOKENS = {
 };
 let fetchCount = 0;
 function resp(code, obj) { return { getResponseCode: () => code, getContentText: () => JSON.stringify(obj) }; }
+const PUSHES = [];
 // Stripe のまね
 const SESSIONS = {}; let lastCreate = null;
 function stripe(url, opt) {
@@ -68,6 +69,7 @@ const UrlFetchApp = {
     }
     const t = auth && auth.replace('Bearer ', ''); const u = TOKENS[t];
     if (url === 'https://api.line.me/v2/profile') return u ? resp(200, { userId: u.uid, displayName: u.name }) : resp(401, {});
+    if (url === 'https://api.line.me/v2/bot/message/push') { PUSHES.push(JSON.parse(opt.payload)); return resp(200, {}); }
     if (url === 'https://api.line.me/friendship/v1/status') return u ? resp(200, { friendFlag: u.friend }) : resp(401, {});
     if (url.startsWith('https://api.stripe.com/v1/')) return stripe(url, opt);
     throw new Error('unexpected fetch ' + url);
@@ -373,6 +375,22 @@ props.STRIPE_SECRET_KEY = 'rk_test_x';
   // 回数券を付与できる・ログインしたら同じ行を使う
   ctx.addMockCredits_('Unew1', 9, 'test');
   assert.strictEqual(ctx.sheetObjects_(ctx.quizCreditSheet_()).filter(r => r['LINE userId'] === 'Unew1').length, 1);
+}
+// --- 回数券を付与したことをLINEで知らせる ---
+{
+  const reg = ctx.regSheet_();
+  const rh = reg.getRange(1, 1, 1, reg.getLastColumn()).getValues()[0];
+  reg.appendRow(rh.map(h => ({ '登録日時': new Date(), 'LINE userId': 'Unep', '言語': 'नेपाली' })[h] || ''));
+  reg.appendRow(rh.map(h => ({ '登録日時': new Date(), 'LINE userId': 'Ublk', '言語': 'English', 'ブロック': '○' })[h] || ''));
+  PUSHES.length = 0;
+  assert.strictEqual(ctx.quizNotifyCredits_('Unep', 9, 9), true);
+  assert.strictEqual(PUSHES[0].to, 'Unep'); assert.ok(PUSHES[0].messages[0].text.includes('९') || PUSHES[0].messages[0].text.includes('9 टिकट'));
+  assert.ok(PUSHES[0].messages[0].text.includes('https://liff.line.me/2012300446-Oe7H41c2'));
+  assert.strictEqual(ctx.quizNotifyCredits_('Unew1', 30, 39), true);   // English → 日英併記
+  const t = PUSHES[1].messages[0].text;
+  assert.ok(t.includes('回数券を30回分') && t.includes('― English ―') && t.includes('30 tickets') && t.split('https://liff.line.me').length === 2, t);
+  assert.strictEqual(ctx.quizNotifyCredits_('Ublk', 9, 9), false, 'blocked: not sent');
+  assert.strictEqual(PUSHES.length, 2);
 }
 
 // webhook path still works (no events)
