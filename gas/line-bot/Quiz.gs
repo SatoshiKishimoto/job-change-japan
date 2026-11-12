@@ -556,8 +556,8 @@ function menuGiveMockCredits() {
   var left = addMockCredits_(uid, pack.count, memo);
   var tell = ui.alert('付与しました', name + ' さんの残り回数：' + left + '回\n\n本人にLINEで知らせますか？（LINEの月200通の無料枠を1通使います）', ui.ButtonSet.YES_NO);
   if (tell !== ui.Button.YES) return;
-  var ok = quizNotifyCredits_(uid, pack.count, left);
-  ui.alert(ok ? '送信しました' : '送れませんでした', ok ? name + ' さんにLINEで知らせました。' : 'ブロックされているか、LINEの送信に失敗しました。', ui.ButtonSet.OK);
+  var res = quizNotify_(uid, QUIZ_GIFT_MSG, { n: pack.count, left: left });
+  ui.alert(res.ok ? '送信しました' : '送れませんでした', res.ok ? name + ' さんにLINEで知らせました。' : res.why, ui.ButtonSet.OK);
 }
 
 // 回数券を付与したことを、本人の言語でLINEに知らせる
@@ -568,14 +568,42 @@ var QUIZ_GIFT_MSG = {
   ne: 'तपाईंलाई {n} टिकट पठाइएको छ (बाँकी {left} टिकट)।\nअभ्यास पेजमा "सुरु" थिच्नुहोस् — १ टिकटले २४ घण्टा सबै अभ्यास र मोक टेस्ट प्रयोग गर्न सकिन्छ।\n{url}',
   id: 'Kami telah mengirim {n} tiket untuk Anda (sisa {left} tiket).\nKetuk "Mulai" di halaman latihan — 1 tiket = bebas memakai semua latihan dan ujian simulasi selama 24 jam.\n{url}'
 };
-function quizNotifyCredits_(uid, n, left) {
+// 付与はせずに、選んだ行の人に「回数券が○回分あります」とだけ知らせる（付与したのに知らせ忘れたとき用）
+var QUIZ_HAVE_MSG = {
+  ja: '回数券が{left}回分あります。\n練習問題のページで「始める」を押すと、1回分で24時間、練習問題も模擬テストもすべて使えます。\n{url}',
+  en: 'You have {left} tickets.\nTap "Start" on the practice page — 1 ticket gives you 24 hours of full access to practice questions and mock exams.\n{url}',
+  vi: 'Bạn đang có {left} vé.\nNhấn "Bắt đầu" trên trang luyện tập — 1 vé = dùng tất cả bài luyện và thi thử trong 24 giờ.\n{url}',
+  ne: 'तपाईंसँग {left} टिकट छ।\nअभ्यास पेजमा "सुरु" थिच्नुहोस् — १ टिकटले २४ घण्टा सबै अभ्यास र मोक टेस्ट प्रयोग गर्न सकिन्छ।\n{url}',
+  id: 'Anda punya {left} tiket.\nKetuk "Mulai" di halaman latihan — 1 tiket = bebas memakai semua latihan dan ujian simulasi selama 24 jam.\n{url}'
+};
+function menuNotifyCredits() {
+  var ui = SpreadsheetApp.getUi();
+  var sh = SpreadsheetApp.getActiveSheet();
+  if (sh.getName() !== QUIZ_CREDIT_SHEET) { ui.alert('「' + QUIZ_CREDIT_SHEET + '」シートで、知らせたい人の行を選んでから実行してください。'); return; }
+  var r = sh.getActiveRange().getRow();
+  if (r < 2) { ui.alert('知らせたい人の行（2行目以降）を選んでください。'); return; }
+  var uid = sh.getRange(r, quizCol_(sh, 'LINE userId')).getValue();
+  var name = sh.getRange(r, quizCol_(sh, 'LINE表示名')).getValue();
+  var left = quizNum_(sh.getRange(r, quizCol_(sh, '残り回数')).getValue());
+  if (!uid) { ui.alert('この行には LINE userId がありません。'); return; }
+  if (left <= 0) { ui.alert(name + ' さんの残り回数は0回です。先に付与してください。'); return; }
+  var ans = ui.alert('LINEで知らせますか？', name + ' さんに「回数券が' + left + '回分あります」と送ります（LINEの月200通の無料枠を1通使います）。', ui.ButtonSet.YES_NO);
+  if (ans !== ui.Button.YES) return;
+  var res = quizNotify_(uid, QUIZ_HAVE_MSG, { left: left });
+  ui.alert(res.ok ? '送信しました' : '送れませんでした', res.ok ? name + ' さんにLINEで知らせました。' : res.why, ui.ButtonSet.OK);
+}
+
+function quizNotifyCredits_(uid, n, left) { return quizNotify_(uid, QUIZ_GIFT_MSG, { n: n, left: left }).ok; }
+
+function quizNotify_(uid, msgs, o) {
   var u = sheetObjects_(regSheet_()).filter(function (r) { return r['LINE userId'] === uid; }).pop();
-  if (u && u['ブロック'] === '○') return false;
+  if (u && u['ブロック'] === '○') return { ok: false, why: 'この人はLINEをブロックしています（LINE登録シートのブロック列が○）。' };
   var lang = langCode_(u ? u['言語'] : '');
-  var o = { n: n, left: left, url: QUIZ_URL };
-  var body = tk_(lang) === 'jaen' ? fmt_(QUIZ_GIFT_MSG.ja, o).replace('\n' + QUIZ_URL, '') + '\n\n― English ―\n' + fmt_(QUIZ_GIFT_MSG.en, o)
-                                  : fmt_(QUIZ_GIFT_MSG[lang] || QUIZ_GIFT_MSG.ja, o);
-  return !!push_(uid, [text_(body)]);
+  o.url = QUIZ_URL;
+  var body = tk_(lang) === 'jaen' ? fmt_(msgs.ja, o).replace('\n' + QUIZ_URL, '') + '\n\n― English ―\n' + fmt_(msgs.en, o)
+                                  : fmt_(msgs[lang] || msgs.ja, o);
+  if (push_(uid, [text_(body)])) return { ok: true };
+  return { ok: false, why: 'LINEの送信に失敗しました。今月の無料枠（200通）を使い切っているか、ブロックされている可能性があります。GASの「実行数」でエラーの内容を確認してください。' };
 }
 
 // ============================================================

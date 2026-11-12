@@ -766,6 +766,7 @@ function onSheetOpen() {
     .addItem('配信予定を確認する（送りません）', 'menuPreviewJobs')
     .addSeparator()
     .addItem('回数券：選んだ行の人に付与（9・30・60回分）', 'menuGiveMockCredits')
+    .addItem('回数券：選んだ行の人にLINEで知らせる（付与はしない）', 'menuNotifyCredits')
     .addItem('練習問題の案内を登録者に送る（1回だけ）', 'menuAnnounceQuiz')
     .addItem('取りこぼしたステップ配信をまとめて送る', 'menuSendMissedSteps')
     .addToUi();
