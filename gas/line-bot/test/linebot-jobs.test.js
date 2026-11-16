@@ -130,4 +130,15 @@ add('VIEW', 3);
 post({ type: 'message', replyToken: 'r', source: { userId: 'VIEW' }, message: { type: 'text', text: 'jobs' } });
 assert.strictEqual(got('VIEW'), 'J002,J003,J005');
 assert.strictEqual(ctx.missedJobsPlan_().length, 0);
+// 配信の前に東京で登録 → 配信のあとに大阪へ登録し直した人には、大阪の求人がまだ届いていない
+add('MOVE', 40, { '最終更新': daysAgo(2) });
+assert.strictEqual(ctx.missedJobsPlan_().find(p => p.uid === 'MOVE').jobs.map(j => j['求人ID']).join(','), 'J002,J003');
+// 登録し直しの流れ：同じ雇用形態の行を上書きし、条件に合う求人が返信に付く
+ctx.setState_('MOVE', { lang: 'en', step: 'name', flow: 'baito', ans: { role: '外食業', location: '東京都', type: 'アルバイト', visa: '留学' } });
+calls.length = 0;
+post({ type: 'message', replyToken: 'r', source: { userId: 'MOVE' }, message: { type: 'text', text: 'Move Kun' } });
+const rep2 = calls.filter(c => /message\/reply/.test(c.url)).pop().body.messages.map(m => m.text);
+assert.ok(rep2[0].includes('updated') && rep2.some(x => x.includes('Baito Tokyo')), rep2.join('\n---\n'));
+assert.strictEqual(ctx.findRegs_('MOVE').length, 1);
+assert.strictEqual(ctx.findRegs_('MOVE')[0]['希望勤務地'], '東京都');
 console.log('ALL TESTS PASSED');

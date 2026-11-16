@@ -489,7 +489,7 @@ function replyJobs_(token, uid, st) {
 
 // ------------------------------------------------------------
 // だれにどの求人が届いたか（登録シートの「受信求人」列に、求人IDをカンマ区切りで記録）
-//  この列ができる前に配信した求人は、「その求人の配信日時より前に、条件に合う行で登録していた人」には届いたとみなす。
+//  この列ができる前に配信した求人は、「その求人の配信日時より前に、今と同じ条件で登録していた人」には届いたとみなす。
 // ------------------------------------------------------------
 function receivedIds_(rows) {
   var got = {};
@@ -500,7 +500,11 @@ function jobReceived_(job, rows, got) {
   if (got[String(job['求人ID']).toUpperCase()]) return true;
   var sent = job['配信日時'];
   if (!(sent instanceof Date)) return false;
-  return rows.some(function (r) { return jobMatches_(job, r) && r['登録日時'] instanceof Date && r['登録日時'] <= sent; });
+  // 最終更新（登録・登録し直した日時）が配信より前＝そのときの条件で届いている。あとで勤務地などを変えた人には、まだ届いていない
+  return rows.some(function (r) {
+    var t = r['最終更新'] instanceof Date ? r['最終更新'] : r['登録日時'];
+    return jobMatches_(job, r) && t instanceof Date && t <= sent;
+  });
 }
 // その人に合う公開中の求人のうち、まだ届いていないもの。onlySent = true なら、配信済みの求人だけ
 // （まだ配信していない求人は「新着求人を今すぐ送る」で届くので、そちらに任せる）
