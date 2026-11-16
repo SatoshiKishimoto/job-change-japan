@@ -141,4 +141,38 @@ const rep2 = calls.filter(c => /message\/reply/.test(c.url)).pop().body.messages
 assert.ok(rep2[0].includes('updated') && rep2.some(x => x.includes('Baito Tokyo')), rep2.join('\n---\n'));
 assert.strictEqual(ctx.findRegs_('MOVE').length, 1);
 assert.strictEqual(ctx.findRegs_('MOVE')[0]['希望勤務地'], '東京都');
+// 登録済みの人が「登録・変更」を押す → 新規登録ではなく、今の登録内容と変更ボタン
+const lastQ = () => calls.filter(c => /message\/reply/.test(c.url)).pop().body.messages[0];
+calls.length = 0;
+post({ type: 'postback', replyToken: 'r', source: { userId: 'NEW1' }, postback: { data: 'menu=register' } });
+ctx.setState_('NEW1', Object.assign(ctx.getState_('NEW1'), { lang: 'en' }));
+post({ type: 'postback', replyToken: 'r', source: { userId: 'NEW1' }, postback: { data: 'menu=register' } });
+let m = lastQ();
+assert.ok(m.text.includes('already registered') && m.text.includes('アルバイト') && m.text.includes('大阪'), m.text);
+const labels = m.quickReply.items.map(i => i.action.label);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(labels)), ['登録内容を変更/Edit info', 'フルタイムも登録/Full-time']);
+labels.forEach(l => assert.ok(Array.from(l).length <= 20));
+// 「登録内容を変更」→ 雇用形態は聞かずに職種から
+post({ type: 'postback', replyToken: 'r', source: { userId: 'NEW1' }, postback: { data: 'edit=1' } });
+m = lastQ(); assert.ok(m.text.startsWith('2/7'), m.text);
+assert.strictEqual(ctx.getState_('NEW1').ans.type, 'アルバイト');
+// キーワード「変更」でも同じ画面
+post({ type: 'message', replyToken: 'r', source: { userId: 'NEW2' }, message: { type: 'text', text: '変更' } });
+ctx.setState_('NEW2', Object.assign(ctx.getState_('NEW2'), { lang: 'ne' }));
+post({ type: 'message', replyToken: 'r', source: { userId: 'NEW2' }, message: { type: 'text', text: 'change' } });
+m = lastQ(); assert.ok(m.text.includes('पहिले नै दर्ता'), m.text);
+m.quickReply.items.forEach(i => assert.ok(Array.from(i.action.displayText).length <= 20, i.action.displayText));
+// 「フルタイムも登録」→ フルタイムのコースで職種から
+post({ type: 'postback', replyToken: 'r', source: { userId: 'NEW2' }, postback: { data: 'addtype=正社員・フルタイム' } });
+assert.strictEqual(ctx.getState_('NEW2').flow, 'full');
+// 2つ登録している人は、どちらを変えるか聞く
+add('TWO', 3, { '雇用形態': '正社員・フルタイム' }); add('TWO', 3);
+ctx.setState_('TWO', { lang: 'vi', step: 'done' });
+post({ type: 'postback', replyToken: 'r', source: { userId: 'TWO' }, postback: { data: 'menu=register' } });
+assert.strictEqual(lastQ().quickReply.items.length, 1);
+post({ type: 'postback', replyToken: 'r', source: { userId: 'TWO' }, postback: { data: 'edit=1' } });
+m = lastQ(); assert.ok(m.text.includes('sửa đăng ký nào') && m.quickReply.items.length === 2);
+// 全言語のボタンが20文字以内
+['ja', 'en', 'vi', 'ne', 'id', 'jaen'].forEach(k => ['editBtn', 'addFull', 'addBaito'].forEach(b => assert.ok(Array.from(ctx.T[k][b]).length <= 20, k + b)));
+console.log('register/edit OK');
 console.log('ALL TESTS PASSED');

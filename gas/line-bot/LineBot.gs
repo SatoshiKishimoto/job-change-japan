@@ -47,6 +47,7 @@ var T = {
     needRegister: 'まだ登録されていません。下のボタンから登録してください（30秒で終わります）。',
     noJobs: 'いま、あなたの希望に合う求人はありません。\n新しい求人が出たら、このLINEでお知らせします。',
     jobsHead: 'あなたの希望に合う求人です（{n}件）',
+    regMenu: 'すでに登録されています。\n{list}\n\n勤務地・職種などを変えるときは「登録内容を変更」を押してください。', editBtn: '登録内容を変更', addFull: 'フルタイムも登録', addBaito: 'アルバイトも登録', editWhich: 'どちらの登録を変更しますか？',
     newJob: '【新着求人】',
     jobFields: { role: '職種', loc: '勤務地', pay: '給与', type: '雇用形態' },
     applyHint: '応募・質問は「応募 {id}」と送ってください。',
@@ -72,6 +73,7 @@ var T = {
     needRegister: 'You are not registered yet. Tap the button below to register (30 seconds).',
     noJobs: 'There are no openings that match your wishes right now.\nWe will let you know on this LINE when new jobs come in.',
     jobsHead: 'Jobs that match your wishes ({n})',
+    regMenu: 'You are already registered.\n{list}\n\nTo change your location, job type, etc., tap "Edit info".', editBtn: 'Edit info', addFull: 'Add full-time', addBaito: 'Add part-time', editWhich: 'Which registration do you want to change?',
     newJob: '[New job]',
     jobFields: { role: 'Job type', loc: 'Location', pay: 'Salary', type: 'Employment' },
     applyHint: 'To apply or ask, send "apply {id}".',
@@ -97,6 +99,7 @@ var T = {
     needRegister: 'Bạn chưa đăng ký. Hãy bấm nút bên dưới để đăng ký (30 giây).',
     noJobs: 'Hiện chưa có việc phù hợp với mong muốn của bạn.\nKhi có việc mới, chúng tôi sẽ báo qua LINE này.',
     jobsHead: 'Việc làm phù hợp với bạn ({n})',
+    regMenu: 'Bạn đã đăng ký rồi.\n{list}\n\nĐể thay đổi nơi làm việc, ngành nghề..., hãy bấm "Sửa thông tin".', editBtn: 'Sửa thông tin', addFull: 'Thêm toàn thời gian', addBaito: 'Thêm làm thêm', editWhich: 'Bạn muốn sửa đăng ký nào?',
     newJob: '[Việc làm mới]',
     jobFields: { role: 'Ngành nghề', loc: 'Nơi làm việc', pay: 'Lương', type: 'Hình thức' },
     applyHint: 'Để ứng tuyển hoặc hỏi, hãy gửi "apply {id}".',
@@ -122,6 +125,7 @@ var T = {
     needRegister: 'तपाईं अझै दर्ता हुनुभएको छैन। तलको बटन थिचेर दर्ता गर्नुहोस् (३० सेकेन्ड)।',
     noJobs: 'अहिले तपाईंको इच्छा अनुसारको काम छैन।\nनयाँ काम आएमा यही LINE मा जानकारी दिनेछौं।',
     jobsHead: 'तपाईंलाई मिल्ने कामहरू ({n})',
+    regMenu: 'तपाईं पहिले नै दर्ता हुनुहुन्छ।\n{list}\n\nकामको स्थान, कामको प्रकार आदि परिवर्तन गर्न "विवरण परिवर्तन" थिच्नुहोस्।', editBtn: 'विवरण परिवर्तन', addFull: 'पूर्णकालीन पनि दर्ता', addBaito: 'पार्ट-टाइम पनि दर्ता', editWhich: 'कुन दर्ता परिवर्तन गर्ने?',
     newJob: '[नयाँ काम]',
     jobFields: { role: 'कामको प्रकार', loc: 'स्थान', pay: 'तलब', type: 'रोजगारीको किसिम' },
     applyHint: 'आवेदन वा प्रश्नका लागि "apply {id}" पठाउनुहोस्।',
@@ -147,6 +151,7 @@ var T = {
     needRegister: 'Anda belum terdaftar. Ketuk tombol di bawah untuk mendaftar (30 detik).',
     noJobs: 'Saat ini belum ada lowongan yang sesuai dengan keinginan Anda.\nJika ada lowongan baru, kami akan memberi tahu lewat LINE ini.',
     jobsHead: 'Lowongan yang cocok untuk Anda ({n})',
+    regMenu: 'Anda sudah terdaftar.\n{list}\n\nUntuk mengubah lokasi, jenis pekerjaan, dll., tekan "Ubah data".', editBtn: 'Ubah data', addFull: 'Tambah penuh waktu', addBaito: 'Tambah paruh waktu', editWhich: 'Pendaftaran mana yang ingin diubah?',
     newJob: '[Lowongan baru]',
     jobFields: { role: 'Jenis pekerjaan', loc: 'Lokasi', pay: 'Gaji', type: 'Jenis kontrak' },
     applyHint: 'Untuk melamar atau bertanya, kirim "apply {id}".',
@@ -204,6 +209,7 @@ var STEPS_BAITO = {
 
 // 文字で送られたときに受け付ける言葉
 var KW_REGISTER = ['登録', 'register', 'đăng ký', 'dang ky', 'दर्ता', 'daftar', 'start'];
+var KW_EDIT = ['変更', '登録変更', '登録内容の変更', '登録内容を変更', 'edit', 'change', 'update', 'edit info', 'thay đổi', 'sửa', 'sửa thông tin', 'परिवर्तन', 'ubah', 'ubah data'];
 var KW_LANG = ['言語', 'language', 'ngôn ngữ', 'भाषा', 'bahasa', 'lang'];
 var KW_JOBS = ['求人', 'jobs', 'job', 'việc làm', 'काम', 'lowongan', 'pekerjaan'];
 var KW_QUIZ = ['練習問題', '練習', '模擬テスト', '試験', 'テスト', '2号', '特定技能2号', 'test', 'exam', 'quiz', 'practice', 'practice test', 'mock test', 'n3', 'jlpt', '日本語能力試験', '日本語', 'luyện thi', 'thi thử', 'đề thi', 'परीक्षा', 'अभ्यास', 'latihan', 'ujian', 'tes'];
@@ -255,13 +261,16 @@ function bi_(a, b, short) {
   if (short) return a + '\n' + b;
   return a + '\n\n― English ―\n' + b;
 }
-var SHORT_KEYS = ['chooseLang', 'startBtn', 'q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'b2', 'b5', 'other', 'none', 'nameRetry', 'jobsHead', 'newJob', 'applyHint', 'aiNote', 'updated'];
+var SHORT_KEYS = ['chooseLang', 'startBtn', 'q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'b2', 'b5', 'other', 'none', 'nameRetry', 'jobsHead', 'newJob', 'applyHint', 'aiNote', 'updated', 'editWhich'];
 T.jaen = {};
 Object.keys(T.ja).forEach(function (k) {
   var a = T.ja[k], b = T.en[k];
   if (k === 'jobFields') { T.jaen[k] = { role: '職種 / Job type', loc: '勤務地 / Location', pay: '給与 / Salary', type: '雇用形態 / Employment' }; return; }
   if (k === 'chooseLang') { T.jaen[k] = a; return; }
   if (k === 'startBtn') { T.jaen[k] = '登録 / Register'; return; }
+  if (k === 'editBtn') { T.jaen[k] = '登録内容を変更/Edit info'; return; }
+  if (k === 'addFull') { T.jaen[k] = 'フルタイムも登録/Full-time'; return; }
+  if (k === 'addBaito') { T.jaen[k] = 'アルバイトも登録/Part-time'; return; }
   if (k === 'other') { T.jaen[k] = 'その他 / Other'; return; }
   if (k === 'none') { T.jaen[k] = 'なし / None'; return; }
   if (k === 'newJob') { T.jaen[k] = '【新着求人 / New job】'; return; }
@@ -404,6 +413,8 @@ function handleEventLocked_(ev, uid) {
       return;
     }
     if (p.menu === 'register' || p.go) { startFlow_(ev.replyToken, uid, st); return; }
+    if (p.edit) { editFlow_(ev.replyToken, uid, st); return; }
+    if (p.addtype) { beginWithType_(ev.replyToken, uid, st, p.addtype); return; }
     if (p.menu === 'lang') { reply_(ev.replyToken, [langMenu_()]); return; }
     if (p.menu === 'jobs') { replyJobs_(ev.replyToken, uid, st); return; }
     if (p.menu === 'ask') { reply_(ev.replyToken, [text_(L.askPrompt)]); return; }
@@ -432,7 +443,7 @@ function handleEventLocked_(ev, uid) {
     var low = msg.toLowerCase();
 
     if (KW_LANG.indexOf(low) >= 0) { reply_(ev.replyToken, [langMenu_()]); return; }
-    if (KW_REGISTER.indexOf(low) >= 0) { startFlow_(ev.replyToken, uid, st); return; }
+    if (KW_REGISTER.indexOf(low) >= 0 || KW_EDIT.indexOf(low) >= 0) { startFlow_(ev.replyToken, uid, st); return; }
     if (KW_JOBS.indexOf(low) >= 0) { replyJobs_(ev.replyToken, uid, st); return; }
     if (KW_QUIZ.indexOf(low) >= 0) { reply_(ev.replyToken, [text_(fmt_(L.quizInfo, { url: QUIZ_URL }))]); return; }
 
@@ -461,8 +472,43 @@ function handleEventLocked_(ev, uid) {
 
 function startFlow_(token, uid, st) {
   if (!st.lang) { reply_(token, [langMenu_()]); return; }
+  var rows = findRegs_(uid);
+  if (rows.length) { reply_(token, [regMenu_(rows, st.lang)]); return; }   // 登録済みの人には、今の登録内容と「変更」ボタン
   st.step = 'q0'; st.ans = {}; st.flow = ''; setState_(uid, st);
   reply_(token, [question_('q0', st.lang, st)]);
+}
+
+// 登録済みの人に出す画面：今の登録内容（雇用形態・職種・勤務地）と、変更・もう一方の雇用形態の追加ボタン
+function regMenu_(rows, lang) {
+  var L = TL_(lang);
+  var list = rows.map(function (r) {
+    return '・' + optLabel_('q0', typeOf_(r), lang) + '：' + optLabel_('q1', r['希望職種'], lang) + ' / ' + optLabel_('q4', r['希望勤務地'], lang);
+  }).join('\n');
+  var items = [[L.editBtn, 'edit=1']];
+  var types = rows.map(typeOf_);
+  if (types.indexOf('正社員・フルタイム') < 0) items.push([L.addFull, 'addtype=正社員・フルタイム']);
+  if (types.indexOf('アルバイト') < 0) items.push([L.addBaito, 'addtype=アルバイト']);
+  return quick_(fmt_(L.regMenu, { list: list }), items);
+}
+function optLabel_(qid, v, lang) {
+  var o = Q[qid].opts.filter(function (x) { return x[0] === v; })[0];
+  return o ? label_(o[1], lang) : String(v || '-');
+}
+// 「登録内容を変更」：登録が1つならその雇用形態のまま職種から聞き直す。2つあるときは、どちらを変えるか聞く
+function editFlow_(token, uid, st) {
+  var rows = findRegs_(uid);
+  if (rows.length === 1) { beginWithType_(token, uid, st, typeOf_(rows[0])); return; }
+  if (!rows.length) { startFlow_(token, uid, st); return; }
+  st.step = 'q0'; st.ans = {}; st.flow = ''; setState_(uid, st);
+  var items = Q.q0.opts.map(function (o, i) { return [label_(o[1], st.lang), 'q=q0&i=' + i]; });
+  reply_(token, [quick_(TL_(st.lang).editWhich, items)]);
+}
+function beginWithType_(token, uid, st, type) {
+  if (!st.lang) { reply_(token, [langMenu_()]); return; }
+  if (type !== 'アルバイト') type = '正社員・フルタイム';
+  st.ans = { type: type }; st.flow = type === 'アルバイト' ? 'baito' : 'full';
+  st.step = flow_(st)[1]; setState_(uid, st);
+  reply_(token, [question_(st.step, st.lang, st)]);
 }
 
 function flow_(st) { return st.flow === 'baito' ? FLOW_BAITO : FLOW_FULL; }
@@ -1066,7 +1112,7 @@ function setupRichMenu() {
   // 3列×2段（上：登録・求人・練習問題／下：相談・言語・サイト）
   var W = [833, 834, 833], H = 843, x0 = [0, 833, 1667];
   var buttons = [
-    { type: 'postback', data: 'menu=register', displayText: '登録 / Register' },
+    { type: 'postback', data: 'menu=register', displayText: '登録・変更 / Register' },
     { type: 'postback', data: 'menu=jobs', displayText: '求人 / Jobs' },
     { type: 'uri', uri: QUIZ_URL },
     { type: 'postback', data: 'menu=ask', displayText: '相談 / Ask' },
