@@ -339,7 +339,7 @@ var Q = {
 
 // シートの列（名前で探すので、列の順番を入れ替えても動きます）
 var REG_SHEET = 'LINE登録';
-var REG_HEADERS = ['登録日時', '受付ID', 'LINE userId', 'LINE表示名', '言語', 'お名前', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始', '対応状況', 'メモ', 'ステップ送信済', 'ブロック', '最終更新', '雇用形態', '資格外活動許可', '週の勤務時間'];
+var REG_HEADERS = ['登録日時', '受付ID', 'LINE userId', 'LINE表示名', '言語', 'お名前', '希望職種', '在留資格', '日本語', '希望勤務地', '就業開始', '対応状況', 'メモ', 'ステップ送信済', 'ブロック', '最終更新', '雇用形態', '資格外活動許可', '週の勤務時間', '受信求人'];
 var JOB_SHEET = '求人';
 var JOB_HEADERS = ['求人ID', '公開', '職種', '勤務地', 'タイトル', '給与', '内容', '詳細URL', '配信日時', '配信人数', '応募数', '雇用形態'];
 
@@ -441,7 +441,13 @@ function handleEventLocked_(ev, uid) {
       var res = saveRegistration_(uid, st, msg);
       st.step = 'done'; st.ans = {}; st.registeredId = res.id; setState_(uid, st);
       var tpl = (res.isNew ? L.done : L.updated) + (res.baito ? L.baitoRule : '');
-      reply_(ev.replyToken, [text_(fmt_(tpl, { name: msg, id: res.id }))]);
+      // 条件に合う公開中の求人のうち、まだ届いていないものを一緒に返信する（返信は無料）
+      var jobs = unreceivedJobs_(uid, false).slice(0, 4);
+      var head = fmt_(tpl, { name: msg, id: res.id }) + (jobs.length ? '\n\n' + fmt_(L.jobsHead, { n: jobs.length }) : '');
+      var out = [text_(head)];
+      jobs.forEach(function (j) { out.push(text_(jobText_(j, st.lang || 'ja', false))); });
+      reply_(ev.replyToken, out);
+      if (jobs.length) markJobsReceived_(findRegs_(uid), jobs.map(function (j) { return j['求人ID']; }));
       return;
     }
     if (st.step && Q[st.step]) { reply_(ev.replyToken, [question_(st.step, st.lang, st)]); return; }
@@ -478,6 +484,44 @@ function replyJobs_(token, uid, st) {
   var msgs = [text_(fmt_(L.jobsHead, { n: jobs.length }))];
   jobs.forEach(function (j) { msgs.push(text_(jobText_(j, st.lang || 'ja', false))); });
   reply_(token, msgs);
+  markJobsReceived_(rows, jobs.map(function (j) { return j['求人ID']; }));
+}
+
+// ------------------------------------------------------------
+// だれにどの求人が届いたか（登録シートの「受信求人」列に、求人IDをカンマ区切りで記録）
+//  この列ができる前に配信した求人は、「その求人の配信日時より前に、条件に合う行で登録していた人」には届いたとみなす。
+// ------------------------------------------------------------
+function receivedIds_(rows) {
+  var got = {};
+  rows.forEach(function (r) { String(r['受信求人'] || '').split(',').forEach(function (id) { id = id.trim().toUpperCase(); if (id) got[id] = 1; }); });
+  return got;
+}
+function jobReceived_(job, rows, got) {
+  if (got[String(job['求人ID']).toUpperCase()]) return true;
+  var sent = job['配信日時'];
+  if (!(sent instanceof Date)) return false;
+  return rows.some(function (r) { return jobMatches_(job, r) && r['登録日時'] instanceof Date && r['登録日時'] <= sent; });
+}
+// その人に合う公開中の求人のうち、まだ届いていないもの。onlySent = true なら、配信済みの求人だけ
+// （まだ配信していない求人は「新着求人を今すぐ送る」で届くので、そちらに任せる）
+function unreceivedJobs_(uid, onlySent, jobs, rows) {
+  rows = rows || findRegs_(uid);
+  if (!rows.length) return [];
+  var got = receivedIds_(rows);
+  return (jobs || openJobs_()).filter(function (j) {
+    if (onlySent && !(j['配信日時'] instanceof Date)) return false;
+    return rows.some(function (u) { return jobMatches_(j, u); }) && !jobReceived_(j, rows, got);
+  });
+}
+function markJobsReceived_(rows, ids) {
+  if (!rows || !rows.length || !ids.length) return;
+  var sh = regSheet_(), col = colIndex_(sh, '受信求人');
+  rows.forEach(function (r) {
+    var cur = String(r['受信求人'] || '').split(',').map(function (x) { return x.trim(); }).filter(String);
+    ids.forEach(function (id) { if (cur.indexOf(String(id)) < 0) cur.push(String(id)); });
+    r['受信求人'] = cur.join(',');
+    sh.getRange(r._row, col).setValue(r['受信求人']);
+  });
 }
 
 function handleApply_(token, uid, st, jobId) {
@@ -739,11 +783,14 @@ function sendNewJobs_(dryRun) {
   var plan = [];
   if (!jobs.length) return dryRun ? plan : 0;
   var users = sheetObjects_(regSheet_()).filter(function (u) { return u['LINE userId'] && u['ブロック'] !== '○'; });
+  var rowsOf = {};
+  users.forEach(function (u) { (rowsOf[u['LINE userId']] = rowsOf[u['LINE userId']] || []).push(u); });
   var total = 0;
   jobs.forEach(function (job) {
     var byLang = {}, seen = {};
     users.filter(function (u) { return jobMatches_(job, u); }).forEach(function (u) {
       if (seen[u['LINE userId']]) return;   // 同じ人には1回だけ
+      if (receivedIds_(rowsOf[u['LINE userId']])[String(job['求人ID']).toUpperCase()]) return;   // 登録時などにもう届いている
       seen[u['LINE userId']] = 1;
       var lg = langCode_(u['言語']); (byLang[lg] = byLang[lg] || []).push(u['LINE userId']);
     });
@@ -752,7 +799,11 @@ function sendNewJobs_(dryRun) {
     Object.keys(byLang).forEach(function (lg) {
       var ids = byLang[lg];
       for (var i = 0; i < ids.length; i += 500) {
-        if (multicast_(ids.slice(i, i + 500), [text_(jobText_(job, lg, true))])) n += Math.min(500, ids.length - i);
+        var part = ids.slice(i, i + 500);
+        if (multicast_(part, [text_(jobText_(job, lg, true))])) {
+          n += part.length;
+          part.forEach(function (id) { markJobsReceived_(rowsOf[id], [job['求人ID']]); });
+        }
       }
     });
     jsh.getRange(job._row, colIndex_(jsh, '配信日時')).setValue(new Date());
@@ -769,6 +820,7 @@ function onSheetOpen() {
   SpreadsheetApp.getUi().createMenu('LINE配信')
     .addItem('新着求人を今すぐ送る', 'menuSendJobsNow')
     .addItem('配信予定を確認する（送りません）', 'menuPreviewJobs')
+    .addItem('公開中の求人を、まだ届いていない登録者に送る', 'menuSendMissedJobs')
     .addSeparator()
     .addItem('回数券：選んだ行の人に付与（9・30・60回分）', 'menuGiveMockCredits')
     .addItem('回数券：選んだ行の人にLINEで知らせる（付与はしない）', 'menuNotifyCredits')
@@ -799,6 +851,63 @@ function menuSendJobsNow() {
     if (ans !== ui.Button.YES) return;
     var sent = sendNewJobs_(false);
     ui.alert('送信しました', sent + '通を送りました。「配信日時」「配信人数」に記録しました。', ui.ButtonSet.OK);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ============================================================
+// 公開中の求人を、まだ届いていない登録者に送る
+//  新着求人は配信したときに1回だけ届くので、あとから登録した人には届いていないことがある。
+//  1人1回のプッシュ（見出し＋求人最大4件）にまとめる。5件目以降は、次にこのメニューを使ったときに届く。
+// ============================================================
+function missedJobsPlan_() {
+  var jobs = openJobs_(), byUser = {}, order = [];
+  sheetObjects_(regSheet_()).forEach(function (r) {
+    var id = r['LINE userId'];
+    if (!id) return;
+    if (!byUser[id]) { byUser[id] = { uid: id, rows: [], blocked: false }; order.push(id); }
+    byUser[id].rows.push(r);
+    if (r['ブロック'] === '○') byUser[id].blocked = true;
+  });
+  var plan = [];
+  order.forEach(function (id) {
+    var u = byUser[id];
+    if (u.blocked) return;
+    var list = unreceivedJobs_(id, true, jobs, u.rows);
+    if (!list.length) return;
+    var last = u.rows[u.rows.length - 1];
+    plan.push({ uid: id, rows: u.rows, jobs: list.slice(0, 4), more: Math.max(0, list.length - 4),
+                lang: langCode_(last['言語']), name: last['お名前'] || last['LINE表示名'] || id });
+  });
+  return plan;
+}
+
+function sendMissedJobs_(plan) {
+  var n = 0;
+  plan.forEach(function (p) {
+    var msgs = [text_(fmt_(TL_(p.lang).jobsHead, { n: p.jobs.length }))];
+    p.jobs.forEach(function (j) { msgs.push(text_(jobText_(j, p.lang, true))); });
+    if (push_(p.uid, msgs)) { markJobsReceived_(p.rows, p.jobs.map(function (j) { return j['求人ID']; })); n++; }
+  });
+  return n;
+}
+
+function menuSendMissedJobs() {
+  var ui = SpreadsheetApp.getUi();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var plan = missedJobsPlan_();
+    if (!plan.length) { ui.alert('公開中の求人', 'まだ届いていない登録者はいません。', ui.ButtonSet.OK); return; }
+    var lines = plan.map(function (p) {
+      return '・' + p.name + '：' + p.jobs.map(function (j) { return j['求人ID']; }).join('・') + (p.more ? '（ほか' + p.more + '件は次回）' : '');
+    });
+    var ans = ui.alert('公開中の求人を送りますか？',
+      lines.join('\n') + '\n\n' + plan.length + '人に送ります。1人1通にまとめるので、LINEの月200通の無料枠を' + plan.length + '通使います。', ui.ButtonSet.YES_NO);
+    if (ans !== ui.Button.YES) return;
+    var n = sendMissedJobs_(plan);
+    ui.alert('送信しました', n + '人に求人を送りました。登録シートの「受信求人」に記録しました。', ui.ButtonSet.OK);
   } finally {
     lock.releaseLock();
   }
