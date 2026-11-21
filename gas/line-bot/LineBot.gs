@@ -835,7 +835,8 @@ function sendNewJobs_(dryRun) {
   var users = sheetObjects_(regSheet_()).filter(function (u) { return u['LINE userId'] && u['ブロック'] !== '○'; });
   var rowsOf = {};
   users.forEach(function (u) { (rowsOf[u['LINE userId']] = rowsOf[u['LINE userId']] || []).push(u); });
-  var total = 0;
+  var total = 0, failed = [], nobody = [];
+  LINE_ERR_ = '';
   jobs.forEach(function (job) {
     var byLang = {}, seen = {};
     users.filter(function (u) { return jobMatches_(job, u); }).forEach(function (u) {
@@ -856,11 +857,19 @@ function sendNewJobs_(dryRun) {
         }
       }
     });
+    var want = Object.keys(seen).length;
+    // 条件に合う人がまだいないときは「配信日時」を書かない（合う人が登録したら、そのときに届く）
+    if (!want) { nobody.push(job['求人ID']); return; }
+    // 1人も送れなかったとき（無料枠の上限など）も「配信日時」を書かず、あとでもう一度送れるようにする
+    if (!n) { failed.push(job['求人ID']); return; }
     jsh.getRange(job._row, colIndex_(jsh, '配信日時')).setValue(new Date());
     jsh.getRange(job._row, colIndex_(jsh, '配信人数')).setValue(n);
+    if (n < want) failed.push(job['求人ID'] + '（' + (want - n) + '人に送れず）');
     total += n;
   });
-  return dryRun ? plan : total;
+  if (dryRun) return plan;
+  sendNewJobs_.failed = failed; sendNewJobs_.nobody = nobody;
+  return total;
 }
 
 // ============================================================
@@ -899,8 +908,15 @@ function menuSendJobsNow() {
     var ans = ui.alert('新着求人を今すぐ送りますか？',
       previewText_(plan) + '\n\n合計 ' + total + '通（LINEの月200通の無料枠を使います）', ui.ButtonSet.YES_NO);
     if (ans !== ui.Button.YES) return;
-    var sent = sendNewJobs_(false);
-    ui.alert('送信しました', sent + '通を送りました。「配信日時」「配信人数」に記録しました。', ui.ButtonSet.OK);
+    if (!total) { ui.alert('新着求人', '条件（職種・勤務地・雇用形態）に合う登録者がまだいないので、送る相手がいません。\n\n' + previewText_(plan) + '\n\n合う人が登録すると、登録完了のメッセージと一緒にこの求人が届きます。', ui.ButtonSet.OK); return; }
+    var sent = sendNewJobs_(false), failed = sendNewJobs_.failed || [];
+    if (failed.length) {
+      ui.alert(sent ? '一部送れませんでした' : '送れませんでした',
+        (sent ? sent + '通は送りました。\n' : '') + '送れなかった求人：' + failed.join('、') + '\n\n理由：' + (LINE_ERR_ || '不明（実行数のログを見てください）') +
+        '\n\n1人にも送れなかった求人は「配信日時」を空のままにしたので、原因を直したらもう一度このメニューで送れます。', ui.ButtonSet.OK);
+    } else {
+      ui.alert('送信しました', sent + '通を送りました。「配信日時」「配信人数」に記録しました。', ui.ButtonSet.OK);
+    }
   } finally {
     lock.releaseLock();
   }
@@ -956,8 +972,10 @@ function menuSendMissedJobs() {
     var ans = ui.alert('公開中の求人を送りますか？',
       lines.join('\n') + '\n\n' + plan.length + '人に送ります。1人1通にまとめるので、LINEの月200通の無料枠を' + plan.length + '通使います。', ui.ButtonSet.YES_NO);
     if (ans !== ui.Button.YES) return;
+    LINE_ERR_ = '';
     var n = sendMissedJobs_(plan);
-    ui.alert('送信しました', n + '人に求人を送りました。登録シートの「受信求人」に記録しました。', ui.ButtonSet.OK);
+    ui.alert(n < plan.length ? '一部送れませんでした' : '送信しました', n + '人に求人を送りました。登録シートの「受信求人」に記録しました。' +
+      (n < plan.length ? '\n\n' + (plan.length - n) + '人には送れませんでした。理由：' + (LINE_ERR_ || '不明') : ''), ui.ButtonSet.OK);
   } finally {
     lock.releaseLock();
   }
@@ -1194,8 +1212,22 @@ function lineApi_(path, payload) {
     headers: { Authorization: 'Bearer ' + token_() },
     payload: JSON.stringify(payload), muteHttpExceptions: true
   });
-  if (r.getResponseCode() !== 200) { console.error(path + ' ' + r.getResponseCode() + ' ' + r.getContentText()); return false; }
+  if (r.getResponseCode() !== 200) {
+    console.error(path + ' ' + r.getResponseCode() + ' ' + r.getContentText());
+    LINE_ERR_ = lineErrText_(r.getResponseCode(), r.getContentText());
+    return false;
+  }
   return true;
+}
+// 最後に送れなかった理由（メニューの完了画面に出す）
+var LINE_ERR_ = '';
+function lineErrText_(code, body) {
+  var msg = ''; try { msg = JSON.parse(body).message || ''; } catch (e) { msg = String(body || '').slice(0, 200); }
+  if (code === 429 && /monthly limit/i.test(msg)) return '今月のメッセージ送信数の上限（無料枠）に達しています。LINE公式アカウントの管理画面で、今月の送信数とプランを確認してください。';
+  if (code === 429) return 'LINEの送信が一時的に多すぎます。少し時間をおいてもう一度送ってください。';
+  if (code === 401) return 'LINE_TOKEN（チャネルアクセストークン）が正しくありません。';
+  if (code === 400) return 'LINEに受け付けられませんでした（' + msg + '）';
+  return 'LINEのエラー ' + code + '（' + msg + '）';
 }
 function reply_(replyToken, messages) {
   var ok = lineApi_('message/reply', { replyToken: replyToken, messages: messages.slice(0, 5) });

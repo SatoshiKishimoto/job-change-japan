@@ -29,7 +29,9 @@ const ss = { sheets: {}, getId: () => 'SSID', getUrl: () => 'https://sheet', get
 const props = { SHEET_ID: 'SSID', LINE_TOKEN: 'x', LIFF_CHANNEL_ID: '1' };
 const calls = [];
 const ok = { getResponseCode: () => 200, getContentText: () => JSON.stringify({ richMenuId: 'rm1', richmenus: [], displayName: 'N' }), getBlob: () => ({ setContentType() { return { getBytes: () => [] }; } }) };
-const UrlFetchApp = { fetch(url, opt) { calls.push({ url, body: opt && opt.payload && typeof opt.payload === 'string' ? JSON.parse(opt.payload) : null }); return ok; } };
+let failPush = false;
+const ng = { getResponseCode: () => 429, getContentText: () => JSON.stringify({ message: 'You have reached your monthly limit.' }) };
+const UrlFetchApp = { fetch(url, opt) { calls.push({ url, body: opt && opt.payload && typeof opt.payload === 'string' ? JSON.parse(opt.payload) : null }); return failPush && /push|multicast/.test(url) ? ng : ok; } };
 let uiAnswer = 'YES'; const alerts = [];
 const ui = { alert(...a) { alerts.push(a); return a.length > 2 ? uiAnswer : 'OK'; }, ButtonSet: { OK: 'OK', YES_NO: 'YES_NO' }, Button: { YES: 'YES' } };
 const ctx = {
@@ -175,4 +177,23 @@ m = lastQ(); assert.ok(m.text.includes('sửa đăng ký nào') && m.quickReply.
 // 全言語のボタンが20文字以内
 ['ja', 'en', 'vi', 'ne', 'id', 'jaen'].forEach(k => ['editBtn', 'addFull', 'addBaito'].forEach(b => assert.ok(Array.from(ctx.T[k][b]).length <= 20, k + b)));
 console.log('register/edit OK');
+// 無料枠の上限で送れなかったとき：配信日時は空のまま、理由を表示
+const jcell = id => ctx.sheetObjects_(jsh).find(r => r['求人ID'] === id);
+job({ '求人ID': 'J006', 'タイトル': 'Baito Quota', '雇用形態': 'アルバイト' });
+failPush = true; calls.length = 0; uiAnswer = 'YES';
+ctx.menuSendJobsNow();
+let al = alerts[alerts.length - 1];
+assert.ok(al[0] === '送れませんでした' && al[1].includes('J006') && al[1].includes('上限'), al.join(' | '));
+assert.strictEqual(jcell('J006')['配信日時'], '');
+failPush = false; ctx.menuSendJobsNow();
+al = alerts[alerts.length - 1];
+assert.strictEqual(al[0], '送信しました');
+assert.ok(jcell('J006')['配信日時'] instanceof Date);
+// 条件に合う人がいない求人：送らず、配信日時も空のまま
+job({ '求人ID': 'J007', 'タイトル': 'Hotel Hokkaido', '職種': 'ホテル・宿泊', '勤務地': '北海道', '雇用形態': '正社員・フルタイム' });
+calls.length = 0; ctx.menuSendJobsNow();
+assert.ok(alerts[alerts.length - 1][1].includes('合う登録者がまだいない'));
+assert.strictEqual(calls.filter(c => /multicast/.test(c.url)).length, 0);
+assert.strictEqual(jcell('J007')['配信日時'], '');
+console.log('send failure OK');
 console.log('ALL TESTS PASSED');
