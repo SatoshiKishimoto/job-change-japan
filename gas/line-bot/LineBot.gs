@@ -849,13 +849,11 @@ function sendNewJobs_(dryRun) {
     var n = 0;
     Object.keys(byLang).forEach(function (lg) {
       var ids = byLang[lg];
-      for (var i = 0; i < ids.length; i += 500) {
-        var part = ids.slice(i, i + 500);
-        if (multicast_(part, [text_(jobText_(job, lg, true))])) {
-          n += part.length;
-          part.forEach(function (id) { markJobsReceived_(rowsOf[id], [job['求人ID']]); });
-        }
-      }
+      // 1人ずつプッシュで送る（通数はマルチキャストと同じ1人1通。プッシュなら管理画面のチャットにも残る）
+      var msg = [text_(jobText_(job, lg, true))];
+      ids.forEach(function (id) {
+        if (push_(id, msg)) { n++; markJobsReceived_(rowsOf[id], [job['求人ID']]); }
+      });
     });
     var want = Object.keys(seen).length;
     // 条件に合う人がまだいないときは「配信日時」を書かない（合う人が登録したら、そのときに届く）
